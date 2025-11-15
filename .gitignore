@@ -14,3 +14,5 @@ components.d.ts
 
 # Claude settings
 .claude/
+.claude/settings.json
+.claude/settings.local.json
