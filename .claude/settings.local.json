@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push -u origin clean-main:main)",
+      "Bash(ping -c 2 github.com)",
+      "Bash(curl -s --max-time 5 https://github.com)",
+      "Bash(git config --list)",
+      "Bash(git rev-parse --abbrev-ref HEAD)",
+      "Bash(git add .claude/settings.local.json)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
