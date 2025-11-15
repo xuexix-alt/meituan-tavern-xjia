@@ -6,7 +6,11 @@
       "Bash(curl -s --max-time 5 https://github.com)",
       "Bash(git config --list)",
       "Bash(git rev-parse --abbrev-ref HEAD)",
-      "Bash(git add .claude/settings.local.json)"
+      "Bash(git add .claude/settings.local.json)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n更新Claude Code设置文件\n\n- 在权限设置中添加更多Bash命令许可\n- 允许执行git config和git rev-parse相关命令\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push origin 20251115)",
+      "Bash(/dev/null)",
+      "Bash(git add .)"
     ],
     "deny": [],
     "ask": []
