@@ -17,30 +17,28 @@
           暂无历史订单
         </div>
         <div v-for="item in historyItems" :key="item.order_time" class="history-card" @click="reorder(item)">
-          <div class="history-info">
-            <h3 class="history-title">{{ item.girl_name || '-' }} - {{ item.package_name || '-' }}</h3>
-            <div class="history-details">
-              <div class="detail-item">
-                <i class="fas fa-user"></i>
-                <span>{{ item.identity || '-' }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="fas fa-clock"></i>
-                <span>{{ item.order_time || '-' }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="fas fa-info-circle"></i>
-                <span>订单状态:</span>
-                <span :style="getStatusStyle(item.order_status)" class="status-badge">{{ item.order_status || '-' }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>服务地点: {{ item.service_location || '-' }}</span>
-              </div>
+          <!-- 头部：姓名套餐和价格 -->
+          <div class="history-header">
+            <div class="title-section">
+              <h3 class="history-title">{{ item.girl_name || '-' }} - {{ item.package_name || '-' }}</h3>
+            </div>
+            <div class="price-section">
+              <div class="history-price">{{ item.price || '-' }}</div>
             </div>
           </div>
-          <div class="history-price-section">
-            <div class="history-price">{{ item.price || '-' }}</div>
+
+          <!-- 中部：身份信息 -->
+          <div class="identity-section">
+            <i class="fas fa-user"></i>
+            <span class="identity-text">{{ item.identity || '-' }}</span>
+          </div>
+
+          <!-- 底部：时间和状态 + 按钮 -->
+          <div class="bottom-section">
+            <div class="status-time">
+              <span class="order-time">{{ item.order_time || '-' }}</span>
+              <span :style="getStatusStyle(item.order_status)" class="status-badge">{{ item.order_status || '-' }}</span>
+            </div>
             <div class="quick-reorder-btn">
               <i class="fas fa-redo"></i>
               <span>再次下单</span>
@@ -446,7 +444,7 @@ async function initDisplay() {
           order_time: '历史订单',
           order_status: order.订单状态 || '服务结束',
           service_location: '未知',
-          price: order.套餐?.套餐价格 || order.套餐价格 || 0,
+          price: order.套餐?.折后价格 || order.套餐?.套餐价格 || order.套餐价格 || 0,
           features: extractOrderFeatures(order),
           originalData: order
         };
@@ -498,7 +496,7 @@ async function loadFullExampleData() {
           order_time: '历史订单',
           order_status: order.订单状态 || '服务结束',
           service_location: '未知',
-          price: order.套餐?.套餐价格 || order.套餐价格 || 0,
+          price: order.套餐?.折后价格 || order.套餐?.套餐价格 || order.套餐价格 || 0,
           features: extractOrderFeatures(order),
           originalData: order
         };
@@ -597,8 +595,8 @@ onMounted(async () => {
 
 .history-card {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
   background: var(--bg-card);
   border-radius: 16px;
   padding: 16px;
@@ -609,60 +607,92 @@ onMounted(async () => {
   border: 1px solid var(--border-accent);
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(255, 195, 0, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 195, 0, 0.2);
   }
 
-  .history-info {
-    flex-grow: 1;
-    margin-right: 16px;
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
 
-    .history-title {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: var(--text-primary);
+    .title-section {
+      flex: 1;
+      min-width: 0;
+
+      .history-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.4;
+        margin: 0;
+        word-break: break-word;
+      }
     }
 
-    .history-details {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    .price-section {
+      flex-shrink: 0;
 
-      .detail-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
-        color: var(--text-placeholder);
+      .history-price {
+        font-size: 24px;
+        font-weight: 900;
+        background: var(--badge-danger-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        white-space: nowrap;
 
-        i {
-          width: 14px;
-          text-align: center;
-        }
-
-        .status-badge {
-          margin-left: 4px;
+        &::before {
+          content: '¥';
+          font-size: 18px;
         }
       }
     }
   }
 
-  .history-price-section {
-    text-align: right;
-    flex-shrink: 0;
+  .identity-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 4px 0;
 
-    .history-price {
-      font-size: 28px;
-      font-weight: 900;
-      background: var(--badge-danger-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
+    i {
+      color: var(--accent-primary);
+      width: 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
 
-      &::before {
-        content: '¥';
-        font-size: 20px;
+    .identity-text {
+      font-style: italic;
+    }
+  }
+
+  .bottom-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+
+    .status-time {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .order-time {
+        font-size: 12px;
+        color: var(--text-placeholder);
+        white-space: nowrap;
+      }
+
+      .status-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
       }
     }
 
@@ -1077,21 +1107,32 @@ onMounted(async () => {
   }
 
   .history-card {
-    flex-direction: column;
-    align-items: flex-start;
+    .history-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
 
-    .history-info {
-      margin-right: 0;
-      margin-bottom: 12px;
-      width: 100%;
+      .title-section {
+        width: 100%;
+      }
+
+      .price-section {
+        align-self: flex-end;
+      }
     }
 
-    .history-price-section {
-      width: 100%;
-      text-align: left;
+    .bottom-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
 
-      .history-price {
-        font-size: 24px;
+      .status-time {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .quick-reorder-btn {
+        align-self: flex-end;
       }
     }
   }

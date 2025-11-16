@@ -13,7 +13,7 @@
       <div class="user-profile-card">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <img v-if="userAvatar" :src="userAvatar" :alt="userName" />
+            <img v-if="userAvatar" :src="userAvatar" alt="用户头像" @error="userAvatar = ''" />
             <i v-else class="fas fa-user"></i>
           </div>
           <div class="avatar-badge">
@@ -21,10 +21,10 @@
           </div>
         </div>
         <div class="user-info">
-          <h2 class="user-name">{{ userName }}</h2>
+          <h2 class="user-name">{{ username }}</h2>
           <div class="user-level">
             <i class="fas fa-star"></i>
-            <span>VIP用户</span>
+            <span>VIP用户 8128</span>
           </div>
           <div class="user-stats">
             <div class="stat-item">
@@ -36,36 +36,7 @@
               <div class="stat-value">{{ totalSpending }}</div>
               <div class="stat-label">累计消费</div>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <div class="stat-value">{{ orderCount }}</div>
-              <div class="stat-label">订单数量</div>
-            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- 最近服务 -->
-      <div class="card">
-        <div class="card-title">
-          <i class="fas fa-clock"></i>最近服务
-        </div>
-        <div v-if="recentServices.length === 0" class="empty-state">
-          <i class="fas fa-inbox"></i>
-          <p>暂无最近服务记录</p>
-        </div>
-        <div v-for="service in recentServices" :key="service.id" class="service-item" @click="reorder(service)">
-          <div class="service-icon">
-            <i :class="service.icon"></i>
-          </div>
-          <div class="service-info">
-            <div class="service-name">{{ service.name }}</div>
-            <div class="service-meta">
-              <span class="service-time">{{ service.time }}</span>
-              <span class="service-status" :class="service.status">{{ service.status }}</span>
-            </div>
-          </div>
-          <div class="service-price">{{ service.price }}</div>
         </div>
       </div>
 
@@ -99,16 +70,16 @@
               <i class="fas fa-chevron-right"></i>
             </div>
           </div>
-          <div class="settings-item" @click="goHome">
+          <div class="settings-item" @click="regenerateShops">
             <div class="settings-icon">
-              <i class="fas fa-home"></i>
+              <i class="fas fa-sync-alt"></i>
             </div>
             <div class="settings-info">
-              <div class="settings-title">返回首页</div>
-              <div class="settings-desc">返回首页浏览店铺</div>
+              <div class="settings-title">重新生成首页店铺</div>
+              <div class="settings-desc">重新生成首页店铺</div>
             </div>
             <div class="settings-arrow">
-              <i class="fas fa-chevron-right"></i>
+              <i class="fas fa-sync-alt"></i>
             </div>
           </div>
         </div>
@@ -144,12 +115,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 
+// 酒馆宏替换函数声明
+declare global {
+  interface Window {
+    replaceMacros: (macro: string) => Promise<string>;
+  }
+}
+
 // 响应式数据
-const userName = ref('玩家');
-const userAvatar = ref('');
 const isDarkMode = ref(false);
 const fullStatData = ref<any>(null);
-const historyItems = ref<any[]>([]);
+const userAvatar = ref<string>('');
+const username = ref<string>('玩家'); // 默认用户名
 
 // 统计数据
 const accountBalance = computed(() => {
@@ -160,25 +137,18 @@ const accountBalance = computed(() => {
 });
 
 const totalSpending = computed(() => {
-  if (fullStatData.value?.经济?.订单消费 !== undefined) {
-    return fullStatData.value.经济.订单消费;
+  // 从服务中的订单计算累计消费
+  const orders = fullStatData.value?.['服务中的订单'] || fullStatData.value?.服务中的订单 || [];
+  if (Array.isArray(orders)) {
+    const total = orders.reduce((sum: number, order: any) => {
+      const price = order.套餐?.套餐价格 || order.套餐价格 || 0;
+      return sum + (typeof price === 'number' ? price : 0);
+    }, 0);
+    return total || 0;
   }
   return 0;
 });
 
-const orderCount = computed(() => historyItems.value.length || 0);
-
-// 最近服务
-const recentServices = computed(() => {
-  return historyItems.value.slice(0, 5).map((item, index) => ({
-    id: index,
-    name: item.girl_name || '未知',
-    icon: 'fas fa-heart',
-    time: item.order_time || '历史订单',
-    status: getStatusClass(item.order_status || '已完成'),
-    price: `¥${item.price || 0}`
-  }));
-});
 
 // 状态样式类名
 function getStatusClass(status: string) {
@@ -206,12 +176,6 @@ function sendToAI(message: string) {
   }
 }
 
-// 重新下单
-function reorder(service: any) {
-  const pkg = service.name || '未知套餐';
-  sendToAI(`/send 我要下单：${pkg}`);
-}
-
 // 切换主题
 function toggleTheme() {
   isDarkMode.value = !isDarkMode.value;
@@ -228,9 +192,60 @@ function refreshData() {
   window.location.reload();
 }
 
-// 返回首页（修改后的指令）
-function goHome() {
-  sendToAI('/send 首页-路人商品1个店铺-熟人商品一个店铺');
+// 重新生成首页店铺
+function regenerateShops() {
+  sendToAI('/send 生成-首页-熟人店铺2个-路人店铺2个');
+}
+
+// 获取用户头像
+function getUserAvatar(): string {
+  try {
+    console.log('开始获取头像...');
+
+    // 尝试从 accountStorage 获取头像
+    if (SillyTavern?.accountStorage) {
+      console.log('找到 accountStorage:', SillyTavern.accountStorage);
+      console.log('accountStorage 全部字段:', Object.keys(SillyTavern.accountStorage));
+
+      // 尝试多种可能的头像字段名
+      const avatarFile = SillyTavern.accountStorage.avatar ||
+                         SillyTavern.accountStorage.user_avatar ||
+                         SillyTavern.accountStorage.avatar_url ||
+                         SillyTavern.accountStorage.userAvatar;
+      console.log('尝试的 avatarFile:', avatarFile);
+      if (avatarFile) {
+        const avatarUrl = SillyTavern.getThumbnailUrl('user', avatarFile);
+        console.log('生成的头像URL:', avatarUrl);
+        return avatarUrl;
+      }
+    } else {
+      console.log('未找到 accountStorage');
+    }
+
+    // 尝试从全局变量获取头像
+    try {
+      const globalVars = getVariables({ type: 'global' });
+      console.log('全局变量:', globalVars);
+      if (globalVars?.avatar) {
+        const avatarUrl = SillyTavern.getThumbnailUrl('user', globalVars.avatar);
+        console.log('从全局变量生成的头像URL:', avatarUrl);
+        return avatarUrl;
+      }
+    } catch (e) {
+      console.log('获取全局变量失败:', e);
+    }
+
+    // 尝试直接检查 SillyTavern 上的头像相关属性
+    console.log('尝试从其他位置获取头像...');
+    console.log('SillyTavern 对象:', SillyTavern);
+
+    // 如果没有头像，返回空字符串使用默认图标
+    console.log('未找到头像，返回空字符串');
+    return '';
+  } catch (error) {
+    console.error('获取头像失败:', error);
+    return '';
+  }
 }
 
 // 初始化数据
@@ -238,36 +253,19 @@ async function initDisplay() {
   try {
     const messages = await getChatMessages('latest');
     if (!messages || messages.length === 0 || !messages[0].data) {
-      const loaded = await loadFullExampleData();
-      if (loaded) return true;
-      return false;
+      console.warn('未获取到消息数据，使用默认空数据');
+      fullStatData.value = {};
+      return true;
     }
 
     const statData = messages[0].data.stat_data;
     if (!statData) {
-      const loaded = await loadFullExampleData();
-      if (loaded) return true;
-      return false;
+      console.warn('消息数据中无 stat_data，使用默认空数据');
+      fullStatData.value = {};
+      return true;
     }
 
     fullStatData.value = statData;
-
-    if (statData['历史订单'] && Array.isArray(statData['历史订单'])) {
-      historyItems.value = statData['历史订单'].map((item: any) => {
-        const order = Array.isArray(item) ? item[0] : item;
-        return {
-          girl_name: order.基础信息?.姓名?.[0] || order.姓名 || '未知',
-          identity: order.基础信息?.身份?.[0] || order.身份 || '未知',
-          package_name: order.套餐?.套餐名称?.[0] || order.套餐名称 || '未知套餐',
-          order_time: '历史订单',
-          order_status: order.订单状态 || '已完成',
-          service_location: '未知',
-          price: order.套餐?.套餐价格?.[0] || order.套餐价格 || 0
-        };
-      });
-    } else {
-      historyItems.value = [];
-    }
 
     return true;
   } catch (error) {
@@ -287,58 +285,12 @@ async function getChatMessages(messageId: string) {
   }
 }
 
-async function loadFullExampleData() {
-  try {
-    const res = await fetch('./变量示例.json');
-    if (!res.ok) return false;
-    const data = await res.json();
-    const statData = data?.stat_data;
-    if (!statData) return false;
+// async function loadFullExampleData() {
+//   // 此函数已废弃，不再加载本地示例数据
+//   // 以避免404错误
+//   return false;
+// }
 
-    fullStatData.value = statData;
-
-    if (statData['历史订单'] && Array.isArray(statData['历史订单'])) {
-      historyItems.value = statData['历史订单'].map((item: any) => {
-        const order = Array.isArray(item) ? item[0] : item;
-        return {
-          girl_name: order.基础信息?.姓名?.[0] || order.姓名 || '未知',
-          identity: order.基础信息?.身份?.[0] || order.身份 || '未知',
-          package_name: order.套餐?.套餐名称?.[0] || order.套餐名称 || '未知套餐',
-          order_time: '历史订单',
-          order_status: order.订单状态 || '已完成',
-          service_location: '未知',
-          price: order.套餐?.套餐价格?.[0] || order.套餐价格 || 0
-        };
-      });
-    } else {
-      historyItems.value = [];
-    }
-
-    return true;
-  } catch (error) {
-    console.error('加载本地数据失败:', error);
-    return false;
-  }
-}
-
-// 获取用户头像（使用酒馆宏）
-async function getUserAvatar() {
-  try {
-    if (typeof window.replaceMacros === 'function') {
-      // 使用酒馆宏获取头像URL
-      const avatarUrl = await window.replaceMacros('{{user_avatar}}');
-      if (avatarUrl && avatarUrl !== '{{user_avatar}}') {
-        userAvatar.value = avatarUrl;
-        return;
-      }
-    }
-    // 如果没有头像宏，使用默认头像或生成头像
-    userAvatar.value = '';
-  } catch (e) {
-    console.error('获取用户头像失败:', e);
-    userAvatar.value = '';
-  }
-}
 
 onMounted(async () => {
   // 加载主题设置
@@ -350,23 +302,38 @@ onMounted(async () => {
     }));
   }
 
-  await initDisplay();
-
-  // 获取用户名（使用酒馆宏{{user}}）
-  try {
-    if (typeof window.replaceMacros === 'function') {
-      const userNameMacro = await window.replaceMacros('{{user}}');
-      if (userNameMacro && userNameMacro !== '{{user}}') {
-        userName.value = userNameMacro;
+  // 尝试从 SillyTavern 获取用户名
+  if (SillyTavern?.name1) {
+    username.value = SillyTavern.name1;
+    console.log('从 SillyTavern 获取用户名:', username.value);
+  } else {
+    // 尝试从全局变量获取
+    try {
+      const globalVars = getVariables({ type: 'global' });
+      if (globalVars?.user_name) {
+        username.value = globalVars.user_name;
+        console.log('从全局变量获取用户名:', username.value);
+      } else {
+        console.log('未找到用户名，使用默认:', username.value);
       }
+    } catch (e) {
+      console.log('获取全局变量失败:', e);
     }
-  } catch (e) {
-    console.error('获取用户名失败:', e);
-    userName.value = '玩家';
   }
 
   // 获取用户头像
-  await getUserAvatar();
+  userAvatar.value = getUserAvatar();
+
+  // 如果没有获取到头像，等待一下再试（可能是异步加载）
+  if (!userAvatar.value) {
+    console.log('头像未获取到，延迟500ms后重试...');
+    setTimeout(() => {
+      userAvatar.value = getUserAvatar();
+      console.log('延迟后的头像:', userAvatar.value);
+    }, 500);
+  }
+
+  await initDisplay();
 });
 </script>
 
@@ -568,84 +535,6 @@ onMounted(async () => {
     i {
       color: var(--accent-primary);
     }
-  }
-}
-
-.service-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-item);
-  border-radius: 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-
-  &:hover {
-    background: var(--bg-item-hover);
-    transform: translateX(4px);
-  }
-
-  .service-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--bg-badge);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
-    color: var(--accent-primary);
-    border: 1px solid var(--accent-primary);
-  }
-
-  .service-info {
-    flex-grow: 1;
-
-    .service-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    .service-meta {
-      display: flex;
-      gap: 8px;
-      font-size: 12px;
-
-      .service-time {
-        color: var(--text-secondary);
-      }
-
-      .service-status {
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 500;
-
-        &.status-completed {
-          background-color: rgba(46, 204, 113, 0.2);
-          color: #2ecc71;
-        }
-
-        &.status-ended {
-          background-color: rgba(231, 76, 60, 0.2);
-          color: #e74c3c;
-        }
-
-        &.status-ongoing {
-          background-color: rgba(52, 152, 219, 0.2);
-          color: #3498db;
-        }
-      }
-    }
-  }
-
-  .service-price {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-price);
   }
 }
 
