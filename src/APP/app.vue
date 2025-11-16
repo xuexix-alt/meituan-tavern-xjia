@@ -28,7 +28,7 @@ const ErrorBoundary = defineComponent({
       error.value = err;
       hasError.value = true;
       errorMessage.value = err.message || '发生了未知错误';
-      toastr.error('页面出现错误，已自动恢复', '系统提示');
+      console.log('[系统提示] 页面出现错误，已自动恢复');
       return false; // 阻止错误继续传播
     });
 

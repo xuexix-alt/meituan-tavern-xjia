@@ -13,8 +13,7 @@
       <div class="user-profile-card">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <img v-if="userAvatar" :src="userAvatar" alt="用户头像" @error="userAvatar = ''" />
-            <i v-else class="fas fa-user"></i>
+            <i class="fas fa-user"></i>
           </div>
           <div class="avatar-badge">
             <i class="fas fa-crown"></i>
@@ -125,7 +124,6 @@ declare global {
 // 响应式数据
 const isDarkMode = ref(false);
 const fullStatData = ref<any>(null);
-const userAvatar = ref<string>('');
 const username = ref<string>('玩家'); // 默认用户名
 
 // 统计数据
@@ -197,55 +195,11 @@ function regenerateShops() {
   sendToAI('/send 生成-首页-熟人店铺2个-路人店铺2个');
 }
 
-// 获取用户头像
-function getUserAvatar(): string {
-  try {
-    console.log('开始获取头像...');
-
-    // 尝试从 accountStorage 获取头像
-    if (SillyTavern?.accountStorage) {
-      console.log('找到 accountStorage:', SillyTavern.accountStorage);
-      console.log('accountStorage 全部字段:', Object.keys(SillyTavern.accountStorage));
-
-      // 尝试多种可能的头像字段名
-      const avatarFile = SillyTavern.accountStorage.avatar ||
-                         SillyTavern.accountStorage.user_avatar ||
-                         SillyTavern.accountStorage.avatar_url ||
-                         SillyTavern.accountStorage.userAvatar;
-      console.log('尝试的 avatarFile:', avatarFile);
-      if (avatarFile) {
-        const avatarUrl = SillyTavern.getThumbnailUrl('user', avatarFile);
-        console.log('生成的头像URL:', avatarUrl);
-        return avatarUrl;
-      }
-    } else {
-      console.log('未找到 accountStorage');
-    }
-
-    // 尝试从全局变量获取头像
-    try {
-      const globalVars = getVariables({ type: 'global' });
-      console.log('全局变量:', globalVars);
-      if (globalVars?.avatar) {
-        const avatarUrl = SillyTavern.getThumbnailUrl('user', globalVars.avatar);
-        console.log('从全局变量生成的头像URL:', avatarUrl);
-        return avatarUrl;
-      }
-    } catch (e) {
-      console.log('获取全局变量失败:', e);
-    }
-
-    // 尝试直接检查 SillyTavern 上的头像相关属性
-    console.log('尝试从其他位置获取头像...');
-    console.log('SillyTavern 对象:', SillyTavern);
-
-    // 如果没有头像，返回空字符串使用默认图标
-    console.log('未找到头像，返回空字符串');
-    return '';
-  } catch (error) {
-    console.error('获取头像失败:', error);
-    return '';
-  }
+// 获取用户头像 - 简化版本，使用默认图标
+function getUserAvatar(): boolean {
+  // 暂时不实现复杂头像获取，使用默认用户图标
+  console.log('使用默认用户头像图标');
+  return false;
 }
 
 // 初始化数据
@@ -321,17 +275,8 @@ onMounted(async () => {
     }
   }
 
-  // 获取用户头像
-  userAvatar.value = getUserAvatar();
-
-  // 如果没有获取到头像，等待一下再试（可能是异步加载）
-  if (!userAvatar.value) {
-    console.log('头像未获取到，延迟500ms后重试...');
-    setTimeout(() => {
-      userAvatar.value = getUserAvatar();
-      console.log('延迟后的头像:', userAvatar.value);
-    }, 500);
-  }
+  // 初始化头像（使用默认图标）
+  getUserAvatar();
 
   await initDisplay();
 });

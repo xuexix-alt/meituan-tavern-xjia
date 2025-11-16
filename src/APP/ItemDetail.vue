@@ -156,7 +156,7 @@ function addToRemark(content: string) {
 function quickOrder(content: string) {
   const itemName = itemData.value?.name || '';
   sendToAI(`/send 我要下单：${itemName}。备注：${content}`);
-  toastr.success(`已选择：${content}`, '快速下单');
+  console.log(`[快速下单] 已选择：${content}`);
 }
 
 // 确认下单
@@ -181,22 +181,13 @@ function sendToAI(message: string) {
   }
 }
 
-// 从酒馆消息提取数据 - 增强版，支持回退到最近楼层或缓存
+// 从酒馆消息提取数据 - 增强版，支持回退到最近楼层
 function extractDataFromMessage(): { shops: any[]; packages: any[] } {
   try {
-    // 首先尝试从缓存获取数据（酒馆变量）
-    const cachedData = getCachedShopData();
-    if (cachedData) {
-      console.log('[ItemDetail] 使用缓存的手机界面数据');
-      return cachedData;
-    }
-
     // 尝试从当前楼层获取数据
     const currentMessageId = getCurrentMessageId();
     const currentData = extractDataFromSpecificMessage(currentMessageId);
     if (currentData) {
-      // 成功获取数据，缓存起来
-      cacheShopData(currentData);
       return currentData;
     }
 
@@ -208,8 +199,7 @@ function extractDataFromMessage(): { shops: any[]; packages: any[] } {
       const historicalMessageId = `msg_${parseInt(currentIdStr.replace('msg_', '')) - i}`;
       const historicalData = extractDataFromSpecificMessage(historicalMessageId);
       if (historicalData) {
-        console.log(`[ItemDetail] 从 ${i} 个楼层前找到数据，已缓存并使用`);
-        cacheShopData(historicalData);
+        console.log(`[ItemDetail] 从 ${i} 个楼层前找到数据，已使用`);
         return historicalData;
       }
     }
@@ -240,41 +230,6 @@ function extractDataFromSpecificMessage(messageId: string): { shops: any[]; pack
 
     const dataText = match[1].trim();
     return parseShopData(dataText);
-  } catch (e) {
-    return null;
-  }
-}
-
-// 缓存数据到酒馆变量
-function cacheShopData(data: { shops: any[]; packages: any[] }) {
-  try {
-    const scriptId = getScriptId();
-    if (scriptId) {
-      replaceVariables({
-        cachedShopData: data,
-        cachedAt: Date.now()
-      }, { type: 'script', script_id: scriptId });
-    }
-  } catch (e) {
-    console.warn('[ItemDetail] 缓存数据失败:', e);
-  }
-}
-
-// 从酒馆变量获取缓存数据
-function getCachedShopData(): { shops: any[]; packages: any[] } | null {
-  try {
-    const scriptId = getScriptId();
-    if (!scriptId) return null;
-
-    const variables = getVariables({ type: 'script', script_id: scriptId });
-    if (variables && variables.cachedShopData) {
-      // 检查缓存是否过期（24小时）
-      const cacheAge = Date.now() - (variables.cachedAt || 0);
-      if (cacheAge < 24 * 60 * 60 * 1000) {
-        return variables.cachedShopData;
-      }
-    }
-    return null;
   } catch (e) {
     return null;
   }

@@ -509,14 +509,14 @@ async function refreshData() {
 
     if (data.girls.length === 0) {
       errorMessage.value = '未找到服务中的订单';
-      toastr.warning('暂无服务数据', '服务状态');
+      console.log('[服务状态] 暂无服务数据');
     } else {
       toastr.success(`加载了 ${data.girls.length} 位女孩的服务数据`, '服务状态');
     }
   } catch (error: any) {
     errorMessage.value = error.message || '数据加载失败';
     console.error('[Service] 刷新数据失败:', error);
-    toastr.error('数据加载失败，请重试', '服务状态');
+    console.log('[服务状态] 数据加载失败，请重试');
     girlsData.value = [];
   } finally {
     isRefreshing.value = false;

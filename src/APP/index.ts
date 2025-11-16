@@ -85,9 +85,9 @@ const initApp = async () => {
 
     // 根据MVU状态显示不同消息
     if (mvuReady) {
-      toastr.success(`界面加载成功！(${initTime.toFixed(0)}ms)`, '欢迎使用');
+      console.log(`[欢迎使用] 界面加载成功！(${initTime.toFixed(0)}ms)`);
     } else {
-      toastr.warning('部分功能可能不可用', '降级模式');
+      console.log('[降级模式] 部分功能可能不可用');
     }
 
     // 挂载Vue应用
@@ -99,7 +99,7 @@ const initApp = async () => {
 
   } catch (error) {
     console.error('[初始化] 应用启动失败:', error);
-    toastr.error('界面加载失败，请刷新页面重试', '错误');
+    console.log('[错误] 界面加载失败，请刷新页面重试');
   }
 };
 
@@ -119,13 +119,13 @@ function initTheme() {
 $(window).on('pagehide', () => {
   const unloadTime = performance.now() - perfStartTime;
   console.log(`[性能] 应用运行时间: ${unloadTime.toFixed(2)}ms`);
-  toastr.info('界面已卸载', '再见');
+  console.log('[再见] 界面已卸载');
 });
 
 // 全局错误处理 - 捕获未处理的Promise错误
 window.addEventListener('unhandledrejection', (event) => {
   console.error('[全局错误] 未处理的Promise错误:', event.reason);
-  toastr.error('发生了未知错误', '系统提示');
+  console.log('[系统提示] 发生了未知错误');
 });
 
 // 全局错误处理 - 捕获JavaScript运行时错误
