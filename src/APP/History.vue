@@ -412,6 +412,9 @@ function sendToAI(message: string) {
 // 初始化数据
 async function initDisplay() {
   try {
+    // 等待MVU初始化
+    await waitGlobalInitialized('Mvu');
+
     const messages = await getChatMessages('latest');
     if (!messages || messages.length === 0 || !messages[0].data) {
       const loaded = await loadFullExampleData();
@@ -426,17 +429,24 @@ async function initDisplay() {
       return false;
     }
 
-    if (statData['历史订单'] && Array.isArray(statData['历史订单'])) {
-      historyItems.value = statData['历史订单'].map((item: any) => {
-        const order = Array.isArray(item) ? item[0] : item;
+    // 从服务中的订单筛选出服务结束的订单作为历史订单
+    const orders = statData['服务中的订单'] || statData.服务中的订单;
+    if (orders && Array.isArray(orders)) {
+      // 筛选服务结束的订单
+      const completedOrders = orders.filter((order: any) => {
+        const status = order.订单状态 || '';
+        return status.includes('服务结束');
+      });
+
+      historyItems.value = completedOrders.map((order: any) => {
         return {
-          girl_name: order.基础信息?.姓名?.[0] || order.姓名 || '未知',
-          identity: order.基础信息?.身份?.[0] || order.身份 || '未知',
-          package_name: order.套餐?.套餐名称?.[0] || order.套餐名称 || '未知套餐',
+          girl_name: order.基础信息?.姓名 || order.姓名 || '未知',
+          identity: order.基础信息?.身份 || order.身份 || '未知',
+          package_name: order.套餐?.套餐名称 || order.套餐名称 || '未知套餐',
           order_time: '历史订单',
-          order_status: order.订单状态 || '已完成',
+          order_status: order.订单状态 || '服务结束',
           service_location: '未知',
-          price: order.套餐?.套餐价格?.[0] || order.套餐价格 || 0,
+          price: order.套餐?.套餐价格 || order.套餐价格 || 0,
           features: extractOrderFeatures(order),
           originalData: order
         };
@@ -471,17 +481,24 @@ async function loadFullExampleData() {
     const statData = data?.stat_data;
     if (!statData) return false;
 
-    if (statData['历史订单'] && Array.isArray(statData['历史订单'])) {
-      historyItems.value = statData['历史订单'].map((item: any) => {
-        const order = Array.isArray(item) ? item[0] : item;
+    // 从服务中的订单筛选出服务结束的订单作为历史订单
+    const orders = statData['服务中的订单'] || statData.服务中的订单;
+    if (orders && Array.isArray(orders)) {
+      // 筛选服务结束的订单
+      const completedOrders = orders.filter((order: any) => {
+        const status = order.订单状态 || '';
+        return status.includes('服务结束');
+      });
+
+      historyItems.value = completedOrders.map((order: any) => {
         return {
-          girl_name: order.基础信息?.姓名?.[0] || order.姓名 || '未知',
-          identity: order.基础信息?.身份?.[0] || order.身份 || '未知',
-          package_name: order.套餐?.套餐名称?.[0] || order.套餐名称 || '未知套餐',
+          girl_name: order.基础信息?.姓名 || order.姓名 || '未知',
+          identity: order.基础信息?.身份 || order.身份 || '未知',
+          package_name: order.套餐?.套餐名称 || order.套餐名称 || '未知套餐',
           order_time: '历史订单',
-          order_status: order.订单状态 || '已完成',
+          order_status: order.订单状态 || '服务结束',
           service_location: '未知',
-          price: order.套餐?.套餐价格?.[0] || order.套餐价格 || 0,
+          price: order.套餐?.套餐价格 || order.套餐价格 || 0,
           features: extractOrderFeatures(order),
           originalData: order
         };
