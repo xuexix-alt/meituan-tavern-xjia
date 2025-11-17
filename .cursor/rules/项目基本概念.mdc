@@ -39,6 +39,60 @@ alwaysApply: true
 
 以上接口在代码中均可直接使用, 不需要导入或新定义它们, 也不需要检查是否可用.
 
+### 接口使用规范
+
+**@types 目录限制**
+
+- `@types` 目录包含了所有酒馆和酒馆助手提供的依赖函数、接口和类型定义
+- **禁止超出** `@types` 文件夹中定义的函数和接口进行开发
+- 不得自建接口或使用未在 `@types` 中定义的全局函数
+
+**@types 目录结构**
+
+`@types` 目录包含以下核心模块，所有可用的接口和函数均定义于此：
+
+**function/ 目录 - 核心功能函数：**
+- `variables.d.ts` - 变量操作：`getVariables`、`replaceVariables`、`klona`
+- `chat_message.d.ts` - 消息处理：`getChatMessages`、`sendMessage`、`getCurrentMessageId`
+- `slash.d.ts` - STScript命令：`triggerSlash`、`waitGlobalInitialized`
+- `script.d.ts` - 脚本管理：`getScriptId`、`eventOn`、`getButtonEvent`
+- `builtin.d.ts` - 内置工具：`toastr`、`$`、`jQuery`
+- `generate.d.ts` - 内容生成：`generate`
+- `character.d.ts` - 角色卡：`getCurrentCharacterId`、`getCharacterCard`
+- `global.d.ts` - 全局API：`getIframeName`、`window`、`document`
+- `audio.d.ts` - 音频播放：`playAudio`
+- `lorebook.d.ts` - 世界书：`replaceWorldbook`
+- `util.d.ts` - 工具函数：`klona`
+
+**iframe/ 目录 - 框架和插件接口：**
+- `exported.sillytavern.d.ts` - 酒馆原生API
+- `exported.tavernhelper.d.ts` - 酒馆助手API
+- `exported.mvu.d.ts` - MVU变量框架：`Mvu.getMvuData`、`Mvu.parseMessage`
+- `exported.ejstemplate.d.ts` - EJS模板引擎
+- `event.d.ts` - 事件系统：`tavern_events`
+- `script.d.ts` - 脚本框架：`waitForInit`
+- `util.d.ts` - iframe工具
+- `variables.d.ts` - iframe变量操作
+
+**所有酒馆交互功能必须使用上述接口**，例如：
+- 变量操作：`getVariables({type: 'script', script_id: getScriptId()})`
+- 消息处理：`getChatMessages(getCurrentMessageId())`
+- 事件监听：`eventOn(getButtonEvent('按钮名'), callback)`
+
+**webpack.config.ts 禁止修改**
+
+- `webpack.config.ts` 是项目的构建配置文件，**不允许修改**
+- 该文件已配置好所有必要的loader、插件和优化选项，包括：
+  - Vue Loader（用于Vue SFC编译）
+  - TypeScript Loader（用于.ts/.tsx文件编译）
+  - SCSS Loader（用于.scss文件编译和提取）
+  - MiniCssExtractPlugin（用于CSS提取）
+  - HtmlWebpackPlugin（用于HTML打包）
+  - VueUse自动导入组件和指令
+  - 代码混淆和压缩优化
+- 修改此文件可能导致构建失败或功能异常
+- 如需调整构建行为，请通过项目提供的配置项或环境变量进行
+
 ## 特殊导入方式
 
 ### 导入文件内容

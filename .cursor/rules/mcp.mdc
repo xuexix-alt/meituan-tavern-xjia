@@ -1,7 +1,278 @@
----
-alwaysApply: true
----
-
 # MCP
 
-你可以通过 browsermcp 自行读取酒馆网页当前的 DOM 情况、实际显示情况和 Console 情况.
+Chrome DevTools MCP 是一个强大的浏览器自动化和调试工具，通过 Model Context Protocol (MCP) 为 AI 助手提供完整的 Chrome DevTools 功能访问权限。
+
+## 功能概览
+
+Chrome DevTools MCP 提供了 **6 大类共 26 个工具功能**，分为：
+
+1. **Input automation** (8个工具) - 输入自动化
+2. **Navigation automation** (6个工具) - 导航自动化
+3. **Emulation** (2个工具) - 模拟
+4. **Performance** (3个工具) - 性能分析
+5. **Network** (2个工具) - 网络请求
+6. **Debugging** (5个工具) - 调试
+
+---
+
+## 1. Input automation (8个工具) - 输入自动化
+
+### `click`
+- **描述**: 点击指定元素
+- **参数**:
+  - `dblClick` (boolean, 可选): 设置为 true 进行双击，默认 false
+  - `uid` (string, 必需): 页面元素快照中的元素唯一ID
+
+### `drag`
+- **描述**: 将一个元素拖拽到另一个元素上
+- **参数**:
+  - `from_uid` (string, 必需): 要拖拽的元素ID
+  - `to_uid` (string, 必需): 目标元素ID
+
+### `fill`
+- **描述**: 在输入框、文本域中输入文本或选择下拉框选项
+- **参数**:
+  - `uid` (string, 必需): 页面元素快照中的元素唯一ID
+  - `value` (string, 必需): 要输入的值
+
+### `fill_form`
+- **描述**: 批量填充多个表单元素
+- **参数**:
+  - `elements` (array, 必需): 元素快照中要填充的元素数组
+
+### `handle_dialog`
+- **描述**: 处理浏览器弹出的对话框
+- **参数**:
+  - `action` (enum: "accept" | "dismiss", 必需): 接受或拒绝对话框
+  - `promptText` (string, 可选): 可选的提示文本
+
+### `hover`
+- **描述**: 悬停在指定元素上
+- **参数**:
+  - `uid` (string, 必需): 页面元素快照中的元素唯一ID
+
+### `press_key`
+- **描述**: 按键或组合键操作
+- **参数**:
+  - `key` (string, 必需): 按键名称 (如 "Enter", "Control+A", "Control++", "Control+Shift+R")
+  - 支持修饰符: Control, Shift, Alt, Meta
+
+### `upload_file`
+- **描述**: 通过指定元素上传文件
+- **参数**:
+  - `filePath` (string, 必需): 要上传文件的本地路径
+  - `uid` (string, 必需): 文件输入元素或触发文件选择器的元素ID
+
+---
+
+## 2. Navigation automation (6个工具) - 导航自动化
+
+### `close_page`
+- **描述**: 关闭指定索引的页面
+- **参数**:
+  - `pageIdx` (number, 必需): 要关闭的页面索引
+
+### `list_pages`
+- **描述**: 获取浏览器中所有打开的页面列表
+- **参数**: 无
+
+### `navigate_page`
+- **描述**: 导航到指定URL或在历史中前进/后退/刷新
+- **参数**:
+  - `ignoreCache` (boolean, 可选): 是否忽略缓存
+  - `timeout` (number, 可选): 最大等待时间(毫秒)
+  - `type` (enum: "url" | "back" | "forward" | "reload", 可选): 导航类型
+  - `url` (string, 可选): 目标URL
+
+### `new_page`
+- **描述**: 创建新页面
+- **参数**:
+  - `timeout` (number, 可选): 最大等待时间(毫秒)
+  - `url` (string, 必需): 新页面要加载的URL
+
+### `select_page`
+- **描述**: 选择指定页面作为后续工具调用的上下文
+- **参数**:
+  - `pageIdx` (number, 必需): 要选择的页面索引
+
+### `wait_for`
+- **描述**: 等待指定文本在页面上出现
+- **参数**:
+  - `text` (string, 必需): 要出现的文本
+  - `timeout` (number, 可选): 最大等待时间(毫秒)
+
+---
+
+## 3. Emulation (2个工具) - 模拟
+
+### `emulate`
+- **描述**: 模拟页面上的各种条件
+- **参数**:
+  - `cpuThrottlingRate` (number, 可选): CPU减速因子
+  - `networkConditions` (enum: "No emulation" | "Offline" | "Slow 3G" | "Fast 3G" | "Slow 4G" | "Fast 4G", 可选): 网络条件限制
+
+### `resize_page`
+- **描述**: 调整页面窗口大小
+- **参数**:
+  - `height` (number, 必需): 页面高度
+  - `width` (number, 必需): 页面宽度
+
+---
+
+## 4. Performance (3个工具) - 性能分析
+
+### `performance_analyze_insight`
+- **描述**: 分析性能跟踪中的特定洞察
+- **参数**:
+  - `insightName` (string, 必需): 洞察名称 (如 "DocumentLatency" 或 "LCPBreakdown")
+  - `insightSetId` (string, 必需): 洞察集ID
+
+### `performance_start_trace`
+- **描述**: 开始性能跟踪记录
+- **参数**:
+  - `autoStop` (boolean, 必需): 是否自动停止跟踪
+  - `reload` (boolean, 必需): 是否在跟踪开始后自动刷新页面
+
+### `performance_stop_trace`
+- **描述**: 停止当前页面的性能跟踪记录
+- **参数**: 无
+
+---
+
+## 5. Network (2个工具) - 网络请求
+
+### `get_network_request`
+- **描述**: 获取指定的网络请求
+- **参数**:
+  - `reqid` (number, 可选): 网络请求ID
+
+### `list_network_requests`
+- **描述**: 列出当前页面自上次导航以来的所有网络请求
+- **参数**:
+  - `includePreservedRequests` (boolean, 可选): 是否包含最近3次导航的保留请求
+  - `pageIdx` (number, 可选): 页面编号(0-based)
+  - `pageSize` (number, 可选): 最大返回请求数
+  - `resourceTypes` (array, 可选): 过滤特定资源类型
+
+---
+
+## 6. Debugging (5个工具) - 调试
+
+### `evaluate_script`
+- **描述**: 在当前页面执行JavaScript函数
+- **参数**:
+  - `args` (array, 可选): 要传递给函数的参数列表
+  - `function` (string, 必需): 要执行的JavaScript函数声明
+
+### `get_console_message`
+- **描述**: 根据ID获取控制台消息
+- **参数**:
+  - `msgid` (number, 必需): 控制台消息ID
+
+### `list_console_messages`
+- **描述**: 列出当前页面自上次导航以来的所有控制台消息
+- **参数**:
+  - `includePreservedMessages` (boolean, 可选): 是否包含最近3次导航的保留消息
+  - `pageIdx` (number, 可选): 页面编号(0-based)
+  - `pageSize` (number, 可选): 最大返回消息数
+  - `types` (array, 可选): 过滤特定消息类型
+
+### `take_screenshot`
+- **描述**: 截取页面或元素截图
+- **参数**:
+  - `filePath` (string, 可选): 保存截图的文件路径
+  - `format` (enum: "png" | "jpeg" | "webp", 可选): 截图格式，默认png
+  - `fullPage` (boolean, 可选): 是否截取完整页面
+  - `quality` (number, 可选): JPEG/WebP压缩质量(0-100)
+  - `uid` (string, 可选): 要截图的元素ID
+
+### `take_snapshot`
+- **描述**: 获取页面的文本快照(基于无障碍树)
+- **参数**:
+  - `filePath` (string, 可选): 保存快照的文件路径
+  - `verbose` (boolean, 可选): 是否包含完整的无障碍树信息
+
+---
+
+## 使用说明
+
+### 获取页面元素信息
+
+在使用输入自动化工具之前，通常需要先使用 `take_snapshot` 获取页面的文本快照，以获取元素的唯一标识符 (uid)。
+
+### 典型工作流程示例
+
+```typescript
+// 1. 先获取页面快照
+take_snapshot({ verbose: true });
+
+// 2. 导航到指定URL
+navigate_page({ type: 'url', url: 'https://example.com' });
+
+// 3. 等待页面加载
+wait_for({ text: '欢迎', timeout: 5000 });
+
+// 4. 填充表单
+fill_form({
+  elements: [
+    { uid: 'element-1', value: '用户名' },
+    { uid: 'element-2', value: '密码' }
+  ]
+});
+
+// 5. 点击提交按钮
+click({ uid: 'submit-button' });
+
+// 6. 截取结果截图
+take_screenshot({ format: 'png', fullPage: true });
+```
+
+### 性能分析工作流程
+
+```typescript
+// 1. 开始性能跟踪
+performance_start_trace({ autoStop: true, reload: true });
+
+// 等待跟踪完成...
+
+// 2. 分析性能洞察
+performance_analyze_insight({
+  insightSetId: 'insight-set-1',
+  insightName: 'LCPBreakdown'
+});
+
+// 3. 停止跟踪
+performance_stop_trace();
+```
+
+## 配置选项
+
+Chrome DevTools MCP 支持多种配置选项：
+
+- `--browserUrl`, `-u`: 连接到运行中的 Chrome 实例
+- `--wsEndpoint`, `-w`: WebSocket 端点
+- `--headless`: 无头模式运行
+- `--executablePath`: 自定义 Chrome 可执行文件路径
+- `--isolated`: 使用临时用户数据目录
+- `--channel`: 指定 Chrome 通道 (stable/canary/beta/dev)
+- `--viewport`: 初始视窗大小
+- `--acceptInsecureCerts`: 忽略 SSL 证书错误
+- `--categoryEmulation`: 是否包含模拟工具
+- `--categoryPerformance`: 是否包含性能工具
+- `--categoryNetwork`: 是否包含网络工具
+
+---
+
+## 注意事项
+
+1. **安全警告**: 启用远程调试端口会打开浏览器的调试接口，确保不在调试端口打开时浏览敏感网站
+2. **元素识别**: 使用 `take_snapshot` 获取页面的无障碍树快照，所有自动化操作都需要先获取元素的 uid
+3. **页面等待**: 使用 `wait_for` 等待页面状态变化，避免操作过早执行
+4. **性能分析**: 性能跟踪会消耗资源，合理设置 `autoStop` 参数
+5. **截图保存**: 截图可以保存到指定路径或直接在响应中返回
+
+## 相关文档
+
+- [Chrome DevTools 官方文档](https://developer.chrome.com/docs/devtools/)
+- [Puppeteer 文档](https://puppeteer.github.io/puppeteer/)
+- [MCP 协议规范](https://modelcontextprotocol.io/)
