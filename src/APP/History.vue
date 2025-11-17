@@ -413,7 +413,7 @@ async function initDisplay() {
     // 等待MVU初始化
     await waitGlobalInitialized('Mvu');
 
-    const messages = await getChatMessages('latest');
+    const messages = await getChatMessages(getCurrentMessageId());
     if (!messages || messages.length === 0 || !messages[0].data) {
       const loaded = await loadFullExampleData();
       if (loaded) return true;
@@ -460,10 +460,10 @@ async function initDisplay() {
   }
 }
 
-async function getChatMessages(messageId: string) {
+async function getChatMessages(messageId?: number) {
   try {
     if (typeof window.Mvu === 'undefined' || !window.Mvu.getMvuData) return [];
-    const response = window.Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
+    const response = window.Mvu.getMvuData({ type: 'message', message_id: messageId ?? getCurrentMessageId() });
     return response && response.stat_data ? [{ data: response }] : [];
   } catch (error) {
     console.error('获取消息失败:', error);

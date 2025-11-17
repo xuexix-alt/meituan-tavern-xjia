@@ -11,35 +11,35 @@
     <div class="app-content">
       <!-- 分类网格 -->
       <div class="category-grid">
-        <div class="category-item" @click="search('各类路人')">
+        <div class="category-item" @click="search('路人商品-各类路人主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
           <span>路人</span>
         </div>
-        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题')">
+        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-mask"></i></div>
           <span>偶遇</span>
         </div>
-        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题')">
+        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-video"></i></div>
           <span>AV</span>
         </div>
-        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题')">
+        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
           <span>街拍</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类主题')">
+        <div class="category-item" @click="search('熟人商品-熟人关系主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
           <span>熟人</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类乱伦主题')">
+        <div class="category-item" @click="search('熟人商品-各类乱伦主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-heart-broken"></i></div>
           <span>乱伦</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类职场主题')">
+        <div class="category-item" @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-briefcase"></i></div>
           <span>职场</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类朋友妻主题')">
+        <div class="category-item" @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-users"></i></div>
           <span>友妻</span>
         </div>
@@ -62,7 +62,6 @@
           <h3>特色玩法</h3>
         </div>
         <div class="feature-button-grid">
-          <!-- 特色玩法按钮已移除，测试酒馆信息解析功能 -->
         </div>
       </div>
 

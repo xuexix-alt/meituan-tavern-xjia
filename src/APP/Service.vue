@@ -412,7 +412,7 @@ async function extractDataFromMVU(): Promise<{ girls: any[] }> {
     await waitGlobalInitialized('Mvu');
 
     // 获取MVU数据
-    const mvuData = Mvu.getMvuData({ type: 'message', message_id: 'latest' }) as any;
+    const mvuData = Mvu.getMvuData({ type: 'message', message_id: getCurrentMessageId() }) as any;
 
     if (!mvuData) {
       throw new Error('MVU数据为空');
@@ -464,7 +464,7 @@ async function extractDataFromMVU(): Promise<{ girls: any[] }> {
         },
         套餐: {
           套餐名称: order.套餐?.套餐名称 || '未命名套餐',
-          套餐价格: order.套餐?.套餐价格 || 0,
+          套餐价格: order.套餐?.折后价格 || order.套餐?.套餐价格 || 0,
           商品类型: order.套餐?.商品类型 || '未知',
           折后价格: order.套餐?.折后价格 || 0,
           玩法特色: order.套餐?.玩法特色 || []
@@ -535,7 +535,7 @@ const basicInfo = computed(() => ({
 // 套餐信息
 const packageInfo = computed(() => ({
   name: getNestedValue(currentGirl.value, '套餐.套餐名称', '未命名套餐'),
-  price: getNestedValue(currentGirl.value, '套餐.套餐价格', '0'),
+  price: getNestedValue(currentGirl.value, '套餐.折后价格', '') || getNestedValue(currentGirl.value, '套餐.套餐价格', '0'),
   type: getNestedValue(currentGirl.value, '套餐.商品类型', ''),
   features: getNestedValue(currentGirl.value, '套餐.玩法特色', []),
 }));
