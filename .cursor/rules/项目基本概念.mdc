@@ -39,6 +39,16 @@ alwaysApply: true
 
 以上接口在代码中均可直接使用, 不需要导入或新定义它们, 也不需要检查是否可用.
 
+<<<<<<< HEAD
+=======
+### 工具函数
+
+在 `src/util` 中定义了一些工具函数:
+
+- `src/util/script.ts`: 脚本可能使用的函数
+- `src/util/common.ts`: 前端界面或脚本可能使用的函数
+
+>>>>>>> 33527c80a66276af6720263f25e29f2d6fbff9cb
 ## 特殊导入方式
 
 ### 导入文件内容
@@ -157,6 +167,7 @@ $(window).on('pagehide', () => {
 });
 ```
 
+<<<<<<< HEAD
 ### 重载前端界面或脚本
 
 如果有完全重载前端界面或脚本的需求, 你应该使用 `window.location.reload()`. 如聊天文件变更时重新载入前端界面或脚本:
@@ -164,9 +175,39 @@ $(window).on('pagehide', () => {
 ```ts
 let chat_id = SillyTavern.getCurrentChatId();
 eventOn(tavern_events.CHAT_CHANGED, new_chat_id => {
+=======
+### 使用 console、throw 和 errorCatched 合理记录日志和错误
+
+你应该在代码的关键节点使用 `console.info` 简洁地记录日志, 并尽量保持日志与最新代码逻辑的一致性.
+
+对于可恢复的错误, 使用 `console.warn`、`console.error` 记录日志;
+
+对于让前端界面、脚本无法继续使用的错误, 你应该使用 `throw Error`, 而用 errorCatched 转换顶部函数从而对其进行记录, 例如:
+
+```typescript
+function init() { /*... */}
+
+$(() => {
+  errorCatched(init)();
+})
+```
+
+### 重载前端界面或脚本
+
+如果有完全重载前端界面或脚本的需求, 你应该使用 `window.location.reload()`. 如聊天文件变更时重新载入前端界面或脚本, 你可以用 `src/util/script.ts` 中定义好了的工具函数:
+
+```ts
+export function reloadOnChatChange(): EventOnReturn {
+  let chat_id = SillyTavern.getCurrentChatId();
+  return eventOn(tavern_events.CHAT_CHANGED, new_chat_id => {
+>>>>>>> 33527c80a66276af6720263f25e29f2d6fbff9cb
   if (chat_id !== new_chat_id) {
     chat_id = new_chat_id;
     window.location.reload();
   }
 });
+<<<<<<< HEAD
+=======
+}
+>>>>>>> 33527c80a66276af6720263f25e29f2d6fbff9cb
 ```
