@@ -10,12 +10,10 @@ const ScriptSettings = z.object({
   enabled: z.boolean().default(true),
   placeholder_text: z.string().default('【前端占位符】'),
   auto_insert: z.boolean().default(true),
-  show_notification: z.boolean().default(true)
+  show_notification: z.boolean().default(true),
 });
 
-const settings = ScriptSettings.parse(
-  getVariables({ type: 'script', script_id: getScriptId() })
-);
+const settings = ScriptSettings.parse(getVariables({ type: 'script', script_id: getScriptId() }));
 
 /**
  * 检查消息中是否包含占位符
@@ -51,7 +49,7 @@ function getCurrentFloorMessages(): Array<{ role: string; content: string; id: s
   return messages.map(msg => ({
     role: msg.role,
     content: msg.message || '',
-    id: msg.id
+    id: msg.id,
   }));
 }
 
@@ -79,7 +77,7 @@ function checkAndInsertPlaceholder(): boolean {
     if (settings.auto_insert) {
       const updatedMessages = messages.map(msg => ({
         ...msg,
-        content: containsPlaceholder(msg.content) ? msg.content : insertPlaceholder(msg.content)
+        content: containsPlaceholder(msg.content) ? msg.content : insertPlaceholder(msg.content),
       }));
 
       // 发送更新消息（使用第一个消息的ID作为基础）
@@ -179,9 +177,7 @@ export function updateSettings(newSettings: Partial<ScriptSettings>): void {
  * 获取当前设置
  */
 export function getSettings(): ScriptSettings {
-  return ScriptSettings.parse(
-    getVariables({ type: 'script', script_id: getScriptId() })
-  );
+  return ScriptSettings.parse(getVariables({ type: 'script', script_id: getScriptId() }));
 }
 
 // =============================================================================
