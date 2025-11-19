@@ -29,6 +29,29 @@ alwaysApply: true
 
 前端界面或脚本都是在浏览器中使用, 因此你不能使用 nodejs 库
 
+### CDN资源引用
+
+项目提供免费的CDN服务支持，所有第三方库和GitHub文件都可以通过CDN访问。
+
+**国内访问优化**：
+- 使用 `https://testingcf.jsdelivr.net` 镜像确保国内网络环境可正常访问
+- 不推荐使用 `https://cdn.jsdelivr.net`（国内可能无法访问）
+
+**第三方库管理**：
+- 为项目添加第三方库时，**推荐使用** `pnpm add 第三方库名` 来安装
+- 模板文件夹已配置webpack，会在打包时自动将第三方库转换为jsdelivr CDN链接
+- 这可以避免在多个脚本或界面中重复打包相同的第三方库，减少总体积
+- 转换后的CDN链接将使用 `https://testingcf.jsdelivr.net/npm/` 前缀
+
+**手动CDN引用示例**：
+```typescript
+// ✅ 正确：使用国内可访问的镜像
+import something from 'https://testingcf.jsdelivr.net/npm/package-name@version/+esm';
+
+// ❌ 错误：可能无法在国内访问
+import something from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
+```
+
 ### 与酒馆交互的方式
 
 前端界面或脚本主要使用酒馆助手所提供的接口与酒馆进行交互. 这些接口定义在 `@types` 文件夹中, 如 `@types/function/variables.d.ts` 中描述了该如何操控酒馆变量.

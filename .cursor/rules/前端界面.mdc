@@ -45,3 +45,28 @@ description: 当需要编写前端界面时, 你应该参考本文件
 - 避免使用会强制撑高父容器的元素 (如 `min-height`、`overflow: auto`)
 - 页面整体应适配容器宽度，不产生横向滚动条
 - 如果样式更适合卡片形状，则不要有背景颜色，除非用户有明确要求
+
+## CDN资源引用
+
+项目支持通过CDN引用外部资源, 特别是第三方库.
+
+**国内访问优化**：
+- 使用 `https://testingcf.jsdelivr.net` 镜像确保国内网络环境可正常访问
+- 不推荐使用 `https://cdn.jsdelivr.net`（国内可能无法访问）
+
+**通过pnpm添加第三方库（推荐）**：
+```bash
+pnpm add lodash
+pnpm add gsap
+```
+模板已配置webpack，会自动将第三方库转换为CDN链接，避免重复打包。
+
+**手动引用CDN资源**：
+如果需要直接引用CDN资源，请使用：
+```typescript
+// ✅ 正确：使用国内可访问的镜像
+import something from 'https://testingcf.jsdelivr.net/npm/package-name@version/+esm';
+
+// ❌ 错误：可能无法在国内访问
+import something from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
+```

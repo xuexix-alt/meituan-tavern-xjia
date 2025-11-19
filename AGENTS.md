@@ -111,6 +111,30 @@ dist/                 # 构建输出目录（自动生成）
 - 使用`gsap`制作动画效果
 - 使用`vueuse`提供的组合式API
 
+### 3.3 CDN使用与第三方库管理
+
+项目提供免费的CDN服务支持，所有第三方库和GitHub文件都可以通过CDN访问。
+
+**国内访问优化**：
+- 使用 `https://testingcf.jsdelivr.net` 镜像确保国内网络环境可正常访问
+- 不推荐使用 `https://cdn.jsdelivr.net`（国内可能无法访问）
+
+**第三方库添加与管理**：
+- 为项目添加第三方库时，**推荐使用** `pnpm add 第三方库名` 来安装
+- 模板文件夹已配置webpack，会在打包时自动将第三方库转换为jsdelivr CDN链接
+- 这可以避免在多个脚本或界面中重复打包相同的第三方库，减少总体积
+- 转换后的CDN链接将使用 `https://testingcf.jsdelivr.net/npm/` 前缀
+
+**手动CDN引用**：
+如果您需要直接在脚本或界面中引用CDN资源，请使用以下格式：
+```typescript
+// ✅ 正确：使用国内可访问的镜像
+importSomething from 'https://testingcf.jsdelivr.net/npm/package-name@version/+esm';
+
+// ❌ 错误：可能无法在国内访问
+importSomething from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
+```
+
 ---
 
 ## 4. 接口使用规范
