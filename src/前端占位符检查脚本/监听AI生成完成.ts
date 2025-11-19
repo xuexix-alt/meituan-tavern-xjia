@@ -50,10 +50,12 @@ async function checkAndAddPlaceholder(message_id: number, mode: 'auto' | 'manual
       const newMessage = message.message + '\n' + placeholder;
 
       // 修改消息内容
-      await setChatMessages([{
-        message_id: message_id,
-        message: newMessage
-      }]);
+      await setChatMessages([
+        {
+          message_id: message_id,
+          message: newMessage,
+        },
+      ]);
 
       // 根据模式显示不同的成功提示
       if (mode === 'auto') {
