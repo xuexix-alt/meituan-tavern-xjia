@@ -16,7 +16,7 @@ const currentTheme = ref<'light' | 'dark'>('light');
 // 错误边界组件
 const ErrorBoundary = defineComponent({
   name: 'ErrorBoundary',
-  setup(_, { slots, emit }) {
+  setup(_, { slots }) {
     const hasError = ref(false);
     const errorMessage = ref('');
 
@@ -222,18 +222,25 @@ body {
   @media (max-width: 480px) {
     width: 95vw;
     max-width: 380px;
-    height: 90vh;
+    // 使用aspect-ratio替代vh单位，确保高度与宽度成比例
+    aspect-ratio: 360 / 780;
     max-height: 800px;
+    // 设置最小高度，防止被压缩
+    min-height: 600px;
     border-width: 6px;
     border-radius: 28px;
   }
 
   @media (max-width: 360px) {
     width: 100vw;
-    height: 100vh;
+    // 使用aspect-ratio而不是100vh，确保比例一致
+    aspect-ratio: 360 / 780;
+    // 在极小屏幕上允许高度自适应，但保持最小值
+    min-height: 100%;
     border-radius: 0;
     border: none;
     max-width: none;
+    // 移除max-height限制，允许在非常小的屏幕上完全显示
     max-height: none;
 
     &::before {

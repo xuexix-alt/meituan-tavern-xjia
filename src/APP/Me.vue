@@ -87,7 +87,7 @@
 
     <!-- 底部导航 -->
     <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/')">
+      <div class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
       </div>
@@ -147,17 +147,6 @@ const totalSpending = computed(() => {
   return 0;
 });
 
-
-// 状态样式类名
-function getStatusClass(status: string) {
-  const statusMap: Record<string, string> = {
-    '已完成': 'status-completed',
-    '订单结束': 'status-ended',
-    '服务结束': 'status-ended',
-    '进行中': 'status-ongoing'
-  };
-  return statusMap[status] || 'status-completed';
-}
 
 // 发送AI指令
 function sendToAI(message: string) {
@@ -230,8 +219,8 @@ async function initDisplay() {
 
 async function getChatMessages(messageId: string) {
   try {
-    if (typeof window.Mvu === 'undefined' || !window.Mvu.getMvuData) return [];
-    const response = window.Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
+    if (typeof (window as any).Mvu === 'undefined' || !(window as any).Mvu.getMvuData) return [];
+    const response = (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
     return response && response.stat_data ? [{ data: response }] : [];
   } catch (error) {
     console.error('获取消息失败:', error);

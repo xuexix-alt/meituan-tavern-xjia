@@ -9,6 +9,39 @@
     </div>
 
     <div class="app-content">
+      <!-- Slogan区域 - 移至顶部 -->
+      <div class="slogan-section">
+        <div class="slogan-card">
+          <div class="slogan-bg-decoration">
+            <div class="decoration-circle circle-1"></div>
+            <div class="decoration-circle circle-2"></div>
+            <div class="decoration-circle circle-3"></div>
+          </div>
+          <div class="slogan-content">
+            <h2 class="slogan-title">
+              <span class="title-line">
+                <span class="text-gradient">随心所欲</span>
+              </span>
+              <span class="title-line">
+                <span class="text-gradient">所见所得</span>
+              </span>
+            </h2>
+            <p class="slogan-subtitle">
+              <span class="subtitle-text">为您送上一切心动的美人</span>
+            </p>
+            <div class="slogan-signature">
+              <div class="signature-line"></div>
+              <div class="signature-text">
+                <i class="fas fa-heart"></i>
+                <span>美人团外卖</span>
+                <i class="fas fa-heart"></i>
+              </div>
+              <div class="signature-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 分类网格 -->
       <div class="category-grid">
         <div class="category-item" @click="search('各类路人')">
@@ -70,7 +103,7 @@
 
     <!-- 底部导航 -->
     <div class="nav-bar">
-      <div class="nav-item active" @click="$router.push('/')">
+      <div class="nav-item active" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
       </div>
@@ -389,6 +422,274 @@ function sendToAI(message: string) {
       transform: translateY(0);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
+  }
+}
+
+// Slogan区域样式
+.slogan-section {
+  margin-bottom: 16px;
+  animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slogan-card {
+  position: relative;
+  background: linear-gradient(135deg,
+    rgba(255, 195, 0, 0.15) 0%,
+    rgba(255, 215, 64, 0.1) 50%,
+    rgba(255, 195, 0, 0.05) 100%);
+  border-radius: 24px;
+  padding: 28px 24px;
+  box-shadow:
+    0 8px 32px rgba(255, 195, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 195, 0, 0.3);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 16px 48px rgba(255, 195, 0, 0.25),
+      0 8px 24px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .slogan-bg-decoration {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+
+    .decoration-circle {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 195, 0, 0.1) 0%, transparent 70%);
+      animation: float 6s ease-in-out infinite;
+
+      &.circle-1 {
+        width: 120px;
+        height: 120px;
+        top: -30px;
+        right: -30px;
+        animation-delay: 0s;
+      }
+
+      &.circle-2 {
+        width: 80px;
+        height: 80px;
+        bottom: -20px;
+        left: -20px;
+        animation-delay: 2s;
+      }
+
+      &.circle-3 {
+        width: 60px;
+        height: 60px;
+        top: 50%;
+        right: 20%;
+        animation-delay: 4s;
+      }
+    }
+  }
+
+  .slogan-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+
+    .slogan-title {
+      margin: 0 0 16px 0;
+      line-height: 1.2;
+
+      .title-line {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        position: relative;
+        animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .text-gradient {
+          background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-dark) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          text-shadow: 0 2px 8px rgba(255, 195, 0, 0.3);
+          position: relative;
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            animation: shimmer 2s ease-in-out infinite;
+          }
+        }
+
+      }
+    }
+
+    .slogan-subtitle {
+      margin: 0 0 20px 0;
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      animation: fadeIn 1s ease-out 0.5s both;
+      letter-spacing: 0.3px;
+      font-style: italic;
+      text-shadow: 0 1px 2px rgba(255, 195, 0, 0.1);
+
+      .subtitle-text {
+        opacity: 0.95;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle-decoration {
+        color: var(--accent-primary);
+        font-weight: bold;
+      }
+    }
+
+    .slogan-signature {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      animation: fadeInUp 1s ease-out 0.8s both;
+
+      .signature-line {
+        width: 40px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+      }
+
+      .signature-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--accent-dark);
+        background: rgba(255, 195, 0, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 195, 0, 0.2);
+
+        i {
+          color: var(--accent-primary);
+          animation: heartbeat 2s ease-in-out infinite;
+
+          &:last-child {
+            animation-delay: 1s;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 动画定义
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.2);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.2);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ripple {
+  to {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
   }
 }
 

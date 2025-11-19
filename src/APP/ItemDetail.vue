@@ -185,7 +185,7 @@ function sendToAI(message: string) {
 function extractDataFromMessage(): { shops: any[]; packages: any[] } {
   try {
     // 尝试从当前楼层获取数据
-    const currentMessageId = getCurrentMessageId();
+    const currentMessageId = String(getCurrentMessageId());
     const currentData = extractDataFromSpecificMessage(currentMessageId);
     if (currentData) {
       return currentData;

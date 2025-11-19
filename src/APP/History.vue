@@ -224,7 +224,7 @@
 
     <!-- 底部导航 -->
     <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/')">
+      <div class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
       </div>
@@ -334,11 +334,6 @@ const currentOrderFeatures = computed(() => {
 function reorder(item: any) {
   selectedOrder.value = item;
   currentView.value = 'reorder';
-}
-
-function quickReorder(item: any) {
-  const pkg = item.package_name || '未知套餐';
-  sendToAI(`/send 我要下单：${pkg}`);
 }
 
 function showReorderModal() {
@@ -462,8 +457,8 @@ async function initDisplay() {
 
 async function getChatMessages(messageId: string) {
   try {
-    if (typeof window.Mvu === 'undefined' || !window.Mvu.getMvuData) return [];
-    const response = window.Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
+    if (typeof (window as any).Mvu === 'undefined' || !(window as any).Mvu.getMvuData) return [];
+    const response = (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
     return response && response.stat_data ? [{ data: response }] : [];
   } catch (error) {
     console.error('获取消息失败:', error);
@@ -738,7 +733,8 @@ onMounted(async () => {
   border-radius: 20px;
   width: 100%;
   max-width: 450px;
-  max-height: 90vh;
+  // 使用固定最大高度替代90vh，避免被父容器压缩
+  max-height: 600px;
   overflow-y: auto;
   box-shadow: 0 12px 40px rgba(255, 195, 0, 0.25);
   position: relative;

@@ -135,7 +135,7 @@
                 </h4>
                 <div v-if="hasValidClothing" class="clothing-grid">
                   <div v-for="(value, key) in displayClothing" :key="key" class="clothing-item">
-                    <i :class="['clothing-icon', clothingIcon(key)]"></i>
+                    <i :class="['clothing-icon', clothingIcon(String(key))]"></i>
                     <span class="clothing-key">{{ key }}</span>
                     <span class="clothing-value">{{ value }}</span>
                   </div>
@@ -326,7 +326,7 @@
 
     <!-- 底部导航 -->
     <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/')">
+      <div class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
       </div>

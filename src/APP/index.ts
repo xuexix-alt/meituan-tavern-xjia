@@ -31,7 +31,7 @@ const preloadCriticalRoutes = async () => {
 const preloadCriticalResources = async () => {
   try {
     // 预加载关键资源
-    const resources = [
+    const resources: string[] = [
       // 可以添加图片、字体等关键资源
     ];
 
@@ -108,12 +108,6 @@ $(() => {
   // 初始化主题 - 移动到Vue组件的onMounted中处理，避免重复设置
   initApp();
 });
-
-// 初始化主题系统 - 移除，移到app.vue中统一处理
-function initTheme() {
-  // 主题初始化已移至app.vue的onMounted中
-  // 这里不再重复设置，避免冲突
-}
 
 // 正确使用 jQuery 进行卸载时清理
 $(window).on('pagehide', () => {
