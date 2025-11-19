@@ -8,10 +8,10 @@
     </div>
 
     <div class="app-content" id="detail-content">
-      <div class="detail-info-card" style="margin-top: 0; border-radius: 0; box-shadow: none; padding-bottom: 18px;">
+      <div class="detail-info-card" style="margin-top: 0; border-radius: 0; box-shadow: none; padding-bottom: 18px">
         <div class="detail-name">{{ itemData?.name || '未命名套餐' }}</div>
         <div class="detail-tags">
-          <span v-for="tag in (itemData?.tags || [])" :key="tag" class="tag">{{ tag }}</span>
+          <span v-for="tag in itemData?.tags || []" :key="tag" class="tag">{{ tag }}</span>
         </div>
       </div>
 
@@ -43,9 +43,7 @@
           >
             <p>{{ content }}</p>
           </div>
-          <div class="tip-text">
-            💡 点击上方特色玩法可直接下单，或点击底部"立即下单"自定义备注
-          </div>
+          <div class="tip-text">💡 点击上方特色玩法可直接下单，或点击底部"立即下单"自定义备注</div>
         </div>
         <div v-else class="empty-state">暂无特色玩法介绍。</div>
       </div>
@@ -323,7 +321,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
           const value = match[2].trim();
 
           if (['name', 'price', 'stars', 'icon', 'image1', 'image2', 'image3', 'description'].includes(fieldName)) {
-            pkg[fieldName] = fieldName === 'stars' ? (parseFloat(value) || 0) : value;
+            pkg[fieldName] = fieldName === 'stars' ? parseFloat(value) || 0 : value;
             currentArrayField = null;
           } else if (['tags', 'content', 'reviews'].includes(fieldName)) {
             currentArrayField = fieldName;
@@ -332,7 +330,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
                 value
                   .replace(/^- /, '')
                   .trim()
-                  .replace(/^["']|["']$/g, '')
+                  .replace(/^["']|["']$/g, ''),
               );
             }
           }
@@ -341,7 +339,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
             line
               .substring(2)
               .trim()
-              .replace(/^["']|["']$/g, '')
+              .replace(/^["']|["']$/g, ''),
           );
         }
       });

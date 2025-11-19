@@ -41,9 +41,7 @@
 
       <!-- 设置选项 -->
       <div class="card">
-        <div class="card-title">
-          <i class="fas fa-cog"></i>设置
-        </div>
+        <div class="card-title"><i class="fas fa-cog"></i>设置</div>
         <div class="settings-list">
           <div class="settings-item" @click="toggleTheme">
             <div class="settings-icon">
@@ -147,7 +145,6 @@ const totalSpending = computed(() => {
   return 0;
 });
 
-
 // 发送AI指令
 function sendToAI(message: string) {
   console.log(`[发送至AI]: ${message}`);
@@ -167,9 +164,11 @@ function sendToAI(message: string) {
 function toggleTheme() {
   isDarkMode.value = !isDarkMode.value;
   // 触发全局主题切换事件
-  window.dispatchEvent(new CustomEvent('theme-change', {
-    detail: { isDark: isDarkMode.value }
-  }));
+  window.dispatchEvent(
+    new CustomEvent('theme-change', {
+      detail: { isDark: isDarkMode.value },
+    }),
+  );
   // 持久化主题设置
   localStorage.setItem('app-theme', isDarkMode.value ? 'dark' : 'light');
 }
@@ -234,15 +233,16 @@ async function getChatMessages(messageId: string) {
 //   return false;
 // }
 
-
 onMounted(async () => {
   // 加载主题设置
   const savedTheme = localStorage.getItem('app-theme');
   if (savedTheme === 'dark') {
     isDarkMode.value = true;
-    window.dispatchEvent(new CustomEvent('theme-change', {
-      detail: { isDark: true }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('theme-change', {
+        detail: { isDark: true },
+      }),
+    );
   }
 
   // 尝试从 SillyTavern 获取用户名

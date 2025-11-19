@@ -8,17 +8,13 @@
 
     <div class="app-content">
       <div class="shop-list">
-        <div v-if="shops.length === 0" class="empty-state">
-          暂无发现，请先让AI生成内容。
-        </div>
-        <div
-          v-for="shop in shops"
-          :key="shop.id"
-          class="shop-card"
-          @click="$router.push(`/shop/${shop.id}`)"
-        >
+        <div v-if="shops.length === 0" class="empty-state">暂无发现，请先让AI生成内容。</div>
+        <div v-for="shop in shops" :key="shop.id" class="shop-card" @click="$router.push(`/shop/${shop.id}`)">
           <div class="avatar-text">
-            <i v-if="(shop.packages || []).find((p: any) => p.icon)" :class="(shop.packages || []).find((p: any) => p.icon).icon"></i>
+            <i
+              v-if="(shop.packages || []).find((p: any) => p.icon)"
+              :class="(shop.packages || []).find((p: any) => p.icon).icon"
+            ></i>
             <i v-else class="fas fa-store"></i>
           </div>
           <div class="info">
@@ -208,7 +204,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
           const value = match[2].trim();
 
           if (['name', 'price', 'stars', 'icon', 'image1', 'image2', 'image3', 'description'].includes(fieldName)) {
-            pkg[fieldName] = fieldName === 'stars' ? (parseFloat(value) || 0) : value;
+            pkg[fieldName] = fieldName === 'stars' ? parseFloat(value) || 0 : value;
             currentArrayField = null;
           } else if (['tags', 'content', 'reviews'].includes(fieldName)) {
             currentArrayField = fieldName;
@@ -217,7 +213,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
                 value
                   .replace(/^- /, '')
                   .trim()
-                  .replace(/^["']|["']$/g, '')
+                  .replace(/^["']|["']$/g, ''),
               );
             }
           }
@@ -226,7 +222,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
             line
               .substring(2)
               .trim()
-              .replace(/^["']|["']$/g, '')
+              .replace(/^["']|["']$/g, ''),
           );
         }
       });
@@ -281,12 +277,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--border-accent),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
   }
 
   .title {
@@ -346,13 +337,7 @@ onMounted(() => {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 195, 0, 0.08),
-      rgba(255, 215, 64, 0.12),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.08), rgba(255, 215, 64, 0.12), transparent);
     transition: left 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
@@ -363,11 +348,7 @@ onMounted(() => {
     right: 0;
     width: 60px;
     height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 195, 0, 0.03)
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.03));
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -506,12 +487,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--border-accent),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
   }
 
   .nav-item {

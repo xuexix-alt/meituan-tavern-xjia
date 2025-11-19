@@ -81,11 +81,7 @@
       <!-- 搜索栏 -->
       <div class="search-bar-container">
         <i class="fas fa-search"></i>
-        <input
-          v-model="searchKeyword"
-          placeholder="搜索心仪的美人或服务..."
-          @keyup.enter="doSearch"
-        />
+        <input v-model="searchKeyword" placeholder="搜索心仪的美人或服务..." @keyup.enter="doSearch" />
         <button class="search-btn" @click="doSearch">搜索</button>
       </div>
 
@@ -98,7 +94,6 @@
           <!-- 特色玩法按钮已移除，测试酒馆信息解析功能 -->
         </div>
       </div>
-
     </div>
 
     <!-- 底部导航 -->
@@ -433,10 +428,12 @@ function sendToAI(message: string) {
 
 .slogan-card {
   position: relative;
-  background: linear-gradient(135deg,
+  background: linear-gradient(
+    135deg,
     rgba(255, 195, 0, 0.15) 0%,
     rgba(255, 215, 64, 0.1) 50%,
-    rgba(255, 195, 0, 0.05) 100%);
+    rgba(255, 195, 0, 0.05) 100%
+  );
   border-radius: 24px;
   padding: 28px 24px;
   box-shadow:
@@ -534,7 +531,6 @@ function sendToAI(message: string) {
             animation: shimmer 2s ease-in-out infinite;
           }
         }
-
       }
     }
 
@@ -648,7 +644,8 @@ function sendToAI(message: string) {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
   50% {
@@ -657,7 +654,8 @@ function sendToAI(message: string) {
 }
 
 @keyframes shimmer {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0;
     transform: translateX(-100%);
   }
@@ -668,7 +666,8 @@ function sendToAI(message: string) {
 }
 
 @keyframes heartbeat {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   14% {

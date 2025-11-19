@@ -266,7 +266,9 @@
                           </div>
                           <div class="stat-content">
                             <div class="stat-label">初次性行为对象</div>
-                            <div class="stat-value">{{ getNestedValue(currentGirl, '性经验.初次性行为对象', '-') }}</div>
+                            <div class="stat-value">
+                              {{ getNestedValue(currentGirl, '性经验.初次性行为对象', '-') }}
+                            </div>
                           </div>
                         </div>
                         <div class="stat-item">
@@ -301,7 +303,9 @@
                           </div>
                           <div class="stat-content">
                             <div class="stat-label">本次服务性交次数</div>
-                            <div class="stat-value">{{ getNestedValue(currentGirl, '服务统计.本次服务性交次数', '-') }}</div>
+                            <div class="stat-value">
+                              {{ getNestedValue(currentGirl, '服务统计.本次服务性交次数', '-') }}
+                            </div>
                           </div>
                         </div>
                         <div class="stat-item">
@@ -385,7 +389,10 @@ const currentGirl = computed(() => girlsData.value[currentGirlIndex.value] || nu
  */
 function getNestedValue(obj: any, path: string, fallback: any = '--') {
   if (!obj) return fallback;
-  const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+  const keys = path
+    .replace(/\[(\d+)\]/g, '.$1')
+    .split('.')
+    .filter(Boolean);
   let current = obj;
   for (const key of keys) {
     if (current == null) return fallback;
@@ -438,7 +445,7 @@ async function extractDataFromMVU(): Promise<{ girls: any[] }> {
           姓名: order.基础信息?.姓名 || '未知',
           身份: order.基础信息?.身份 || '未知',
           年龄: order.基础信息?.年龄 || 0,
-          描述: order.基础信息?.描述 || ''
+          描述: order.基础信息?.描述 || '',
         },
         服装: {
           上衣: order.服装?.上衣 || '',
@@ -447,46 +454,46 @@ async function extractDataFromMVU(): Promise<{ girls: any[] }> {
           内裤: order.服装?.内裤 || '',
           丝袜: order.服装?.丝袜 || '',
           鞋子: order.服装?.鞋子 || '',
-          配饰: order.服装?.配饰 || ''
+          配饰: order.服装?.配饰 || '',
         },
         性经验: {
           处女: order.性经验?.处女 || '-',
           性伴侣数量: order.性经验?.性伴侣数量 || '-',
           初次性行为对象: order.性经验?.初次性行为对象 || '-',
           怀孕几率: order.性经验?.怀孕几率 || '-',
-          下单次数: order.性经验?.下单次数 || 0
+          下单次数: order.性经验?.下单次数 || 0,
         },
         服务统计: {
           本次服务性交次数: order.服务统计?.本次服务性交次数 || '-',
           内射次数: order.服务统计?.内射次数 || '-',
           订单状态: order.订单状态 || '未知',
-          心跳: order.心跳 || '-'
+          心跳: order.心跳 || '-',
         },
         套餐: {
           套餐名称: order.套餐?.套餐名称 || '未命名套餐',
           套餐价格: order.套餐?.套餐价格 || 0,
           商品类型: order.套餐?.商品类型 || '未知',
           折后价格: order.套餐?.折后价格 || 0,
-          玩法特色: order.套餐?.玩法特色 || []
+          玩法特色: order.套餐?.玩法特色 || [],
         },
         心理状态: {
           好感度: order.心理状态?.好感度 || 0,
           当前所想: order.心理状态?.当前所想 || '',
           兴奋度: order.心理状态?.兴奋度 || 0,
-          性格类型: order.心理状态?.性格类型 || ''
+          性格类型: order.心理状态?.性格类型 || '',
         },
         身体特征: {
           三围: {
             描述: order.身体特征?.三围?.描述 || '',
-            罩杯: order.身体特征?.三围?.罩杯 || ''
+            罩杯: order.身体特征?.三围?.罩杯 || '',
           },
           乳房: {
-            形状: order.身体特征?.乳房?.形状 || ''
+            形状: order.身体特征?.乳房?.形状 || '',
           },
           姿势: order.身体特征?.姿势 || '',
           胸部: order.身体特征?.胸部 || '',
-          私处: order.身体特征?.私处 || ''
-        }
+          私处: order.身体特征?.私处 || '',
+        },
       }));
 
     return { girls };
@@ -567,9 +574,12 @@ const heartbeatStatusClass = computed(() => {
 });
 const heartbeatColor = computed(() => {
   switch (heartbeatStatusClass.value) {
-    case 'status-warning': return '#FFA726';
-    case 'status-danger': return '#EF5350';
-    default: return '#66BB6A';
+    case 'status-warning':
+      return '#FFA726';
+    case 'status-danger':
+      return '#EF5350';
+    default:
+      return '#66BB6A';
   }
 });
 
@@ -637,13 +647,13 @@ const hasValidClothing = computed(() => Object.keys(displayClothing.value).lengt
 
 function clothingIcon(key: string) {
   const iconMap: Record<string, string> = {
-    '上衣': 'fas fa-tshirt',
-    '下装': 'fas fa-user-tie',
-    '鞋子': 'fas fa-shoe-prints',
-    '内衣': 'fas fa-heart',
-    '内裤': 'fas fa-user',
-    '丝袜': 'fas fa-socks',
-    '配饰': 'fas fa-gem',
+    上衣: 'fas fa-tshirt',
+    下装: 'fas fa-user-tie',
+    鞋子: 'fas fa-shoe-prints',
+    内衣: 'fas fa-heart',
+    内裤: 'fas fa-user',
+    丝袜: 'fas fa-socks',
+    配饰: 'fas fa-gem',
   };
   return iconMap[key] || 'fas fa-tag';
 }
@@ -804,7 +814,9 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // 标签页
@@ -917,12 +929,24 @@ onMounted(async () => {
       .status-icon {
         font-size: 18px;
 
-        &.status-active { color: var(--status-success); }
-        &.status-completed { color: var(--status-info); }
-        &.status-pending { color: var(--status-warning); }
-        &.status-normal { color: var(--status-success); }
-        &.status-warning { color: var(--status-warning); }
-        &.status-danger { color: var(--status-danger); }
+        &.status-active {
+          color: var(--status-success);
+        }
+        &.status-completed {
+          color: var(--status-info);
+        }
+        &.status-pending {
+          color: var(--status-warning);
+        }
+        &.status-normal {
+          color: var(--status-success);
+        }
+        &.status-warning {
+          color: var(--status-warning);
+        }
+        &.status-danger {
+          color: var(--status-danger);
+        }
       }
 
       .status-text {
@@ -1155,7 +1179,7 @@ onMounted(async () => {
     .compact-key,
     .info-key,
     .section-item-label {
-      color: #3B82F6 !important; // blue-500，既适合浅色也适合深色模式
+      color: #3b82f6 !important; // blue-500，既适合浅色也适合深色模式
       font-weight: 600;
     }
 

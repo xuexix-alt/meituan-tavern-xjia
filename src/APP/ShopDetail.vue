@@ -22,15 +22,8 @@
           <h3>精选套餐</h3>
         </div>
         <div class="package-list">
-          <div v-if="shopPackages.length === 0" class="empty-state">
-            该店铺暂无套餐。
-          </div>
-          <div
-            v-for="pkg in shopPackages"
-            :key="pkg.id"
-            class="package-card"
-            @click="$router.push(`/item/${pkg.id}`)"
-          >
+          <div v-if="shopPackages.length === 0" class="empty-state">该店铺暂无套餐。</div>
+          <div v-for="pkg in shopPackages" :key="pkg.id" class="package-card" @click="$router.push(`/item/${pkg.id}`)">
             <div class="avatar-text">
               <i v-if="pkg.icon" :class="pkg.icon"></i>
               <span v-else>套餐</span>
@@ -214,7 +207,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
           const value = match[2].trim();
 
           if (['name', 'price', 'stars', 'icon', 'image1', 'image2', 'image3', 'description'].includes(fieldName)) {
-            pkg[fieldName] = fieldName === 'stars' ? (parseFloat(value) || 0) : value;
+            pkg[fieldName] = fieldName === 'stars' ? parseFloat(value) || 0 : value;
             currentArrayField = null;
           } else if (['tags', 'content', 'reviews'].includes(fieldName)) {
             currentArrayField = fieldName;
@@ -223,7 +216,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
                 value
                   .replace(/^- /, '')
                   .trim()
-                  .replace(/^["']|["']$/g, '')
+                  .replace(/^["']|["']$/g, ''),
               );
             }
           }
@@ -232,7 +225,7 @@ function parseShopData(text: string): { shops: any[]; packages: any[] } {
             line
               .substring(2)
               .trim()
-              .replace(/^["']|["']$/g, '')
+              .replace(/^["']|["']$/g, ''),
           );
         }
       });
@@ -338,12 +331,7 @@ onMounted(() => {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(
-      circle,
-      rgba(255, 195, 0, 0.08) 0,
-      rgba(255, 215, 64, 0.05) 30%,
-      transparent 70%
-    );
+    background: radial-gradient(circle, rgba(255, 195, 0, 0.08) 0, rgba(255, 215, 64, 0.05) 30%, transparent 70%);
     animation: pulse 6s ease-in-out infinite;
   }
 
@@ -354,12 +342,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 195, 0, 0.4),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.4), transparent);
   }
 
   &:hover {
@@ -426,7 +409,8 @@ onMounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.5;
     transform: scale(1);
   }

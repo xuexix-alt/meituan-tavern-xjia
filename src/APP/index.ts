@@ -19,7 +19,7 @@ const preloadCriticalRoutes = async () => {
         const route = router.resolve(path);
         // Vue Router会自动处理组件预加载
         return route;
-      })
+      }),
     );
     console.log('[性能] 关键路由预加载完成');
   } catch (error) {
@@ -45,7 +45,7 @@ const preloadCriticalResources = async () => {
           link.onerror = reject;
           document.head.appendChild(link);
         });
-      })
+      }),
     );
     console.log('[性能] 关键资源预加载完成');
   } catch (error) {
@@ -57,9 +57,7 @@ const preloadCriticalResources = async () => {
 const waitForMvu = async (timeout = 5000) => {
   return Promise.race([
     waitGlobalInitialized('Mvu'),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('MVU初始化超时')), timeout)
-    ),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('MVU初始化超时')), timeout)),
   ]).catch(err => {
     console.warn('[MVU] 初始化失败，使用降级方案:', err);
     return null; // 返回null表示降级
@@ -71,9 +69,9 @@ const initApp = async () => {
   try {
     // 并行执行所有初始化任务
     const initTasks = Promise.all([
-      waitForMvu(),                    // MVU初始化（带超时）
-      preloadCriticalRoutes(),         // 路由预加载
-      preloadCriticalResources(),      // 资源预加载
+      waitForMvu(), // MVU初始化（带超时）
+      preloadCriticalRoutes(), // 路由预加载
+      preloadCriticalResources(), // 资源预加载
     ]);
 
     // 等待所有初始化任务完成
@@ -96,7 +94,6 @@ const initApp = async () => {
     // 记录挂载耗时
     const mountTime = performance.now() - perfStartTime;
     console.log(`[性能] 总启动时间: ${mountTime.toFixed(2)}ms`);
-
   } catch (error) {
     console.error('[初始化] 应用启动失败:', error);
     console.log('[错误] 界面加载失败，请刷新页面重试');
@@ -117,12 +114,12 @@ $(window).on('pagehide', () => {
 });
 
 // 全局错误处理 - 捕获未处理的Promise错误
-window.addEventListener('unhandledrejection', (event) => {
+window.addEventListener('unhandledrejection', event => {
   console.error('[全局错误] 未处理的Promise错误:', event.reason);
   console.log('[系统提示] 发生了未知错误');
 });
 
 // 全局错误处理 - 捕获JavaScript运行时错误
-window.addEventListener('error', (event) => {
+window.addEventListener('error', event => {
   console.error('[全局错误] JavaScript运行时错误:', event.error);
 });

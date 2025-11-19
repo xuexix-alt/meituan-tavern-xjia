@@ -47,7 +47,7 @@
     <!-- 加载动画 -->
     <div class="loading-indicator">
       <div class="loading-dots">
-        <span class="dot" v-for="i in 3" :key="i" :style="{ animationDelay: `${(i-1) * 0.2}s` }"></span>
+        <span class="dot" v-for="i in 3" :key="i" :style="{ animationDelay: `${(i - 1) * 0.2}s` }"></span>
       </div>
     </div>
   </div>
@@ -306,9 +306,15 @@ onMounted(async () => {
         border-radius: 50%;
         animation: loadingDot 1.4s ease-in-out infinite;
 
-        &:nth-child(1) { animation-delay: 0s; }
-        &:nth-child(2) { animation-delay: 0.2s; }
-        &:nth-child(3) { animation-delay: 0.4s; }
+        &:nth-child(1) {
+          animation-delay: 0s;
+        }
+        &:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+        &:nth-child(3) {
+          animation-delay: 0.4s;
+        }
       }
     }
   }
@@ -347,7 +353,8 @@ onMounted(async () => {
 }
 
 @keyframes logoBounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -356,7 +363,8 @@ onMounted(async () => {
 }
 
 @keyframes sparkle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.7;
     transform: scale(1);
   }
@@ -367,7 +375,8 @@ onMounted(async () => {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
   50% {
@@ -376,7 +385,9 @@ onMounted(async () => {
 }
 
 @keyframes loadingDot {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }

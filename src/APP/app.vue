@@ -41,22 +41,24 @@ const ErrorBoundary = defineComponent({
       window.location.reload();
     };
 
-    return () => hasError.value
-      ? h('div', { class: 'error-boundary' }, [
-          h('div', { class: 'error-content' }, [
-            h('i', { class: 'fas fa-exclamation-triangle' }),
-            h('h3', '页面出现错误'),
-            h('p', errorMessage.value),
-            h('button', {
-              class: 'retry-btn',
-              onClick: retry
-            }, [
-              h('i', { class: 'fas fa-redo' }),
-              ' 重新加载'
-            ])
+    return () =>
+      hasError.value
+        ? h('div', { class: 'error-boundary' }, [
+            h('div', { class: 'error-content' }, [
+              h('i', { class: 'fas fa-exclamation-triangle' }),
+              h('h3', '页面出现错误'),
+              h('p', errorMessage.value),
+              h(
+                'button',
+                {
+                  class: 'retry-btn',
+                  onClick: retry,
+                },
+                [h('i', { class: 'fas fa-redo' }), ' 重新加载'],
+              ),
+            ]),
           ])
-        ])
-      : slots.default?.();
+        : slots.default?.();
   },
 });
 
@@ -110,25 +112,25 @@ onErrorCaptured((err: Error) => {
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --text-placeholder: #888888;
-  --text-price: #FF6B6B;
+  --text-price: #ff6b6b;
   --border-color: #e0e0e0;
   --border-accent: rgba(255, 195, 0, 0.15);
   --accent-primary: #ffc300;
-  --accent-light: #FFD54F;
+  --accent-light: #ffd54f;
   --accent-dark: #e6b000;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   /* 状态颜色 */
-  --status-success: #66BB6A;
-  --status-info: #42A5F5;
-  --status-warning: #FFA726;
-  --status-danger: #EF5350;
+  --status-success: #66bb6a;
+  --status-info: #42a5f5;
+  --status-warning: #ffa726;
+  --status-danger: #ef5350;
   /* 渐变 */
   --badge-danger-gradient: linear-gradient(135deg, #ff4a4a 0%, #ff6b6b 100%);
-  --badge-info-gradient: linear-gradient(135deg, #42A5F5 0%, #478ed1 100%);
+  --badge-info-gradient: linear-gradient(135deg, #42a5f5 0%, #478ed1 100%);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* 深色主题 */
   --bg-primary: #1a1a1a;
   --bg-header: #2d2d2d;
@@ -141,22 +143,22 @@ onErrorCaptured((err: Error) => {
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --text-placeholder: #707070;
-  --text-price: #FF8A65;
+  --text-price: #ff8a65;
   --border-color: #3a3a3a;
   --border-accent: rgba(255, 195, 0, 0.3);
   --accent-primary: #ffc300;
-  --accent-light: #FFD54F;
+  --accent-light: #ffd54f;
   --accent-dark: #e6b000;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   /* 状态颜色 - 深色模式下调整亮度 */
-  --status-success: #66BB6A;
-  --status-info: #42A5F5;
-  --status-warning: #FFB74D;
-  --status-danger: #E57373;
+  --status-success: #66bb6a;
+  --status-info: #42a5f5;
+  --status-warning: #ffb74d;
+  --status-danger: #e57373;
   /* 渐变 - 深色模式下调整 */
   --badge-danger-gradient: linear-gradient(135deg, #ff5252 0%, #ff8a80 100%);
-  --badge-info-gradient: linear-gradient(135deg, #29B6F6 0%, #4FC3F7 100%);
+  --badge-info-gradient: linear-gradient(135deg, #29b6f6 0%, #4fc3f7 100%);
 }
 
 /* 全局字体优化 */
@@ -168,22 +170,22 @@ body {
 }
 
 /* 深色模式下字体渲染优化 */
-[data-theme="dark"] body,
-[data-theme="dark"] {
+[data-theme='dark'] body,
+[data-theme='dark'] {
   font-weight: 400;
   letter-spacing: 0.2px;
 }
 
 /* 深色模式下特殊元素字体 */
-[data-theme="dark"] .user-name,
-[data-theme="dark"] .stat-value,
-[data-theme="dark"] .service-name {
+[data-theme='dark'] .user-name,
+[data-theme='dark'] .stat-value,
+[data-theme='dark'] .service-name {
   font-weight: 600;
   letter-spacing: 0.3px;
 }
 
 /* 深色模式下所有组件的字体优化 */
-[data-theme="dark"] * {
+[data-theme='dark'] * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

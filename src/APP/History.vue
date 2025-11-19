@@ -10,12 +10,8 @@
 
     <div class="app-content">
       <div class="card">
-        <div class="card-title">
-          <i class="fas fa-history"></i>历史订单
-        </div>
-        <div v-if="historyItems.length === 0" class="empty-state">
-          暂无历史订单
-        </div>
+        <div class="card-title"><i class="fas fa-history"></i>历史订单</div>
+        <div v-if="historyItems.length === 0" class="empty-state">暂无历史订单</div>
         <div v-for="item in historyItems" :key="item.order_time" class="history-card" @click="reorder(item)">
           <!-- 头部：姓名套餐和价格 -->
           <div class="history-header">
@@ -37,7 +33,9 @@
           <div class="bottom-section">
             <div class="status-time">
               <span class="order-time">{{ item.order_time || '-' }}</span>
-              <span :style="getStatusStyle(item.order_status)" class="status-badge">{{ item.order_status || '-' }}</span>
+              <span :style="getStatusStyle(item.order_status)" class="status-badge">{{
+                item.order_status || '-'
+              }}</span>
             </div>
             <div class="quick-reorder-btn">
               <i class="fas fa-redo"></i>
@@ -49,15 +47,15 @@
     </div>
 
     <!-- 确认订单弹窗 -->
-    <div v-if="currentView === 'reorder' && selectedOrder" class="reorder-modal-overlay" @click.self="currentView = 'history'">
+    <div
+      v-if="currentView === 'reorder' && selectedOrder"
+      class="reorder-modal-overlay"
+      @click.self="currentView = 'history'"
+    >
       <div class="reorder-modal-content">
         <div class="modal-header">
-          <div class="modal-title">
-            <i class="fas fa-shopping-cart"></i>确认订单
-          </div>
-          <button class="btn-close" @click="currentView = 'history'">
-            <i class="fas fa-arrow-left"></i> 返回
-          </button>
+          <div class="modal-title"><i class="fas fa-shopping-cart"></i>确认订单</div>
+          <button class="btn-close" @click="currentView = 'history'"><i class="fas fa-arrow-left"></i> 返回</button>
         </div>
 
         <div class="modal-body">
@@ -81,102 +79,120 @@
           </div>
 
           <div class="info-section">
-            <div class="section-title">
-              <i class="fas fa-info-circle"></i> 订单说明
-            </div>
+            <div class="section-title"><i class="fas fa-info-circle"></i> 订单说明</div>
             <div class="section-content">
               您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{ selectedOrder.price || '-' }}。
-              当前好感度：{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}，
-              被下单次数：{{ getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-') }}，
-              怀孕几率：{{ getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-') }}。
+              当前好感度：{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}， 被下单次数：{{
+                getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-')
+              }}， 怀孕几率：{{ getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-') }}。
               确认后将立即生效，请确保您已了解服务内容。
             </div>
           </div>
 
           <div class="info-section">
-            <div class="section-title">
-              <i class="fas fa-heart"></i> 心理状态
-            </div>
+            <div class="section-title"><i class="fas fa-heart"></i> 心理状态</div>
             <div class="section-grid">
               <div class="section-item">
                 <div class="section-item-label">好感度</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">当前所想</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '心理状态.当前所想', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '心理状态.当前所想', '-') }}
+                </div>
               </div>
             </div>
           </div>
 
           <div class="info-section">
-            <div class="section-title">
-              <i class="fas fa-user"></i> 身体特征
-            </div>
+            <div class="section-title"><i class="fas fa-user"></i> 身体特征</div>
             <div class="section-grid">
               <div class="section-item">
                 <div class="section-item-label">三围描述</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '身体特征.三围.描述', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '身体特征.三围.描述', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">乳房形状</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '身体特征.乳房.形状', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '身体特征.乳房.形状', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">姿势</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '身体特征.姿势', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '身体特征.姿势', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">胸部状态</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '身体特征.胸部', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '身体特征.胸部', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">私处状态</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '身体特征.私处', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '身体特征.私处', '-') }}
+                </div>
               </div>
             </div>
           </div>
 
           <div class="info-section">
-            <div class="section-title">
-              <i class="fas fa-star"></i> 性经验
-            </div>
+            <div class="section-title"><i class="fas fa-star"></i> 性经验</div>
             <div class="section-grid">
               <div class="section-item">
                 <div class="section-item-label">是否处女</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.处女', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '性经验.处女', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">性伴侣数量</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.性伴侣数量', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '性经验.性伴侣数量', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">初次性行为对象</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.初次性行为对象', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '性经验.初次性行为对象', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">怀孕几率</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">下单次数</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-') }}
+                </div>
               </div>
             </div>
           </div>
 
           <div class="info-section">
-            <div class="section-title">
-              <i class="fas fa-chart-bar"></i> 服务统计
-            </div>
+            <div class="section-title"><i class="fas fa-chart-bar"></i> 服务统计</div>
             <div class="section-grid">
               <div class="section-item">
                 <div class="section-item-label">本次服务性交次数</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '服务统计.本次服务性交次数', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '服务统计.本次服务性交次数', '-') }}
+                </div>
               </div>
               <div class="section-item">
                 <div class="section-item-label">内射次数</div>
-                <div class="section-item-value">{{ getNestedValue(selectedOrder?.originalData, '服务统计.内射次数', '-') }}</div>
+                <div class="section-item-value">
+                  {{ getNestedValue(selectedOrder?.originalData, '服务统计.内射次数', '-') }}
+                </div>
               </div>
             </div>
           </div>
@@ -262,7 +278,10 @@ const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
 // 安全获取嵌套值
 function getNestedValue(obj: any, path: string, fallback: any = '--') {
   if (!obj) return fallback;
-  const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+  const keys = path
+    .replace(/\[(\d+)\]/g, '.$1')
+    .split('.')
+    .filter(Boolean);
   let current = obj;
   for (const key of keys) {
     if (current == null) return fallback;
@@ -274,10 +293,14 @@ function getNestedValue(obj: any, path: string, fallback: any = '--') {
 // 状态样式
 function getStatusStyle(status: string) {
   const styles: Record<string, string> = {
-    '已完成': 'background-color: rgba(46,204,113,0.2); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-    '订单结束': 'background-color: rgba(231,76,60,0.2); color: #e74c3c; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-    '服务结束': 'background-color: rgba(230,126,34,0.2); color: #e67e22; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-    '进行中': 'background-color: rgba(52,152,219,0.2); color: #3498db; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;'
+    已完成:
+      'background-color: rgba(46,204,113,0.2); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
+    订单结束:
+      'background-color: rgba(231,76,60,0.2); color: #e74c3c; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
+    服务结束:
+      'background-color: rgba(230,126,34,0.2); color: #e67e22; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
+    进行中:
+      'background-color: rgba(52,152,219,0.2); color: #3498db; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
   };
   return styles[status] || styles['进行中'];
 }
@@ -308,10 +331,7 @@ function extractOrderFeatures(order: any): string[] {
     pushFeature(order['套餐']['商品类型']);
   }
 
-  const clothingSources = [
-    order['服装'],
-    order['身体特征']?.['服装']
-  ];
+  const clothingSources = [order['服装'], order['身体特征']?.['服装']];
   clothingSources.forEach(source => {
     if (source && typeof source === 'object') {
       Object.values(source).forEach(pushFeature);
@@ -441,7 +461,7 @@ async function initDisplay() {
           service_location: '未知',
           price: order.套餐?.折后价格 || order.套餐?.套餐价格 || order.套餐价格 || 0,
           features: extractOrderFeatures(order),
-          originalData: order
+          originalData: order,
         };
       });
     } else {
@@ -493,7 +513,7 @@ async function loadFullExampleData() {
           service_location: '未知',
           price: order.套餐?.折后价格 || order.套餐?.套餐价格 || order.套餐价格 || 0,
           features: extractOrderFeatures(order),
-          originalData: order
+          originalData: order,
         };
       });
     } else {
