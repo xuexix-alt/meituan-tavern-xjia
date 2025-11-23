@@ -15,6 +15,10 @@ fs.globSync('src/**/schema.ts').forEach(async schema_file => {
       );
     }
   } catch (e) {
+<<<<<<< HEAD
     /** ignore */
+=======
+    console.error(`生成 '${schema_file}' 对应的 schema.json 失败: ${e}`);
+>>>>>>> fa81d9815ed87aaa9cd2cfc43a3e875b9f0bcc23
   }
 });

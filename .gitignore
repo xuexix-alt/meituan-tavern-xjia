@@ -11,8 +11,11 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 # Claude settings
 .claude/
 .claude/settings.json
 .claude/settings.local.json
+=======
+>>>>>>> fa81d9815ed87aaa9cd2cfc43a3e875b9f0bcc23
