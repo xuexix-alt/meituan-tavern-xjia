@@ -45,6 +45,7 @@ description: 当需要编写前端界面时, 你应该参考本文件
 - 避免使用会强制撑高父容器的元素 (如 `min-height`、`overflow: auto`)
 - 页面整体应适配容器宽度，不产生横向滚动条
 - 如果样式更适合卡片形状，则不要有背景颜色，除非用户有明确要求
+<<<<<<< HEAD
 
 ## CDN资源引用
 
@@ -70,3 +71,5 @@ import something from 'https://testingcf.jsdelivr.net/npm/package-name@version/+
 // ❌ 错误：可能无法在国内访问
 import something from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
 ```
+=======
+>>>>>>> a6ac49cab5f9f2ac6e94edc96535f8cb9839df7f
