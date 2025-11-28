@@ -8,7 +8,7 @@
           <span class="title-text">状态监视器</span>
         </h2>
         <div class="header-actions">
-           <button class="icon-btn refresh-btn" @click="handleManualRefresh" title="强制刷新数据">
+          <button class="icon-btn refresh-btn" @click="handleManualRefresh" title="强制刷新数据">
             <span>🔄</span>
           </button>
           <button class="icon-btn theme-toggle" @click="toggleThemeModal" title="显示设置">
@@ -49,7 +49,7 @@
             class="photo-frame"
             :class="{
               'has-photo': currentPhotoUrl && imagesLoaded,
-              'loading': isImageLoading || !imagesLoaded
+              loading: isImageLoading || !imagesLoaded,
             }"
             @click="handlePhotoClick"
           >
@@ -96,7 +96,8 @@
                   :class="{ active: characterNames[index] === activeChar }"
                   @click="switchCharacter(characterNames[index])"
                 >
-                  {{ cleanName }}  <!-- ✅ 显示清理后的名字 -->
+                  {{ cleanName }}
+                  <!-- ✅ 显示清理后的名字 -->
                 </button>
               </nav>
             </div>
@@ -177,7 +178,7 @@ const statData = ref<StatData>({
   时间: '示例时间',
   当前地点: '示例地点',
   角色: {
-    '陆副厂长': {
+    陆副厂长: {
       年龄: 25,
       身份: '示例身份',
       与user关系: '示例关系',
@@ -189,9 +190,9 @@ const statData = ref<StatData>({
       内衣: '示例内衣',
       私处: '示例私处',
       鞋袜: '示例鞋袜',
-      照片: 'image/陆副厂长'
-    }
-  }
+      照片: 'image/陆副厂长',
+    },
+  },
 });
 const activeChar = ref<string>(''); // 初始为空，等待初始化
 const showThemeModal = ref(false);
@@ -268,15 +269,16 @@ const loadAllImages = async () => {
     console.log(`[照片缓存] 发现 ${pngFiles.length} 张图片`);
 
     // 并行加载所有图片
-    await Promise.all(pngFiles.map(async (file: any) => {
-      // 加载图片到缓存
-      await loadImageToCache(file.name);
-    }));
+    await Promise.all(
+      pngFiles.map(async (file: any) => {
+        // 加载图片到缓存
+        await loadImageToCache(file.name);
+      }),
+    );
 
     console.log(`[照片缓存] 加载完成！缓存了 ${imageMap.size} 个角色的图片`);
     imagesLoaded.value = true; // ✅ 标记缓存加载完成
     isPreloading.value = false;
-
   } catch (e) {
     console.error('[照片缓存] 加载失败:', e);
     isPreloading.value = false;
@@ -287,7 +289,7 @@ const loadAllImages = async () => {
  * 加载单张图片到缓存
  */
 const loadImageToCache = async (fileName: string): Promise<void> => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const CDN_PREFIX = 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia@main/image';
     const url = `${CDN_PREFIX}/${fileName}`;
 
@@ -507,11 +509,14 @@ const adjustHeight = () => {
 
     // 发送消息给父级 (酒馆扩展标准做法)
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        type: 'adjustIframeHeight',
-        height: finalHeight,
-        scriptId: 'status-bar'
-      }, '*');
+      window.parent.postMessage(
+        {
+          type: 'adjustIframeHeight',
+          height: finalHeight,
+          scriptId: 'status-bar',
+        },
+        '*',
+      );
     }
   });
 };
@@ -556,7 +561,7 @@ watch(activeChar, () => {
   nextTick(adjustHeight);
 });
 
-watch(currentTheme, (val) => {
+watch(currentTheme, val => {
   localStorage.setItem('tavern_helper_theme', val);
   document.documentElement.setAttribute('data-theme', val);
   nextTick(adjustHeight);
@@ -627,7 +632,9 @@ watch(currentTheme, (val) => {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px var(--glass-shadow);
 
-    span { filter: brightness(2); }
+    span {
+      filter: brightness(2);
+    }
   }
 
   &.spinning span {
@@ -645,8 +652,8 @@ watch(currentTheme, (val) => {
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "photo"
-      "info";
+      'photo'
+      'info';
 
     .photo-section {
       grid-area: photo;
@@ -655,9 +662,15 @@ watch(currentTheme, (val) => {
       justify-content: flex-start;
       gap: 16px;
     }
-    .global-info-bar { grid-area: info; }
+    .global-info-bar {
+      grid-area: info;
+    }
 
-    .photo-frame { width: 100px; height: 100px; aspect-ratio: 0.67; }
+    .photo-frame {
+      width: 100px;
+      height: 100px;
+      aspect-ratio: 0.67;
+    }
   }
 }
 
@@ -752,7 +765,10 @@ watch(currentTheme, (val) => {
     color: var(--c-text-mute);
     background: linear-gradient(135deg, var(--glass-bg) 0%, var(--glass-panel) 100%);
 
-    .placeholder-icon { font-size: 3rem; opacity: 0.4; }
+    .placeholder-icon {
+      font-size: 3rem;
+      opacity: 0.4;
+    }
     .placeholder-text {
       font-size: 0.75rem;
       font-weight: 700;
@@ -765,14 +781,16 @@ watch(currentTheme, (val) => {
   .loading-spinner {
     position: absolute;
     inset: 0;
-    background: rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(2px);
     z-index: 2;
     &::after {
       content: '';
       position: absolute;
-      top: 50%; left: 50%;
-      width: 20px; height: 20px;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
       border: 2px solid var(--c-primary);
       border-top-color: transparent;
       border-radius: 50%;
@@ -813,7 +831,9 @@ watch(currentTheme, (val) => {
   overflow-x: auto;
   padding: 4px;
 
-  &::-webkit-scrollbar { height: 0; }
+  &::-webkit-scrollbar {
+    height: 0;
+  }
 
   .tab-button {
     padding: 6px 16px;
@@ -848,7 +868,9 @@ watch(currentTheme, (val) => {
   padding-bottom: var(--space-unit);
   border-bottom: 1px solid var(--glass-border);
 
-  h2 { margin-bottom: 0; }
+  h2 {
+    margin-bottom: 0;
+  }
 
   .badge {
     font-size: 0.85rem;
@@ -966,7 +988,7 @@ watch(currentTheme, (val) => {
   .card-icon {
     font-size: 2.5rem;
     opacity: 0.8;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
   }
 
   .card-data {
@@ -1013,22 +1035,27 @@ watch(currentTheme, (val) => {
   }
 }
 
-.detail-list, .appearance-list {
+.detail-list,
+.appearance-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.detail-item, .appearance-item {
+.detail-item,
+.appearance-item {
   display: flex;
   justify-content: space-between;
   padding: 4px 0;
   border-bottom: 1px dashed var(--glass-border);
 
-  &:last-child { border-bottom: none; }
+  &:last-child {
+    border-bottom: none;
+  }
 
   /* 左侧标签：字体更小、颜色更淡 */
-  .label, .appearance-label {
+  .label,
+  .appearance-label {
     font-size: 0.85rem;
     color: var(--c-text-mute);
     font-weight: 500;
@@ -1036,7 +1063,8 @@ watch(currentTheme, (val) => {
   }
 
   /* 右侧数值/描述：字体更大、颜色更深、更突出 */
-  .value, .appearance-text {
+  .value,
+  .appearance-text {
     font-size: 1rem;
     font-weight: 600;
     text-align: right;
@@ -1067,9 +1095,25 @@ watch(currentTheme, (val) => {
   padding: 40px;
   color: var(--c-text-mute);
 
-  .empty-icon { font-size: 3rem; margin-bottom: 10px; opacity: 0.5; }
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+  }
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
 </style>
