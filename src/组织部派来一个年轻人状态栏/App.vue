@@ -1,12 +1,20 @@
 <template>
-  <main class="glass-container" :data-theme="currentTheme">
+  <main class="glass-container" :data-theme="currentTheme" ref="containerRef">
     <!-- 顶部功能区 -->
     <header class="header-section">
       <div class="header-content">
-        <h2 class="section-title"><span class="icon-pulse">📋</span> 状态面板</h2>
-        <button class="theme-toggle" @click="toggleThemeModal" title="显示设置">
-          <span class="gear-icon">⚙️</span>
-        </button>
+        <h2 class="section-title">
+          <span class="icon-pulse">📊</span>
+          <span class="title-text">状态监视器</span>
+        </h2>
+        <div class="header-actions">
+           <button class="icon-btn refresh-btn" @click="handleManualRefresh" title="强制刷新数据">
+            <span>🔄</span>
+          </button>
+          <button class="icon-btn theme-toggle" @click="toggleThemeModal" title="显示设置">
+            <span class="gear-icon">⚙️</span>
+          </button>
+        </div>
       </div>
 
       <!-- 基础信息卡片 -->
@@ -14,15 +22,24 @@
         <div class="global-info-bar">
           <div class="info-item chapter">
             <span class="icon">📖</span>
-            <span class="text">{{ statData.章节 || '等待数据...' }}</span>
+            <div class="info-content">
+              <span class="label">当前章节</span>
+              <span class="text">{{ statData.章节 || '等待数据...' }}</span>
+            </div>
           </div>
           <div class="info-item time">
             <span class="icon">🕐</span>
-            <span class="text">{{ statData.时间 || '未知时间' }}</span>
+            <div class="info-content">
+              <span class="label">世界时间</span>
+              <span class="text">{{ statData.时间 || '未知时间' }}</span>
+            </div>
           </div>
           <div class="info-item location">
             <span class="icon">📍</span>
-            <span class="text">{{ statData.当前地点 || '未知地点' }}</span>
+            <div class="info-content">
+              <span class="label">当前地点</span>
+              <span class="text">{{ statData.当前地点 || '未知地点' }}</span>
+            </div>
           </div>
         </div>
 
@@ -31,125 +48,117 @@
           <div
             class="photo-frame"
             :class="{
-              'has-photo': currentPhoto,
-              'gallery-mode': isPhotoGalleryMode && photoCount > 1,
+              'has-photo': currentPhotoUrl && imagesLoaded,
+              'loading': isImageLoading || !imagesLoaded
             }"
             @click="handlePhotoClick"
-            @dblclick="handlePhotoDoubleClick"
           >
+            <div v-if="isImageLoading || !imagesLoaded" class="loading-spinner"></div>
             <img
-              v-if="currentPhoto"
-              :src="currentPhoto"
-              :alt="`${activeChar} - ${currentPhotoNumber}`"
-              loading="lazy"
+              v-if="currentPhotoUrl"
+              :src="currentPhotoUrl"
+              :alt="activeChar"
+              class="char-photo"
               @error="handleImageError"
               @load="handleImageLoad"
             />
-            <div v-else class="photo-placeholder">👤</div>
-
-            <!-- 照片画廊模式指示器 -->
-            <div v-if="isPhotoGalleryMode && photoCount > 1" class="photo-indicators">
-              <!-- 照片计数器 -->
-              <div class="photo-counter">{{ currentPhotoNumber }}</div>
-
-              <!-- 切换按钮 -->
-              <div class="photo-controls">
-                <button class="photo-btn photo-prev" @click.stop="switchPhoto('prev')" title="上一张 (←)">◀</button>
-                <button class="photo-btn photo-next" @click.stop="switchPhoto('next')" title="下一张 (→)">▶</button>
-              </div>
+            <div v-else-if="imagesLoaded" class="photo-placeholder">
+              <span class="placeholder-icon">👤</span>
+              <span class="placeholder-text">NO IMAGE</span>
+            </div>
+            <div v-else class="photo-placeholder">
+              <span class="placeholder-icon">⏳</span>
+              <span class="placeholder-text">LOADING...</span>
             </div>
           </div>
           <div class="photo-caption">
-            {{ activeChar || '...' }}
-            <span v-if="isPhotoGalleryMode && photoCount > 1" class="photo-hint"> (点击切换) </span>
+            <span class="char-name">{{ cleanCharName(activeChar || '未知角色') }}</span>
+            <span class="char-status-dot" :class="{ active: hasCharacters }"></span>
           </div>
         </div>
       </div>
     </header>
 
     <!-- 角色详情区 -->
-    <section v-if="hasCharacters" class="content-section">
-      <!-- 标签导航 -->
-      <nav class="tabs-nav">
-        <button
-          v-for="name in characterNames"
-          :key="name"
-          class="tab-button"
-          :class="{ active: activeChar === name }"
-          @click="activeChar = name"
-        >
-          {{ name }}
-        </button>
-      </nav>
-
-      <!-- 详情内容 (带过渡动画) -->
+    <section class="content-section">
+      <!-- 详情内容 -->
       <Transition name="fade-slide" mode="out-in">
         <div :key="activeChar" class="tab-content" v-if="activeCharData">
           <div class="info-grid">
-            <!-- 心理与姿态 -->
-            <div class="card full-width thought-card">
-              <h3>💭 内心想法</h3>
-              <div class="text-box thought">{{ activeCharData.当前想法 || '...' }}</div>
+            <!-- 人物选择卡片 - 全宽 -->
+            <div class="card full-width character-selector-card">
+              <h3>👥 人物选择</h3>
+              <nav class="tabs-nav">
+                <button
+                  v-for="(cleanName, index) in cleanedCharacterNames"
+                  :key="characterNames[index]"
+                  class="tab-button"
+                  :class="{ active: characterNames[index] === activeChar }"
+                  @click="switchCharacter(characterNames[index])"
+                >
+                  {{ cleanName }}  <!-- ✅ 显示清理后的名字 -->
+                </button>
+              </nav>
             </div>
-            <div class="card full-width action-card">
-              <h3>🏃 当前姿势</h3>
-              <div class="text-box action">{{ activeCharData.姿势 || '...' }}</div>
+            <!-- 心理与姿态 (全宽) -->
+            <div class="card full-width thought-card" v-if="activeCharData.当前想法">
+              <h3>💭 内心想法</h3>
+              <div class="text-box thought">{{ activeCharData.当前想法 }}</div>
+            </div>
+
+            <div class="card full-width action-card" v-if="activeCharData.姿势">
+              <h3>🏃 当前姿态</h3>
+              <div class="text-box action">{{ activeCharData.姿势 }}</div>
             </div>
 
             <!-- 基础属性 -->
-            <div class="card">
-              <h3>📋 基本信息</h3>
+            <div class="card info-card two-column-split">
+              <h3>📋 状态面板</h3>
               <div class="detail-list">
                 <div class="detail-item" v-for="(val, key) in basicInfo" :key="key">
-                  <span class="label">{{ key }}</span>
+                  <span class="label">{{ key.replace(/^[^\u4e00-\u9fa5]+/, '') }}</span>
                   <span class="value">{{ val || '--' }}</span>
                 </div>
               </div>
             </div>
 
             <!-- 外观特征 -->
-            <div class="card">
-              <h3>👤 外观描述</h3>
+            <div class="card appearance-card two-column-split">
+              <h3>👤 外观特征</h3>
               <div class="appearance-list">
                 <div class="appearance-item" v-for="(val, key) in appearanceInfo" :key="key">
-                  <div class="appearance-label">{{ key }}</div>
+                  <div class="appearance-label">{{ key.replace(/^[^\u4e00-\u9fa5]+/, '') }}</div>
                   <div class="appearance-text">{{ val || '--' }}</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <div v-else class="empty-state">
+          <div class="empty-icon">📡</div>
+          <p v-if="!imagesLoaded">加载中...</p>
+          <p v-else>请选择一个角色</p>
+          <small v-if="!imagesLoaded">正在同步酒馆数据</small>
+          <small v-else>点击上方选项卡查看角色信息</small>
+        </div>
       </Transition>
     </section>
 
-    <div v-else class="empty-state">
-      <p>暂无角色数据，请在聊天中更新状态...</p>
-    </div>
-
-    <!-- 主题设置弹窗 -->
+    <!-- 设置弹窗 -->
     <Transition name="fade">
       <div v-if="showThemeModal" class="modal-overlay" @click="showThemeModal = false">
-        <div class="modal-content" @click.stop>
+        <div class="modal-content glass-panel" @click.stop>
           <div class="modal-header">
-            <h3>显示设置</h3>
-            <button class="btn-close-icon" @click="showThemeModal = false">×</button>
+            <h3>界面设置</h3>
+            <button class="btn-close" @click="showThemeModal = false">×</button>
           </div>
           <div class="form-group">
             <label>🎨 主题风格</label>
             <select v-model="currentTheme">
-              <option value="default">✨ 现代玻璃 (默认)</option>
-              <option value="dark">🌑 深邃夜空</option>
-              <option value="classic_vintage">📜 经典羊皮纸</option>
+              <option value="default">✨ 极光玻璃 (默认)</option>
+              <option value="dark">🌑 深空幽蓝</option>
+              <option value="classic_vintage">📜 羊皮卷轴</option>
             </select>
-          </div>
-          <div class="form-group">
-            <label>🖼️ 照片轮播</label>
-            <div class="toggle-switch">
-              <input type="checkbox" id="auto-rotate" v-model="autoPhotoRotate" @change="toggleAutoRotate" />
-              <label for="auto-rotate">
-                <span>{{ autoPhotoRotate ? '自动轮播中' : '手动切换' }}</span>
-              </label>
-            </div>
           </div>
         </div>
       </div>
@@ -158,140 +167,221 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { StatData, CharacterData } from './types';
 
-// --- 类型声明补充 (避免 @ts-ignore) ---
-declare const getCurrentMessageId: () => number;
-declare const getChatMessages: (id: number) => any[];
-
 // --- 状态管理 ---
-const statData = ref<StatData>({});
-const activeChar = ref<string>('');
+const containerRef = ref<HTMLElement | null>(null);
+const statData = ref<StatData>({
+  章节: '示例章节',
+  时间: '示例时间',
+  当前地点: '示例地点',
+  角色: {
+    '陆副厂长': {
+      年龄: 25,
+      身份: '示例身份',
+      与user关系: '示例关系',
+      所处位置: '示例位置',
+      当前想法: '示例想法：请在酒馆中安装酒馆助手扩展以获取实时数据',
+      姿势: '示例姿势',
+      衣着: '示例衣着',
+      胸乳: '示例胸乳',
+      内衣: '示例内衣',
+      私处: '示例私处',
+      鞋袜: '示例鞋袜',
+      照片: 'image/陆副厂长'
+    }
+  }
+});
+const activeChar = ref<string>(''); // 初始为空，等待初始化
 const showThemeModal = ref(false);
-const currentTheme = ref(localStorage.getItem('organization_theme') || 'default');
-const autoPhotoRotate = ref(false); // 自动轮播照片
-let pollingInterval: any = null;
-let photoRotateInterval: any = null;
+const currentTheme = ref(localStorage.getItem('tavern_helper_theme') || 'default');
+const isImageLoading = ref(false);
 
 // --- 计算属性 ---
 const characterNames = computed(() => Object.keys(statData.value.角色 || {}));
 const hasCharacters = computed(() => characterNames.value.length > 0);
-const activeCharData = computed<CharacterData | null>(() => statData.value.角色?.[activeChar.value] || null);
 
-// 照片序列管理
-const photoSequence = ref<string[]>([]); // 存储角色照片序列
-const currentPhotoIndex = ref(0); // 当前显示的照片索引
-const isPhotoGalleryMode = ref(false); // 是否处于照片画廊模式
+// ✅ 默认选中第一个角色（{{user}}）
+const defaultActiveChar = computed(() => {
+  return characterNames.value.length > 0 ? characterNames.value[0] : '';
+});
 
-// 获取角色所有同名照片
-const getCharacterPhotoSequence = (charName: string): string[] => {
-  const [username, repo] = ['xuexix-alt', 'meituan-tavern-xjia']; // 请替换为您的GitHub用户名和仓库名
+// ✅ 清理后的角色名列表（用于显示）
+const cleanedCharacterNames = computed(() => {
+  return characterNames.value.map(name => cleanCharName(name));
+});
+const activeCharData = computed<CharacterData | null>(() => {
+  if (!activeChar.value) return null;
+  // ✅ 从当前选中的角色名获取数据（{{user}} 已经被酒馆替换为实际用户名）
+  const data = statData.value.角色?.[activeChar.value];
+  console.log(`[数据] 从"${activeChar.value}"获取数据`);
+  return data || null;
+});
 
-  // 基础文件名（去除数字后缀）
-  const baseFileName = `image/${charName}`;
+// ✅ 清理角色名函数 - 提取纯名字，去除额外信息
+const cleanCharName = (name: string) => {
+  if (!name) return '';
 
-  // 生成可能的文件序列（1-99）
-  const sequence: string[] = [];
-  for (let i = 1; i <= 99; i++) {
-    const photoPath = `${baseFileName}${i}.png`;
-    const cdnUrl = `https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${photoPath}`;
-    sequence.push(cdnUrl);
+  // 去除括号及括号内的所有内容：藤原千惠 (东京某大型商社的社长千金) → 藤原千惠
+  let cleaned = name.replace(/\s*\([^)]*\)\s*/g, '');
 
-    // 也尝试.jpg格式
-    const jpgPath = `${baseFileName}${i}.jpg`;
-    const jpgCdnUrl = `https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${jpgPath}`;
-    sequence.push(jpgCdnUrl);
+  // 去除可能的冒号和后续内容：藤原千惠: 某角色 → 藤原千惠
+  cleaned = cleaned.replace(/:\s*.*$/, '');
+
+  // ✅ 特殊处理：{{user}} 硬解码为 陆副厂长
+  if (cleaned.includes('{{user}}') || cleaned.includes('user') || cleaned === '用户') {
+    cleaned = cleaned.replace(/{{user}}|user|用户/gi, '陆副厂长');
   }
 
-  // 添加无后缀的基础文件（如 "image/藤原千惠.png"）
-  const basePhotoPath = `image/${charName}.png`;
-  const baseCdnUrl = `https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${basePhotoPath}`;
-  sequence.push(baseCdnUrl);
+  // ✅ 去除数字后缀（保持与缓存键一致）：小哥哥1 → 小哥哥
+  cleaned = cleaned.replace(/\d+$/, '');
 
-  // 也尝试.jpg格式的基础文件
-  const baseJpgPath = `image/${charName}.jpg`;
-  const baseJpgUrl = `https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${baseJpgPath}`;
-  sequence.push(baseJpgUrl);
+  // 去除前后空格
+  cleaned = cleaned.trim();
 
-  // 调试输出
-  console.log(`[照片序列] 角色名: ${charName}`);
-  console.log(`[照片序列] 生成的URL数量: ${sequence.length}`);
-  console.log(`[照片序列] 前5个URL:`, sequence.slice(0, 5)); // 只显示前5个
-
-  return sequence;
+  return cleaned;
 };
 
-// 当前显示的照片
-const currentPhoto = computed(() => {
-  const photo = activeCharData.value?.照片;
-  const charName = activeChar.value || '未知角色';
+// ✅ 图片缓存系统 - 直接加载 image 目录
+const imageMap = new Map<string, string[]>(); // key: 角色名, value: 图片URL列表（base64）
+const isPreloading = ref(false);
+const imagesLoaded = ref(false); // ✅ 图片缓存是否加载完成
 
-  console.log(`[照片] 当前角色: ${charName}, 照片字段: ${photo}`);
+/**
+ * 加载 GitHub image 目录下的所有图片
+ */
+const loadAllImages = async () => {
+  if (isPreloading.value) return;
+  isPreloading.value = true;
 
-  // 总是检测该角色的照片序列
-  photoSequence.value = getCharacterPhotoSequence(charName);
+  console.log('[照片缓存] 开始加载 image 目录...');
 
-  // 检查是否有序列照片（至少有一张有效的）
-  const validPhotos = photoSequence.value.filter(url => url && url.trim());
-  const hasSequence = validPhotos.length > 0;
-  isPhotoGalleryMode.value = hasSequence;
+  try {
+    // 使用 GitHub API 获取目录内容
+    const response = await fetch('https://api.github.com/repos/xuexix-alt/meituan-tavern-xjia/contents/image');
+    const files = await response.json();
 
-  if (!hasSequence) {
-    console.log(`[照片] ${charName} 没有找到照片`);
-    return null;
+    // 过滤出 PNG 图片文件
+    const pngFiles = files.filter((file: any) => file.name.toLowerCase().endsWith('.png'));
+
+    console.log(`[照片缓存] 发现 ${pngFiles.length} 张图片`);
+
+    // 并行加载所有图片
+    await Promise.all(pngFiles.map(async (file: any) => {
+      // 加载图片到缓存
+      await loadImageToCache(file.name);
+    }));
+
+    console.log(`[照片缓存] 加载完成！缓存了 ${imageMap.size} 个角色的图片`);
+    imagesLoaded.value = true; // ✅ 标记缓存加载完成
+    isPreloading.value = false;
+
+  } catch (e) {
+    console.error('[照片缓存] 加载失败:', e);
+    isPreloading.value = false;
+  }
+};
+
+/**
+ * 加载单张图片到缓存
+ */
+const loadImageToCache = async (fileName: string): Promise<void> => {
+  return new Promise((resolve) => {
+    const CDN_PREFIX = 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia@main/image';
+    const url = `${CDN_PREFIX}/${fileName}`;
+
+    // 提取角色名（去除 .png 和数字后缀）
+    const charName = extractCharName(fileName);
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      // ✅ 转换为 base64 存储到缓存
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // 添加到角色的图片列表中
+        if (!imageMap.has(charName)) {
+          imageMap.set(charName, []);
+        }
+        imageMap.get(charName)?.push(dataUrl);
+
+        console.log(`[照片缓存] ${charName}: ${fileName}`);
+        resolve();
+      } catch (e) {
+        console.warn(`[照片缓存] 缓存失败: ${fileName}`, e);
+        resolve();
+      }
+    };
+
+    img.onerror = () => {
+      console.log(`[照片缓存] 跳过不存在的图片: ${fileName}`);
+      resolve();
+    };
+
+    img.src = url;
+  });
+};
+
+/**
+ * 从文件名提取角色名
+ * 例如：
+ *   "丁小芹1.png" -> "丁小芹"
+ *   "藤原千惠.png" -> "藤原千惠"
+ *   "林婉仪23.png" -> "林婉仪"
+ */
+const extractCharName = (fileName: string): string => {
+  // 去除扩展名
+  let name = fileName.replace(/\.png$/i, '');
+
+  // 去除数字后缀（支持多位数）
+  name = name.replace(/\d+$/, '');
+
+  return name;
+};
+
+/**
+ * 获取当前角色的随机图片
+ */
+const currentPhotoUrl = computed(() => {
+  // ✅ 只有在缓存加载完成后才返回图片
+  if (!imagesLoaded.value) {
+    return '';
   }
 
-  // 如果照片字段是基础名称（不带.png），优先使用序列中的第一张
-  if (photo && photo.startsWith('image/') && !photo.includes('.')) {
-    console.log(`[照片] 使用基础名称，优先序列第一张`);
-    return validPhotos[0] || null;
+  let imageKey = '';
+
+  // ✅ 第一个角色（{{user}}）：永远显示陆副厂长的图片
+  if (activeChar.value === '{{user}}' || characterNames.value[0] === activeChar.value) {
+    imageKey = '陆副厂长';
+    console.log(`[照片] 第一个角色，显示"陆副厂长"的图片`);
+  } else {
+    // ✅ 其他角色：使用角色同名的图片
+    imageKey = cleanCharName(activeChar.value);
+    console.log(`[照片] 其他角色，显示"${imageKey}"的图片`);
   }
 
-  // 如果照片字段是完整文件名（如 "image/藤原千惠.png"）
-  if (photo && photo.startsWith('image/')) {
-    const photoFileName = photo.split('/').pop()!;
-    console.log(`[照片] 查找具体文件: ${photoFileName}`);
-
-    // 检查这个具体文件是否在序列中
-    const specificIndex = validPhotos.findIndex(
-      url => url.endsWith(`/${photoFileName}`) || url.endsWith(photoFileName),
-    );
-
-    if (specificIndex !== -1) {
-      // 如果指定文件存在，使用它作为起点
-      currentPhotoIndex.value = specificIndex;
-      console.log(`[照片] 找到指定文件，索引: ${specificIndex}`);
-      return validPhotos[specificIndex];
-    } else {
-      // 如果指定文件不存在，使用序列中的第一张
-      console.log(`[照片] 未找到指定文件，使用第一张`);
-      return validPhotos[0] || null;
-    }
+  const images = imageMap.get(imageKey);
+  if (images && images.length > 0) {
+    // 随机选择一张
+    const randomIndex = Math.floor(Math.random() * images.length);
+    const selectedImage = images[randomIndex];
+    console.log(`[照片] 从"${imageKey}"缓存随机选择第 ${randomIndex + 1} 张图片（共 ${images.length} 张）`);
+    return selectedImage;
   }
 
-  // 如果已经是完整URL，直接返回
-  if (photo && (photo.startsWith('http') || photo.startsWith('data:'))) {
-    console.log(`[照片] 使用完整URL`);
-    return photo;
-  }
-
-  // 默认返回第一张有效照片
-  console.log(`[照片] 默认使用第一张有效照片`);
-  return validPhotos[0] || null;
+  console.log(`[照片] ${imageKey}: 缓存中暂无图片，暂不显示`);
+  return '';
 });
 
-// 照片总数（只计算有效照片）
-const photoCount = computed(() => {
-  return photoSequence.value.filter(url => url && url.trim()).length;
-});
-
-// 当前照片编号显示
-const currentPhotoNumber = computed(() => {
-  if (!isPhotoGalleryMode.value || photoCount.value <= 1) return '';
-  return `${currentPhotoIndex.value + 1} / ${photoCount.value}`;
-});
-
+// 基础信息映射
 const basicInfo = computed(() => ({
   '🎂 年龄': activeCharData.value?.年龄,
   '💼 身份': activeCharData.value?.身份,
@@ -299,6 +389,7 @@ const basicInfo = computed(() => ({
   '📍 位置': activeCharData.value?.所处位置,
 }));
 
+// 外观信息映射
 const appearanceInfo = computed(() => ({
   '👔 衣着': activeCharData.value?.衣着,
   '🌸 胸乳': activeCharData.value?.胸乳,
@@ -307,853 +398,678 @@ const appearanceInfo = computed(() => ({
   '👠 鞋袜': activeCharData.value?.鞋袜,
 }));
 
-// --- 核心逻辑 (已修复) ---
-const fetchData = () => {
+// --- 核心逻辑 ---
+
+/**
+ * 核心数据获取函数
+ * 兼容多种 API：getCurrentMessageId / getLastMessageId
+ */
+const fetchData = async () => {
   try {
-    // 1. 获取当前消息ID (修复: 使用 getCurrentMessageId)
-    const msgId = getCurrentMessageId();
-    if (!msgId) return;
+    // 检查酒馆助手接口是否可用
+    const hasGetCurrent = typeof getCurrentMessageId === 'function';
+    const hasGetLast = typeof getLastMessageId === 'function';
+    const hasGetMsgs = typeof getChatMessages === 'function';
 
-    // 2. 获取消息对象
-    const msgs = getChatMessages(msgId);
+    if (!hasGetMsgs) {
+      console.warn('[酒馆助手] 接口未加载');
+      return;
+    }
 
-    // 3. 安全读取数据 (修复: 增加空值检查)
-    // 注意：getChatMessages 返回数组，通常我们需要最新的那一条
-    // 假设数据存储在 stat_data 字段中
-    const targetMsg = msgs && msgs.length > 0 ? msgs[0] : null;
+    let targetMsg = null;
+
+    // 尝试多种方式获取最新消息
+    if (hasGetCurrent) {
+      // 方式 1: getCurrentMessageId (常见于旧版本)
+      const msgId = getCurrentMessageId();
+      if (msgId) {
+        const msgs = getChatMessages(msgId);
+        targetMsg = msgs && msgs.length > 0 ? msgs[0] : null;
+      }
+    } else if (hasGetLast) {
+      // 方式 2: getLastMessageId (常见于新版本)
+      const lastId = getLastMessageId();
+      if (lastId) {
+        const msgs = getChatMessages(lastId);
+        targetMsg = msgs && msgs.length > 0 ? msgs[0] : null;
+      }
+    }
 
     if (targetMsg?.data?.stat_data) {
+      console.log('[酒馆助手] 成功获取数据');
       statData.value = targetMsg.data.stat_data;
+
+      // 等待 characterNames 计算属性更新后再检查
+      await nextTick();
 
       // 如果当前没有选中角色，且有角色数据，默认选中第一个
       if (!activeChar.value && characterNames.value.length > 0) {
+        console.log(`[默认] 自动选中第一个角色: "${characterNames.value[0]}"`);
         activeChar.value = characterNames.value[0];
       }
+
+      // 数据更新后调整高度（延迟等待 DOM 更新）
+      await nextTick();
+      adjustHeight();
     }
   } catch (e) {
-    console.warn('TavernHelper Data Sync:', e);
+    console.warn('数据同步失败:', e);
   }
+};
+
+const handleManualRefresh = () => {
+  fetchData();
+  isImageLoading.value = true;
+  // 模拟加载动画
+  const btn = document.querySelector('.refresh-btn');
+  btn?.classList.add('spinning');
+  setTimeout(() => {
+    btn?.classList.remove('spinning');
+    isImageLoading.value = false;
+  }, 1000);
+};
+
+const switchCharacter = (name: string) => {
+  console.log(`[照片] 切换角色: "${name}"`);
+  activeChar.value = name;
+  isImageLoading.value = true; // 切换时重置加载状态
+  // 切换角色后调整高度
+  nextTick(adjustHeight);
+};
+
+const handleImageLoad = () => {
+  isImageLoading.value = false;
+  console.log('[照片] 图片加载成功');
+  // 图片加载完可能影响高度
+  nextTick(() => setTimeout(adjustHeight, 100));
+};
+
+const handleImageError = (e: Event) => {
+  isImageLoading.value = false;
+  const img = e.target as HTMLImageElement;
+  console.warn('[照片] 图片加载失败:', img.src);
+  // 使用缓存系统后，不再需要复杂的重试逻辑
 };
 
 const toggleThemeModal = () => {
   showThemeModal.value = !showThemeModal.value;
 };
 
-// 图片加载错误处理
-const handleImageError = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  console.warn('图片加载失败:', img.src);
-  // 可以在这里添加备用图片显示逻辑
-  // 例如：img.src = '/fallback-avatar.png';
-};
+// --- 高度自适应逻辑 (优化版) ---
 
-// 图片加载成功处理
-const handleImageLoad = (event: Event) => {
-  const img = event.target as HTMLImageElement;
-  console.log('图片加载成功:', img.src);
-};
+const adjustHeight = () => {
+  if (!containerRef.value) return;
 
-// 照片切换功能
-const switchPhoto = (direction: 'next' | 'prev' | number) => {
-  if (!isPhotoGalleryMode.value || photoCount.value <= 1) return;
+  // 使用 requestAnimationFrame 避免布局抖动
+  requestAnimationFrame(() => {
+    const height = containerRef.value?.scrollHeight || 300;
+    const finalHeight = Math.max(height, 300) + 20; // 增加一点缓冲
 
-  if (typeof direction === 'number') {
-    // 直接设置索引
-    currentPhotoIndex.value = Math.max(0, Math.min(photoCount.value - 1, direction));
-  } else {
-    // 计算新的索引
-    if (direction === 'next') {
-      currentPhotoIndex.value = (currentPhotoIndex.value + 1) % photoCount.value;
-    } else if (direction === 'prev') {
-      currentPhotoIndex.value = (currentPhotoIndex.value - 1 + photoCount.value) % photoCount.value;
+    // 发送消息给父级 (酒馆扩展标准做法)
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'adjustIframeHeight',
+        height: finalHeight,
+        scriptId: 'status-bar'
+      }, '*');
     }
-  }
-
-  console.log(`切换到照片: ${currentPhotoIndex.value + 1}/${photoCount.value}`);
+  });
 };
 
-// 点击照片切换（支持双击）
-const handlePhotoClick = () => {
-  if (!isPhotoGalleryMode.value || photoCount.value <= 1) return;
-
-  // 简单点击切换到下一张
-  switchPhoto('next');
-};
-
-// 双击照片重置到第一张
-const handlePhotoDoubleClick = () => {
-  if (!isPhotoGalleryMode.value || photoCount.value <= 1) return;
-
-  switchPhoto(0);
-  console.log('重置到第一张照片');
-};
-
-// 照片自动轮播控制
-const toggleAutoRotate = () => {
-  autoPhotoRotate.value = !autoPhotoRotate.value;
-  console.log(`自动轮播: ${autoPhotoRotate.value ? '开启' : '关闭'}`);
-};
-
-// 开始自动轮播
-const startAutoRotate = () => {
-  if (photoRotateInterval) {
-    clearInterval(photoRotateInterval);
-  }
-
-  if (autoPhotoRotate.value && isPhotoGalleryMode.value && photoCount.value > 1) {
-    photoRotateInterval = setInterval(() => {
-      switchPhoto('next');
-    }, 3000); // 每3秒切换一次
-    console.log('开始自动轮播');
-  }
-};
-
-// 停止自动轮播
-const stopAutoRotate = () => {
-  if (photoRotateInterval) {
-    clearInterval(photoRotateInterval);
-    photoRotateInterval = null;
-    console.log('停止自动轮播');
-  }
-};
-
-// --- 生命周期 & 监听 ---
-watch(currentTheme, newTheme => {
-  localStorage.setItem('organization_theme', newTheme);
-  document.documentElement.setAttribute('data-theme', newTheme);
-});
+// 监听器
+let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
-  document.documentElement.setAttribute('data-theme', currentTheme.value);
+  // 1. 初始化数据
   fetchData();
-  pollingInterval = setInterval(fetchData, 1000); // 1秒轮询
 
-  // 触发 resize 适配 iframe
-  setTimeout(() => {
-    if (window.jQuery) window.jQuery(window).trigger('resize');
-  }, 200);
-});
-
-// 监听角色变化和自动轮播设置
-watch([activeChar, autoPhotoRotate, isPhotoGalleryMode, photoCount], () => {
-  // 当角色变化或照片序列变化时，重置到第一张照片
-  currentPhotoIndex.value = 0;
-
-  // 如果启用了自动轮播，开始轮播
-  if (autoPhotoRotate.value) {
-    startAutoRotate();
-  } else {
-    stopAutoRotate();
+  // 2. 注册事件监听 (使用规范的 eventOn)
+  if (typeof eventOn === 'function' && typeof tavern_events !== 'undefined') {
+    // 监听消息更新和接收
+    eventOn(tavern_events.MESSAGE_UPDATED, fetchData);
+    eventOn(tavern_events.MESSAGE_RECEIVED, fetchData);
+    eventOn(tavern_events.CHAT_CHANGED, fetchData);
   }
-});
 
-// 监听自动轮播设置
-watch(autoPhotoRotate, newValue => {
-  if (newValue) {
-    startAutoRotate();
-  } else {
-    stopAutoRotate();
+  // 3. 启动高度监听
+  if (containerRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => adjustHeight());
+    resizeObserver.observe(containerRef.value);
+    resizeObserver.observe(document.body); // 同时也监听 body 变化
   }
+
+  // 4. 恢复主题
+  document.documentElement.setAttribute('data-theme', currentTheme.value);
+
+  // 5. 立即加载所有图片（页面加载时就加载）
+  loadAllImages();
 });
 
 onUnmounted(() => {
-  if (pollingInterval) clearInterval(pollingInterval);
+  if (resizeObserver) resizeObserver.disconnect();
+
+  // ✅ 清理图片缓存
+  imageMap.clear();
+});
+
+watch(activeChar, () => {
+  nextTick(adjustHeight);
+});
+
+watch(currentTheme, (val) => {
+  localStorage.setItem('tavern_helper_theme', val);
+  document.documentElement.setAttribute('data-theme', val);
+  nextTick(adjustHeight);
 });
 </script>
 
 <style lang="scss" scoped>
-/* 局部样式优化 - 配合 index.scss */
-.glass-container {
+/*
+  局部样式补充
+  大部分核心样式应在 index.scss 中
+*/
+
+.header-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  height: auto;
-  aspect-ratio: 16/9; /* 宽高比控制 */
-  max-width: 800px;
-  padding-bottom: 40px; /* 底部留白 */
-
-  /* 根据内容自动调整高度 */
-  @media (min-width: 768px) {
-    aspect-ratio: 4/3;
-  }
-
-  @media (min-width: 1024px) {
-    aspect-ratio: 16/10;
-  }
+  gap: 16px;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
 
-  .section-title {
-    font-size: calc(var(--text-base) * 1.75); /* 31.5px */
-    font-weight: 700;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: calc(var(--space-base) * 1.6); /* 8px */
-    line-height: 1.2;
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
 
-    .icon-pulse {
-      animation: pulse 2s infinite;
-      font-size: calc(var(--text-base) * 0.875); /* 15.75px */
-    }
+  .icon-pulse {
+    font-size: 1.4em;
+    animation: pulse 3s infinite ease-in-out;
   }
 
-  .theme-toggle {
-    background: var(--glass-panel);
-    border: 1px solid var(--glass-border);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    .gear-icon {
-      font-size: 1.2rem;
-      filter: grayscale(1);
-      transition: all 0.3s;
-    }
-
-    &:hover {
-      background: var(--glass-highlight);
-      transform: rotate(90deg) scale(1.1);
-      box-shadow: 0 0 15px var(--c-primary-dark);
-      border-color: var(--c-primary);
-
-      .gear-icon {
-        filter: grayscale(0);
-      }
-    }
+  .title-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--c-text-main) 0%, var(--c-text-sub) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
-.info-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* 两列等宽，适应照片框宽度变化 */
-  gap: 20px;
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr; /* 在中等屏幕上改为单列 */
-    gap: 16px;
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-panel);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s var(--ease-spring);
+  font-size: 1.1rem;
+
+  &:hover {
+    background: var(--c-primary);
+    border-color: var(--c-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--glass-shadow);
+
+    span { filter: brightness(2); }
   }
 
-  @media (max-width: 480px) {
+  &.spinning span {
+    animation: spin 1s linear infinite;
+  }
+}
+
+/* 信息布局：左侧信息，右侧照片 */
+.info-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* 调整比例：信息2/3，照片1/3 */
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 700px) {
     grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-areas:
+      "photo"
+      "info";
+
+    .photo-section {
+      grid-area: photo;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 16px;
+    }
+    .global-info-bar { grid-area: info; }
+
+    .photo-frame { width: 100px; height: 100px; aspect-ratio: 0.67; }
   }
 }
 
 .global-info-bar {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--space-base) * 2.5); /* 10px - 增加间距 */
+  gap: 16px; /* 增大卡片间距 */
 }
 
 .info-item {
-  padding: calc(var(--space-base) * 3) calc(var(--space-base) * 4); /* 12px 16px - 增加内边距 */
-  border-radius: var(--radius-md);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
-  gap: calc(var(--space-base) * 3); /* 12px */
-  font-size: calc(var(--text-base) * 0.85); /* 15.3px - 增大字体 */
-  color: var(--c-text-sub);
-  transition: transform 0.2s var(--ease-smooth);
-  min-height: 48px; /* 确保信息项有足够高度 */
+  gap: 14px; /* 增大图标与文字间距 */
+  padding: 14px 18px; /* 增大内边距 */
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  transition: transform 0.2s;
 
   &:hover {
-    transform: translateX(calc(var(--space-base) * 1)); /* 4px */
+    transform: translateX(4px);
     background: var(--glass-highlight);
   }
 
-  &.chapter .icon {
-    color: var(--accent-info);
-    filter: drop-shadow(0 0 2px hsla(var(--hue-primary), 90%, 60%, 0.3));
+  .icon {
+    font-size: 1.4rem;
   }
-  &.time .icon {
-    color: var(--accent-warm);
-    filter: drop-shadow(0 0 2px hsla(var(--hue-warning), 90%, 60%, 0.3));
+
+  .info-content {
+    display: flex;
+    flex-direction: column;
   }
-  &.location .icon {
-    color: var(--accent-danger);
-    filter: drop-shadow(0 0 2px hsla(var(--hue-danger), 90%, 60%, 0.3));
+
+  .label {
+    font-size: 0.7rem;
+    color: var(--c-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .text {
-    font-weight: 600; /* 增加字重 */
+    font-weight: 600;
     color: var(--c-text-main);
-    text-shadow: 0 1px 2px hsla(220, 20%, 10%, 0.05);
   }
 }
 
+/* 照片区域优化 */
 .photo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  width: 50%; /* 宽度占一半 */
-  min-width: 200px; /* 最小宽度确保照片不会太小 */
-
-  @media (max-width: 768px) {
-    width: 45%;
-    min-width: 180px;
-  }
-
-  @media (max-width: 480px) {
-    width: 100%;
-    flex-direction: row;
-    min-width: auto;
-
-    .photo-frame {
-      width: 80px;
-      height: 80px;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .photo-caption {
-      text-align: left;
-      font-size: 1rem;
-      font-weight: bold;
-      flex-shrink: 0;
-      margin-left: 12px;
-    }
-  }
+  gap: 14px; /* 增大间距 */
+  padding-top: 4px; /* 顶部留白 */
 }
 
 .photo-frame {
   width: 100%;
-  height: calc(var(--space-unit) * 5); /* 高度占当前基准5行 = 100px */
-  max-height: 120px; /* 最大高度限制 */
-  background: var(--glass-panel);
-  border: 2px solid var(--glass-border);
+  /* ✅ 适配竖图：848*1264 ≈ 0.67比例 */
+  aspect-ratio: 0.67;
+  max-height: 450px; /* 增大最大高度限制 */
   border-radius: var(--radius-lg);
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 3px solid var(--glass-border);
+  position: relative;
+  background: var(--glass-panel);
   box-shadow: var(--glass-shadow);
   transition: all 0.3s;
-  flex-shrink: 0; /* 防止被压缩 */
-  position: relative;
-  cursor: pointer;
 
   &.has-photo {
     border-color: var(--c-primary);
   }
 
-  &.gallery-mode {
-    border-color: var(--c-primary);
-    box-shadow:
-      0 0 0 2px var(--c-primary),
-      var(--glass-shadow);
-  }
-
-  img {
+  .char-photo {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s;
+    /* ✅ 重要：contain 保持图片完整显示，cover 填充容器 */
+    object-fit: contain;
+    transition: transform 0.5s;
+  }
 
-    &:hover {
-      transform: scale(1.05);
-    }
+  &:hover .char-photo {
+    transform: scale(1.05);
   }
 
   .photo-placeholder {
-    font-size: 2.5rem;
-    opacity: 0.3;
-  }
-
-  /* 照片画廊模式指示器 */
-  .photo-indicators {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
+    width: 100%;
+    height: 100%;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
-  }
-
-  .photo-counter {
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    pointer-events: auto;
-  }
-
-  .photo-controls {
-    display: flex;
-    gap: 4px;
-    pointer-events: auto;
-  }
-
-  .photo-btn {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--c-text-main);
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: var(--c-text-mute);
+    background: linear-gradient(135deg, var(--glass-bg) 0%, var(--glass-panel) 100%);
 
-    &:hover {
-      background: var(--c-primary);
-      color: white;
-      transform: scale(1.1);
+    .placeholder-icon { font-size: 3rem; opacity: 0.4; }
+    .placeholder-text {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-top: 8px;
+      opacity: 0.6;
+      letter-spacing: 0.1em;
     }
+  }
 
-    &:active {
-      transform: scale(0.95);
+  .loading-spinner {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(2px);
+    z-index: 2;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 20px; height: 20px;
+      border: 2px solid var(--c-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: -10px 0 0 -10px;
     }
   }
 }
 
 .photo-caption {
-  font-size: 0.85rem;
-  color: var(--c-text-sub);
-  text-align: center;
-  font-weight: 600;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
 
-  .photo-hint {
-    font-size: 0.7rem;
-    color: var(--c-text-mute);
-    font-weight: 400;
-    opacity: 0.8;
+  .char-name {
+    font-weight: 700;
+    font-size: 1rem; /* 增大字体 */
+    color: var(--c-text-main);
+  }
+
+  .char-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-text-mute);
+
+    &.active {
+      background: hsl(var(--hue-success) 80% 60%);
+      box-shadow: 0 0 8px hsl(var(--hue-success) 80% 60%);
+    }
   }
 }
 
+/* 标签页 */
 .tabs-nav {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: var(--radius-lg);
+  gap: 8px;
   overflow-x: auto;
-  margin-bottom: 16px;
-  scrollbar-width: thin; /* 显示滚动条 */
-  scrollbar-color: var(--c-text-light) transparent;
+  padding: 4px;
 
-  /* Webkit 浏览器滚动条样式 */
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--c-text-light);
-    border-radius: 3px;
-    opacity: 0.6;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
+  &::-webkit-scrollbar { height: 0; }
 
   .tab-button {
-    padding: 6px 12px; /* 减小内边距 */
-    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid transparent;
     background: transparent;
-    border-radius: var(--radius-sm);
     color: var(--c-text-sub);
+    font-size: 0.9rem;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.2s;
-    font-size: 0.85rem; /* 减小字体 */
-    flex-shrink: 0; /* 防止标签被压缩 */
+    transition: all 0.3s;
 
     &:hover {
       background: var(--glass-highlight);
-      color: var(--c-text-main);
     }
 
     &.active {
-      background: var(--c-bg-input);
-      color: var(--c-primary);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      font-weight: 700;
+      background: var(--c-primary);
+      color: white;
+      box-shadow: 0 4px 12px hsla(var(--hue-primary), 80%, 60%, 0.3);
+      font-weight: 600;
     }
   }
 }
 
+/* 📝 标题区域微调 */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: calc(var(--space-unit) * 1.5);
+  padding-bottom: var(--space-unit);
+  border-bottom: 1px solid var(--glass-border);
+
+  h2 { margin-bottom: 0; }
+
+  .badge {
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    background: var(--c-primary);
+    color: white;
+    border-radius: 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px hsla(var(--hue-primary), 60%, 50%, 0.3);
+  }
+}
+
+/* 🕸️ 核心网格布局 */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  /* 响应式列宽：最小 280px，自动填满，确保两列布局 */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* 统一间距 */
+  gap: var(--space-unit);
+  /* 自动对齐行高 */
+  align-items: stretch;
+}
 
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+/* 两列平分布局专用样式 */
+.two-column-split {
+  /* 在桌面端强制平分第一行宽度 */
+  /* 使用媒体查询确保移动端堆叠 */
+}
+
+/* 桌面端：状态面板和外观特征始终平分宽度 */
+@media (min-width: 600px) {
+  .info-grid .card.two-column-split:first-child {
+    grid-column: 1;
   }
 
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .info-grid .card.two-column-split:last-child {
+    grid-column: 2;
+  }
+}
+
+/* 移动端：两个卡片堆叠，各占全宽 */
+@media (max-width: 599px) {
+  .info-grid .card.two-column-split {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 🃏 通用卡片样式 - 优化版 */
+.card {
+  /* 玻璃拟态背景 (比容器稍深或稍浅以区分层级) */
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+
+  /* 布局控制 */
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  /* 高度控制：确保视觉饱满 */
+  min-height: 140px; /* 统一最小高度 */
+  height: 100%; /* 填满 Grid 单元格高度 */
+
+  /* 动效 */
+  transition: all 0.3s var(--ease-spring);
+  position: relative;
+  overflow: hidden;
+
+  /* 悬停微交互 */
+  &:hover {
+    transform: translateY(-4px) scale(1.01);
+    background: var(--glass-highlight);
+    box-shadow: 0 12px 24px -8px hsla(220, 20%, 10%, 0.1);
+    border-color: var(--c-primary);
+    z-index: 1;
   }
 
-  .card {
-    background: var(--glass-bg);
-    padding: calc(var(--space-base) * 3.5); /* 14px */
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-border);
-    transition:
-      transform 0.2s var(--ease-smooth),
-      box-shadow 0.3s var(--ease-out-expo);
+  /* 变体：全宽卡片 (跨越所有列) */
+  &.full-width {
+    grid-column: 1 / -1;
+    min-height: auto; /* 根据内容自适应高度 */
+    padding: calc(var(--space-unit) * 1.5);
+  }
 
-    &:hover {
-      transform: translateY(calc(var(--space-base) * -0.5)); /* -2px */
-      box-shadow:
-        0 8px 24px -8px hsla(220, 20%, 10%, 0.12),
-        0 4px 12px -4px hsla(220, 20%, 10%, 0.08),
-        inset 0 0 0 1px var(--glass-highlight);
-      border-color: var(--glass-highlight);
-    }
+  /* 内部排版 */
+  h3 {
+    font-size: 0.85rem;
+    color: var(--c-text-mute);
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
 
-    &.full-width {
-      grid-column: 1 / -1;
-    }
+  /* 数据强调样式 */
+  .value {
+    font-family: var(--font-sans);
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--c-text-main) 0%, var(--c-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+}
 
-    h3 {
-      font-size: calc(var(--text-base) * 0.875); /* 15.75px */
-      color: var(--c-text-sub); /* 浅色模式下使用更深的颜色 */
-      margin: 0 0 calc(var(--space-base) * 2.4) 0; /* 12px */
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: flex;
-      align-items: center;
-      gap: calc(var(--space-base) * 1.5); /* 7.5px */
-      text-shadow: 0 1px 2px hsla(220, 20%, 15%, 0.15); /* 增强阴影对比度 */
-    }
+/* ✨ 变体：高亮卡片 (用于 HP/MP 等核心数据) */
+.card.highlight {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--glass-panel) 0%, hsla(var(--hue-primary), 30%, 90%, 0.4) 100%);
+
+  .card-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  }
+
+  .card-data {
+    text-align: right;
+  }
+}
+
+/* 🌑 深色模式适配 */
+:root[data-theme='dark'] .status-bar-container {
+  .card:hover {
+    background: hsla(220, 20%, 20%, 0.6);
+  }
+
+  .card.highlight {
+    background: linear-gradient(135deg, var(--glass-panel) 0%, hsla(var(--hue-primary), 30%, 20%, 0.4) 100%);
+  }
+}
+
+/* 👥 人物选择卡片专用样式 */
+.character-selector-card {
+  .tabs-nav {
+    margin-top: 8px;
+    margin-bottom: 0;
   }
 }
 
 .text-box {
-  padding: calc(var(--space-base) * 3); /* 15px */
+  padding: 12px;
   border-radius: var(--radius-sm);
-  font-size: calc(var(--text-base) * 0.7); /* 12.6px */
+  font-size: 0.95rem;
   line-height: 1.6;
-  position: relative;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 
   &.thought {
     background: var(--bg-thought);
     color: var(--text-thought);
-    border-left: calc(var(--space-base) * 0.75) solid var(--text-thought);
-    box-shadow: inset 0 0 0 1px hsla(var(--hue-primary), 60%, 80%, 0.3);
-    text-shadow: 0 1px 2px hsla(var(--hue-primary), 80%, 40%, 0.1);
+    border-left: 3px solid var(--text-thought);
   }
+
   &.action {
     background: var(--bg-action);
     color: var(--text-action);
     font-style: italic;
-    border-left: calc(var(--space-base) * 0.75) solid var(--text-action);
-    box-shadow: inset 0 0 0 1px hsla(var(--hue-danger), 70%, 80%, 0.3);
-    text-shadow: 0 1px 2px hsla(var(--hue-danger), 80%, 40%, 0.1);
+    border-left: 3px solid var(--text-action);
   }
 }
 
-.detail-list {
+.detail-list, .appearance-list {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--space-base) * 2); /* 8px */
-
-  .detail-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px dashed var(--glass-border);
-    padding-bottom: calc(var(--space-base) * 1.5); /* 6px */
-    position: relative;
-
-    &:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(90deg, var(--glass-border) 0%, transparent 100%);
-      opacity: 0.5;
-    }
-
-    .label {
-      color: var(--c-text-main); /* 使用主色调而不是次要色调 */
-      font-size: calc(var(--text-base) * 0.725); /* 13.05px */
-      font-weight: 600; /* 增加字重 */
-      letter-spacing: 0.02em;
-      min-width: 80px; /* 确保标签有足够宽度防止换行 */
-      white-space: nowrap; /* 防止文本换行 */
-      flex-shrink: 0; /* 防止标签被压缩 */
-      text-align: left; /* 左对齐 */
-    }
-    .value {
-      color: var(--c-text-main);
-      font-weight: 700; /* 增加字重 */
-      font-size: calc(var(--text-base) * 0.85); /* 15.3px */
-      text-align: center;
-      text-shadow: 0 1px 2px hsla(220, 20%, 15%, 0.1); /* 增强阴影对比度 */
-    }
-  }
+  gap: 8px;
 }
 
-/* 外观描述左对齐样式 */
-.appearance-list {
+.detail-item, .appearance-item {
   display: flex;
-  flex-direction: column;
-  gap: calc(var(--space-base) * 3); /* 15px 间距 */
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--glass-border);
 
-  .appearance-item {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--space-base) * 2); /* 8px 标签与文本间距 */
-    padding: calc(var(--space-base) * 2.5); /* 10px 内边距 */
-    border-radius: var(--radius-sm);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    transition: all 0.2s var(--ease-smooth);
+  &:last-child { border-bottom: none; }
 
-    &:hover {
-      background: var(--glass-highlight);
-      border-color: var(--glass-highlight);
-      transform: translateY(calc(var(--space-base) * -0.25)); /* -1px 轻微上移 */
-      box-shadow: 0 4px 12px -4px hsla(220, 20%, 10%, 0.08);
-    }
+  /* 左侧标签：字体更小、颜色更淡 */
+  .label, .appearance-label {
+    font-size: 0.85rem;
+    color: var(--c-text-mute);
+    font-weight: 500;
+    line-height: 1.4;
+  }
 
-    .appearance-label {
-      font-size: calc(var(--text-base) * 0.875); /* 15.75px */
-      font-weight: 700;
-      color: var(--c-text-sub);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: calc(var(--space-base) * 1.5); /* 7.5px */
-    }
+  /* 右侧数值/描述：字体更大、颜色更深、更突出 */
+  .value, .appearance-text {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: right;
+    line-height: 1.4;
+  }
 
-    .appearance-text {
-      font-size: calc(var(--text-base) * 0.85); /* 15.3px */
-      line-height: 1.6;
-      color: var(--c-text-main);
-      font-weight: 500;
-      text-align: left;
-      text-shadow: 0 1px 2px hsla(220, 20%, 15%, 0.05);
-    }
+  /* 状态面板的数值使用发光字体 */
+  .value {
+    background: linear-gradient(135deg, var(--c-text-main) 0%, var(--c-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* 外观特征的文本也使用发光字体 */
+  .appearance-text {
+    background: linear-gradient(135deg, var(--c-text-main) 0%, var(--c-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
-/* 开关样式 */
-.toggle-switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-
-  input[type='checkbox'] {
-    display: none;
-  }
-
-  label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--c-text-main);
-  }
-
-  .switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    background: var(--glass-border);
-    border-radius: 12px;
-    transition: all 0.3s;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .switch::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-    transition: all 0.3s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  input[type='checkbox']:checked + label {
-    span {
-      color: var(--c-primary);
-    }
-    .switch {
-      background: var(--c-primary);
-    }
-    .switch::before {
-      transform: translateX(20px);
-    }
-  }
-}
-
+/* 空状态 */
 .empty-state {
-  text-align: center;
-  padding: 40px;
-  color: var(--c-text-light);
-  font-style: italic;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 999;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 40px;
+  color: var(--c-text-mute);
+
+  .empty-icon { font-size: 3rem; margin-bottom: 10px; opacity: 0.5; }
 }
 
-.modal-content {
-  background: var(--glass-bg);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  width: 90%;
-  max-width: 300px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  animation: modalPop 0.3s var(--ease-spring);
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    h3 {
-      margin: 0;
-    }
-
-    .btn-close-icon {
-      background: transparent;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--c-text-sub);
-      padding: 0;
-      line-height: 1;
-
-      &:hover {
-        color: var(--c-text-main);
-      }
-    }
-  }
-
-  select {
-    width: 100%;
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--glass-border);
-    background: var(--c-bg-input);
-    color: var(--c-text-main);
-    font-size: 1rem;
-    cursor: pointer;
-    outline: none;
-
-    &:focus {
-      border-color: var(--c-primary);
-      box-shadow: 0 0 0 2px var(--bg-thought);
-    }
-  }
-}
-
-/* Animations */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes modalPop {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.3s var(--ease-smooth);
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>

@@ -13,7 +13,9 @@
   /* 🖌️ 基础色板 */
   --c-primary: hsl(var(--hue-primary) 90% 60%);
   --c-primary-hover: hsl(var(--hue-primary) 95% 55%);
+  --c-primary-dark: hsl(var(--hue-primary) 85% 45%);
   --c-bg-body: hsl(220 20% 98%);
+  --c-bg-input: hsl(220 15% 96%);
 
   /* 📝 排版系统 - 增大版 */
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
@@ -26,6 +28,22 @@
   --c-text-main: hsl(220 25% 20%); /* 浅色模式下增加对比度 */
   --c-text-sub: hsl(220 20% 35%); /* 浅色模式下增加对比度 */
   --c-text-mute: hsl(220 15% 55%); /* 浅色模式下增加对比度 */
+  --c-text-light: hsl(220 10% 85%); /* 用于滚动条等浅色元素 */
+
+  /* 🎯 颜色系统 */
+  --accent-info: hsl(var(--hue-primary) 90% 60%);
+  --accent-warm: hsl(var(--hue-warning) 90% 60%);
+  --accent-danger: hsl(var(--hue-danger) 90% 60%);
+
+  /* 🧊 玻璃面板 */
+  --glass-panel: hsla(220, 15%, 95%, 0.7);
+  --glass-highlight: hsla(0, 0%, 100%, 0.8);
+
+  /* 💭 思考/行动框 */
+  --text-thought: hsl(var(--hue-primary) 60% 35%);
+  --bg-thought: hsla(var(--hue-primary) 50% 95% / 0.6);
+  --text-action: hsl(var(--hue-danger) 60% 35%);
+  --bg-action: hsla(var(--hue-danger) 50% 95% / 0.6);
 
   /* 🧊 极致玻璃拟态 */
   --glass-bg: hsla(0, 0%, 100%, 0.75); /* 稍微增加不透明度以提高文字对比度 */
@@ -48,6 +66,7 @@
   /* ⚡ 动效曲线 */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 🌑 深色模式 */
@@ -56,11 +75,19 @@
   --c-text-main: hsl(220 10% 98%); /* 更亮的白色以提升深色背景可读性 */
   --c-text-sub: hsl(220 10% 75%);
   --c-text-mute: hsl(220 10% 55%);
+  --c-text-light: hsl(220 10% 35%);
 
   --glass-bg: hsla(220, 30%, 10%, 0.75);
   --glass-border: hsla(0, 0%, 100%, 0.1);
   --glass-highlight: hsla(0, 0%, 100%, 0.15);
+  --glass-panel: hsla(220, 15%, 15%, 0.7);
   --glass-shadow: 0 12px 48px hsla(0, 0%, 0%, 0.5);
+
+  /* 深色模式思考/行动框 */
+  --text-thought: hsl(var(--hue-primary) 70% 75%);
+  --bg-thought: hsla(var(--hue-primary) 30% 20% / 0.6);
+  --text-action: hsl(var(--hue-danger) 70% 75%);
+  --bg-action: hsla(var(--hue-danger) 30% 20% / 0.6);
 }
 
 /* 📜 羊皮纸/复古模式 (Vintage Mode) */
@@ -70,15 +97,23 @@
   --c-text-main: hsl(30 20% 20%);
   --c-text-sub: hsl(30 15% 40%);
   --c-text-mute: hsl(30 15% 60%);
+  --c-text-light: hsl(30 15% 70%);
 
   --glass-bg: hsla(40, 30%, 94%, 0.9);
   --glass-border: hsla(35, 50%, 40%, 0.15);
   --glass-highlight: hsla(40, 50%, 98%, 0.8);
+  --glass-panel: hsla(40, 20%, 90%, 0.8);
   --glass-shadow: 0 4px 12px hsla(30, 20%, 10%, 0.08);
   --glass-blur: 8px;
   --glass-saturate: 100%;
 
   --font-sans: 'Merriweather', 'Georgia', serif; /* 切换为衬线体 */
+
+  /* 经典模式思考/行动框 */
+  --text-thought: hsl(35 60% 25%);
+  --bg-thought: hsla(35, 40% 90% / 0.8);
+  --text-action: hsl(30 60% 25%);
+  --bg-action: hsla(30, 40% 90% / 0.8);
 }
 
 /* =========================================
@@ -164,6 +199,9 @@
     width: 100%;
     max-width: 860px; /* 稍微加宽容器以容纳大字体 */
     margin: 0 auto;
+
+    /* ✅ 修复：移除固定最小高度，改为内容驱动 */
+    height: auto;
 
     /* ⬆️ 调整：内边距增大 */
     padding: calc(var(--space-base) * 7); /* 35px */
