@@ -3,9 +3,7 @@
     <!-- 顶部功能区 -->
     <header class="header-section">
       <div class="header-content">
-        <h2 class="section-title">
-          <span class="icon-pulse">📋</span> 状态面板
-        </h2>
+        <h2 class="section-title"><span class="icon-pulse">📋</span> 状态面板</h2>
         <button class="theme-toggle" @click="toggleThemeModal" title="显示设置">
           <span class="gear-icon">⚙️</span>
         </button>
@@ -34,7 +32,7 @@
             class="photo-frame"
             :class="{
               'has-photo': currentPhoto,
-              'gallery-mode': isPhotoGalleryMode && photoCount > 1
+              'gallery-mode': isPhotoGalleryMode && photoCount > 1,
             }"
             @click="handlePhotoClick"
             @dblclick="handlePhotoDoubleClick"
@@ -56,28 +54,14 @@
 
               <!-- 切换按钮 -->
               <div class="photo-controls">
-                <button
-                  class="photo-btn photo-prev"
-                  @click.stop="switchPhoto('prev')"
-                  title="上一张 (←)"
-                >
-                  ◀
-                </button>
-                <button
-                  class="photo-btn photo-next"
-                  @click.stop="switchPhoto('next')"
-                  title="下一张 (→)"
-                >
-                  ▶
-                </button>
+                <button class="photo-btn photo-prev" @click.stop="switchPhoto('prev')" title="上一张 (←)">◀</button>
+                <button class="photo-btn photo-next" @click.stop="switchPhoto('next')" title="下一张 (→)">▶</button>
               </div>
             </div>
           </div>
           <div class="photo-caption">
             {{ activeChar || '...' }}
-            <span v-if="isPhotoGalleryMode && photoCount > 1" class="photo-hint">
-              (点击切换)
-            </span>
+            <span v-if="isPhotoGalleryMode && photoCount > 1" class="photo-hint"> (点击切换) </span>
           </div>
         </div>
       </div>
@@ -161,12 +145,7 @@
           <div class="form-group">
             <label>🖼️ 照片轮播</label>
             <div class="toggle-switch">
-              <input
-                type="checkbox"
-                id="auto-rotate"
-                v-model="autoPhotoRotate"
-                @change="toggleAutoRotate"
-              />
+              <input type="checkbox" id="auto-rotate" v-model="autoPhotoRotate" @change="toggleAutoRotate" />
               <label for="auto-rotate">
                 <span>{{ autoPhotoRotate ? '自动轮播中' : '手动切换' }}</span>
               </label>
@@ -198,9 +177,7 @@ let photoRotateInterval: any = null;
 // --- 计算属性 ---
 const characterNames = computed(() => Object.keys(statData.value.角色 || {}));
 const hasCharacters = computed(() => characterNames.value.length > 0);
-const activeCharData = computed<CharacterData | null>(() =>
-  statData.value.角色?.[activeChar.value] || null
-);
+const activeCharData = computed<CharacterData | null>(() => statData.value.角色?.[activeChar.value] || null);
 
 // 照片序列管理
 const photoSequence = ref<string[]>([]); // 存储角色照片序列
@@ -277,9 +254,8 @@ const currentPhoto = computed(() => {
     console.log(`[照片] 查找具体文件: ${photoFileName}`);
 
     // 检查这个具体文件是否在序列中
-    const specificIndex = validPhotos.findIndex(url =>
-      url.endsWith(`/${photoFileName}`) ||
-      url.endsWith(photoFileName)
+    const specificIndex = validPhotos.findIndex(
+      url => url.endsWith(`/${photoFileName}`) || url.endsWith(photoFileName),
     );
 
     if (specificIndex !== -1) {
@@ -320,7 +296,7 @@ const basicInfo = computed(() => ({
   '🎂 年龄': activeCharData.value?.年龄,
   '💼 身份': activeCharData.value?.身份,
   '🤝 关系': activeCharData.value?.与user关系,
-  '📍 位置': activeCharData.value?.所处位置
+  '📍 位置': activeCharData.value?.所处位置,
 }));
 
 const appearanceInfo = computed(() => ({
@@ -328,7 +304,7 @@ const appearanceInfo = computed(() => ({
   '🌸 胸乳': activeCharData.value?.胸乳,
   '👙 内衣': activeCharData.value?.内衣,
   '🔒 私处': activeCharData.value?.私处,
-  '👠 鞋袜': activeCharData.value?.鞋袜
+  '👠 鞋袜': activeCharData.value?.鞋袜,
 }));
 
 // --- 核心逻辑 (已修复) ---
@@ -442,7 +418,7 @@ const stopAutoRotate = () => {
 };
 
 // --- 生命周期 & 监听 ---
-watch(currentTheme, (newTheme) => {
+watch(currentTheme, newTheme => {
   localStorage.setItem('organization_theme', newTheme);
   document.documentElement.setAttribute('data-theme', newTheme);
 });
@@ -472,7 +448,7 @@ watch([activeChar, autoPhotoRotate, isPhotoGalleryMode, photoCount], () => {
 });
 
 // 监听自动轮播设置
-watch(autoPhotoRotate, (newValue) => {
+watch(autoPhotoRotate, newValue => {
   if (newValue) {
     startAutoRotate();
   } else {
@@ -676,7 +652,9 @@ onUnmounted(() => {
 
   &.gallery-mode {
     border-color: var(--c-primary);
-    box-shadow: 0 0 0 2px var(--c-primary), var(--glass-shadow);
+    box-shadow:
+      0 0 0 2px var(--c-primary),
+      var(--glass-shadow);
   }
 
   img {
@@ -707,7 +685,7 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 8px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.1), transparent);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
   }
 
   .photo-counter {
@@ -739,7 +717,7 @@ onUnmounted(() => {
     font-size: 12px;
     color: var(--c-text-main);
     transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     &:hover {
       background: var(--c-primary);
@@ -775,7 +753,7 @@ onUnmounted(() => {
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: rgba(0,0,0,0.05);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: var(--radius-lg);
   overflow-x: auto;
   margin-bottom: 16px;
@@ -822,7 +800,7 @@ onUnmounted(() => {
     &.active {
       background: var(--c-bg-input);
       color: var(--c-primary);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       font-weight: 700;
     }
   }
@@ -1007,7 +985,7 @@ onUnmounted(() => {
   gap: 10px;
   padding: 8px 0;
 
-  input[type="checkbox"] {
+  input[type='checkbox'] {
     display: none;
   }
 
@@ -1027,7 +1005,7 @@ onUnmounted(() => {
     background: var(--glass-border);
     border-radius: 12px;
     transition: all 0.3s;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .switch::before {
@@ -1040,10 +1018,10 @@ onUnmounted(() => {
     background: white;
     border-radius: 50%;
     transition: all 0.3s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
-  input[type="checkbox"]:checked + label {
+  input[type='checkbox']:checked + label {
     span {
       color: var(--c-primary);
     }
@@ -1070,7 +1048,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   z-index: 999;
   display: flex;
@@ -1085,7 +1063,7 @@ onUnmounted(() => {
   border: 1px solid var(--glass-border);
   width: 90%;
   max-width: 300px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   animation: modalPop 0.3s var(--ease-spring);
 
   .modal-header {
@@ -1094,7 +1072,9 @@ onUnmounted(() => {
     align-items: center;
     margin-bottom: 20px;
 
-    h3 { margin: 0; }
+    h3 {
+      margin: 0;
+    }
 
     .btn-close-icon {
       background: transparent;
@@ -1105,7 +1085,9 @@ onUnmounted(() => {
       padding: 0;
       line-height: 1;
 
-      &:hover { color: var(--c-text-main); }
+      &:hover {
+        color: var(--c-text-main);
+      }
     }
   }
 
@@ -1129,14 +1111,26 @@ onUnmounted(() => {
 
 /* Animations */
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes modalPop {
-  0% { opacity: 0; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .fade-slide-enter-active,
@@ -1158,7 +1152,8 @@ onUnmounted(() => {
 .fade-leave-active {
   transition: opacity 0.2s;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>
