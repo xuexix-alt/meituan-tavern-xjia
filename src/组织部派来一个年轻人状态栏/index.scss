@@ -1,0 +1,196 @@
+/* =========================================
+   💎 灵动 UI 设计系统 - 核心样式表 (Large Text Edition)
+   ========================================= */
+
+/* 1. 核心设计令牌 Design Tokens */
+:root {
+  /* 🎨 色相控制台 */
+  --hue-primary: 215;
+  --hue-success: 150;
+  --hue-warning: 35;
+  --hue-danger: 350;
+
+  /* 🖌️ 基础色板 */
+  --c-primary: hsl(var(--hue-primary) 90% 60%);
+  --c-primary-hover: hsl(var(--hue-primary) 95% 55%);
+  --c-bg-body: hsl(220 20% 98%);
+
+  /* 📝 排版系统 - 增大版 */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+
+  /* ⬆️ 调整：基础字号提升 */
+  --text-base: 18px;          /* 桌面端默认 18px (原16px) */
+  --text-base-mobile: 16px;   /* 移动端保持 16px 以防溢出 */
+  --text-scale-ratio: 1.25;   /* 字体阶梯比例 */
+
+  --c-text-main: hsl(220 25% 20%); /* 浅色模式下增加对比度 */
+  --c-text-sub: hsl(220 20% 35%);  /* 浅色模式下增加对比度 */
+  --c-text-mute: hsl(220 15% 55%); /* 浅色模式下增加对比度 */
+
+  /* 🧊 极致玻璃拟态 */
+  --glass-bg: hsla(0, 0%, 100%, 0.75); /* 稍微增加不透明度以提高文字对比度 */
+  --glass-border: hsla(0, 0%, 100%, 0.6);
+  --glass-highlight: hsla(0, 0%, 100%, 0.8);
+  --glass-shadow:
+    0 8px 32px -4px hsla(220, 20%, 10%, 0.08),
+    0 2px 4px 0 hsla(220, 20%, 10%, 0.02);
+  --glass-blur: 28px;
+  --glass-saturate: 190%;
+
+  /* 📐 布局与物理引擎 */
+  --radius-xl: 28px; /* 圆角随字体微调增大 */
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+
+  /* ⬆️ 调整：间距基准增加，配合大字体 */
+  --space-base: 5px;
+  --space-unit: calc(var(--space-base) * 4); /* 20px */
+
+  /* ⚡ 动效曲线 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 🌑 深色模式 */
+:root[data-theme='dark'] {
+  --c-primary: hsl(var(--hue-primary) 85% 65%);
+  --c-text-main: hsl(220 10% 98%); /* 更亮的白色以提升深色背景可读性 */
+  --c-text-sub: hsl(220 10% 75%);
+  --c-text-mute: hsl(220 10% 55%);
+
+  --glass-bg: hsla(220, 30%, 10%, 0.75);
+  --glass-border: hsla(0, 0%, 100%, 0.1);
+  --glass-highlight: hsla(0, 0%, 100%, 0.15);
+  --glass-shadow: 0 12px 48px hsla(0, 0%, 0%, 0.5);
+}
+
+/* 📜 羊皮纸/复古模式 (Vintage Mode) */
+:root[data-theme='classic_vintage'] {
+  --hue-primary: 35;
+  --c-primary: hsl(35 90% 35%);
+  --c-text-main: hsl(30 20% 20%);
+  --c-text-sub: hsl(30 15% 40%);
+  --c-text-mute: hsl(30 15% 60%);
+
+  --glass-bg: hsla(40, 30%, 94%, 0.9);
+  --glass-border: hsla(35, 50%, 40%, 0.15);
+  --glass-highlight: hsla(40, 50%, 98%, 0.8);
+  --glass-shadow: 0 4px 12px hsla(30, 20%, 10%, 0.08);
+  --glass-blur: 8px;
+  --glass-saturate: 100%;
+
+  --font-sans: 'Merriweather', 'Georgia', serif; /* 切换为衬线体 */
+}
+
+/* =========================================
+   🛡️ 组件沙盒隔离
+   ========================================= */
+.status-bar-container {
+  /* 基础重置 */
+  all: initial;
+  display: block;
+  font-family: var(--font-sans);
+  color: var(--c-text-main);
+
+  /* ⬆️ 调整：字体与行高优化 */
+  font-size: var(--text-base);
+  line-height: 1.75; /* 增加行高，提升大段文字阅读体验 */
+  letter-spacing: -0.01em; /* 微调字间距，让大字体更紧凑精致 */
+
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: var(--space-unit);
+
+  /* 递归重置盒模型 */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 标题排版系统 (新增) */
+  h1, h2, h3, .text-display {
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: calc(var(--space-unit) * 0.75);
+    color: var(--c-text-main);
+  }
+
+  h1 { font-size: calc(var(--text-base) * 2.5); }
+  h2 { font-size: calc(var(--text-base) * 1.75); }
+  h3 { font-size: calc(var(--text-base) * 1.25); }
+
+  p {
+    margin-bottom: var(--space-unit);
+  }
+
+  small, .text-sm {
+    font-size: 0.85em;
+    color: var(--c-text-sub);
+  }
+
+  /* 滚动条美化 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--c-text-mute);
+    border-radius: 10px;
+    background-clip: content-box;
+    border: 1px solid transparent;
+    opacity: 0.2;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--c-text-sub);
+  }
+
+  /* 💎 核心玻璃容器 */
+  .glass-container {
+    position: relative;
+    width: 100%;
+    max-width: 860px; /* 稍微加宽容器以容纳大字体 */
+    margin: 0 auto;
+
+    /* ⬆️ 调整：内边距增大 */
+    padding: calc(var(--space-base) * 7); /* 35px */
+
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-highlight);
+    box-shadow: var(--glass-shadow);
+    border-radius: var(--radius-xl);
+
+    transition: all 0.4s var(--ease-spring);
+  }
+}
+
+/* ♿ 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  .status-bar-container * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 📱 移动端适配 */
+@media (max-width: 640px) {
+  :root {
+    /* 移动端回调字号，避免屏幕塞不下 */
+    --text-base: var(--text-base-mobile);
+    --space-base: 4px;
+  }
+
+  .status-bar-container .glass-container {
+    padding: calc(var(--space-base) * 5);
+    border-radius: var(--radius-lg);
+  }
+}
