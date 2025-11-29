@@ -202,9 +202,7 @@ const loadImagesParallel = async (roleName: string): Promise<string[]> => {
   console.log(`[图片] 🔍 开始并行加载 "${roleName}" 的所有 JPG 图片 (共 ${imageUrls.length} 个 URL)...`);
 
   // 并行发起所有请求
-  const results = await Promise.allSettled(
-    imageUrls.map(({ url, name }) => loadImageAsBlob(url, name))
-  );
+  const results = await Promise.allSettled(imageUrls.map(({ url, name }) => loadImageAsBlob(url, name)));
 
   // 筛选成功的图片
   const blobUrls: string[] = [];
@@ -221,24 +219,22 @@ const loadImagesParallel = async (roleName: string): Promise<string[]> => {
 
 // 从 URL 加载单个图片为 Blob URL
 const loadImageAsBlob = (url: string, fileName: string): Promise<string | null> => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     // 使用 fetch 加载图片，避免 Canvas 转换的性能开销
     fetch(url, { mode: 'cors' })
-      .then((response) => {
+      .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
         return response.blob();
       })
-      .then((blob) => {
+      .then(blob => {
         // 创建 Blob URL，比 Base64 快得多
         const blobUrl = URL.createObjectURL(blob);
-        console.log(
-          `[图片] ✅ 成功加载并转换: ${fileName} (${(blob.size / 1024).toFixed(2)} KB)`
-        );
+        console.log(`[图片] ✅ 成功加载并转换: ${fileName} (${(blob.size / 1024).toFixed(2)} KB)`);
         resolve(blobUrl);
       })
-      .catch((error) => {
+      .catch(error => {
         console.warn(`[图片] ❌ 加载失败: ${fileName}`, error.message);
         resolve(null);
       });
@@ -257,9 +253,7 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
       return cachedImage;
     }
 
-    console.log(
-      `[图片] 📡 缓存未命中，正在加载 "${roleName}" 的图片...（使用并行加载，速度更快）`
-    );
+    console.log(`[图片] 📡 缓存未命中，正在加载 "${roleName}" 的图片...（使用并行加载，速度更快）`);
 
     // 使用并行加载获取所有可用图片
     const blobUrls = await loadImagesParallel(roleName);
@@ -273,9 +267,7 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
     const randomIndex = Math.floor(Math.random() * blobUrls.length);
     const selectedImage = blobUrls[randomIndex];
 
-    console.log(
-      `[图片] 🎲 为 "${roleName}" 随机选择第 ${randomIndex + 1} 张图片（共 ${blobUrls.length} 张）`
-    );
+    console.log(`[图片] 🎲 为 "${roleName}" 随机选择第 ${randomIndex + 1} 张图片（共 ${blobUrls.length} 张）`);
 
     // 存储到sessionStorage（每个角色固定一张，避免每次都重新加载）
     sessionStorage.setItem(cacheKey, selectedImage);
@@ -385,8 +377,6 @@ const mapRoleToImageName = (roleName: string, roleIndex: number): string => {
 // ✅ 图片缓存已由独立的脚本管理器处理
 // 前端界面直接从全局缓存获取图片
 
-
-
 // ✅ 当前显示的图片URL（响应式）
 const currentPhotoUrl = ref<string>('');
 
@@ -430,9 +420,7 @@ const preloadNextCharacter = async (nextCharName: string) => {
 
     // 存储到预加载缓存
     preloadCache.value.set(nextCharName, selectedImage);
-    console.log(
-      `[预加载] ✅ "${nextCharName}" 预加载完成 (选择第 ${randomIndex + 1} 张，共 ${blobUrls.length} 张)`
-    );
+    console.log(`[预加载] ✅ "${nextCharName}" 预加载完成 (选择第 ${randomIndex + 1} 张，共 ${blobUrls.length} 张)`);
 
     // 清理其他未使用的 Blob URL
     blobUrls.forEach((url, index) => {
@@ -641,7 +629,7 @@ const handleImageError = (e: Event) => {
 
   // 尝试重新加载当前角色的图片（这次会跳过预加载缓存，从源头重新加载）
   console.log('[照片] 🔄 尝试重新加载图片...');
-  loadCurrentPhoto().catch((err) => {
+  loadCurrentPhoto().catch(err => {
     console.error('[照片] ❌ 重新加载失败:', err);
   });
 };
@@ -710,7 +698,7 @@ onMounted(async () => {
   // 5. 等待数据加载完成后，加载图片
   const unwatch = watch(
     () => statData.value.角色,
-    async (newRoles) => {
+    async newRoles => {
       if (newRoles && Object.keys(newRoles).length > 0) {
         // 等待角色自动选中完成后再加载图片
         if (activeChar.value) {
@@ -719,11 +707,11 @@ onMounted(async () => {
         }
       }
     },
-    { immediate: true }
+    { immediate: true },
   );
 
   // 同时监听 activeChar 的变化，一旦设置就加载图片
-  const unwatchChar = watch(activeChar, async (newChar) => {
+  const unwatchChar = watch(activeChar, async newChar => {
     if (newChar && characterNames.value.length > 0) {
       await loadCurrentPhoto();
       unwatchChar(); // 只执行一次
@@ -735,7 +723,7 @@ onUnmounted(() => {
   if (resizeObserver) resizeObserver.disconnect();
 
   // ✅ 清理预加载缓存中的 Blob URL，防止内存泄漏
-  preloadCache.value.forEach((blobUrl) => {
+  preloadCache.value.forEach(blobUrl => {
     URL.revokeObjectURL(blobUrl);
   });
   preloadCache.value.clear();
