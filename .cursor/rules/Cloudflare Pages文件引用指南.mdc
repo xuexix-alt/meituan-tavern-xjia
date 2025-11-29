@@ -1,0 +1,333 @@
+# Cloudflare Pages 文件引用指南
+
+## 利用 Cloudflare Pages 分发静态文件
+
+Cloudflare Pages 是一个强大的免费静态网站托管平台，支持自动部署和全球 CDN 分发。对于部署在 Cloudflare Pages 中的文件，你可以直接通过以下 URL 访问它们：
+
+```
+https://你的项目名.pages.dev/文件路径
+```
+
+## URL 构成
+
+| 组件 | 示例 | 说明 |
+|------|------|------|
+| **Pages 域名** | `meituan-tavern-xjia.pages.dev` | 来自 Cloudflare Pages 的二级域名 |
+| **文件路径** | `/image/苏晴.jpg` | 相对于 `dist` 文件夹的路径 |
+| **完整 URL** | `https://meituan-tavern-xjia.pages.dev/image/苏晴.jpg` | 直接访问文件 |
+
+## 快速示例
+
+### 示例1：脚本引用（推荐用于 Tavern Helper 脚本）
+
+```typescript
+// 在脚本中导入 JavaScript 模块
+import 'https://meituan-tavern-xjia.pages.dev/dist/脚本/index.js'
+
+// 或者在 HTML 中
+<script src="https://meituan-tavern-xjia.pages.dev/dist/脚本/index.js"></script>
+```
+
+### 示例2：前端界面加载
+
+```html
+<!-- 在酒馆消息中动态加载界面 -->
+<body>
+<script>
+  $('body').load('https://meituan-tavern-xjia.pages.dev/dist/状态栏/index.html')
+</script>
+</body>
+```
+
+### 示例3：CSS 样式表引用
+
+```html
+<!-- 在 HTML 中引用样式 -->
+<head>
+  <link rel="stylesheet" href="https://meituan-tavern-xjia.pages.dev/dist/样式/main.css">
+</head>
+
+<!-- 或在 CSS 中导入 -->
+<style>
+  @import url("https://meituan-tavern-xjia.pages.dev/dist/样式/theme.css");
+</style>
+```
+
+### 示例4：图片和媒体资源
+
+```typescript
+// 在 TypeScript/JavaScript 中
+const imageUrl = 'https://meituan-tavern-xjia.pages.dev/image/角色.jpg';
+
+// 在 HTML 中
+<img src="https://meituan-tavern-xjia.pages.dev/image/角色.jpg" alt="角色头像">
+```
+
+---
+
+## 与 GitHub + jsdelivr 的对比
+
+| 特性 | GitHub + jsdelivr | Cloudflare Pages |
+|------|-------------------|------------------|
+| **部署方式** | 手动管理缓存 | ✅ 自动部署 |
+| **缓存刷新** | ⚠️ 需要手动处理 | ✅ 自动最新 |
+| **国内速度** | 中等 | ⭐⭐⭐⭐⭐ 优秀 |
+| **全球 CDN** | 依赖 jsDelivr | ✅ Cloudflare 全球网络 |
+| **自动化程度** | 低 | ✅ 完全自动化 |
+| **成本** | 免费 | ✅ 免费 |
+| **适用场景** | 不常更新的库 | ✅ 频繁更新的项目 |
+
+---
+
+## 使用场景详解
+
+### 场景1：在 Tavern Helper 脚本库中引用自己的脚本
+
+**旧方法（GitHub + jsdelivr）**：
+```typescript
+import 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia@main/dist/脚本/index.js'
+```
+
+**新方法（Cloudflare Pages）**：
+```typescript
+import 'https://meituan-tavern-xjia.pages.dev/dist/脚本/index.js'
+```
+
+**优势**：
+- ✅ 无需 `@main` 分支标记
+- ✅ 无需等待缓存刷新
+- ✅ 更新立即生效
+
+---
+
+### 场景2：在消息中动态加载前端界面
+
+**在 STScript 中**：
+```
+/run
+$('body').load('https://meituan-tavern-xjia.pages.dev/dist/状态栏/index.html')
+```
+
+**在 JavaScript 中**：
+```typescript
+// 立即加载
+$('body').load('https://meituan-tavern-xjia.pages.dev/dist/状态栏/index.html');
+
+// 或者追加到特定容器
+$('#message-container').load('https://meituan-tavern-xjia.pages.dev/dist/状态栏/index.html');
+```
+
+---
+
+### 场景3：作为图片库 CDN
+
+**在前端界面中**：
+```typescript
+const characterImages = {
+  苏晴: 'https://meituan-tavern-xjia.pages.dev/image/苏晴.jpg',
+  苏晴1: 'https://meituan-tavern-xjia.pages.dev/image/苏晴1.jpg',
+  苏晴2: 'https://meituan-tavern-xjia.pages.dev/image/苏晴2.jpg',
+};
+
+// 在 Vue 中使用
+<img :src="characterImages.苏晴" alt="苏晴">
+```
+
+**在 HTML 中**：
+```html
+<img src="https://meituan-tavern-xjia.pages.dev/image/苏晴.jpg" alt="苏晴头像">
+```
+
+---
+
+### 场景4：提供公共资源给其他项目
+
+如果你的仓库中有许多可复用的资源，其他开发者可以直接引用：
+
+**他人的脚本中**：
+```typescript
+// 引用你的图片库
+const myImageLibrary = 'https://meituan-tavern-xjia.pages.dev/image/';
+
+// 引用你的工具脚本
+import utils from 'https://meituan-tavern-xjia.pages.dev/dist/utils/index.js';
+```
+
+---
+
+## 最佳实践
+
+### 1️⃣ URL 规范化
+
+```typescript
+// ✅ 正确：使用明确的文件路径
+const CDN_PREFIX = 'https://meituan-tavern-xjia.pages.dev/image';
+const imageUrl = `${CDN_PREFIX}/苏晴.jpg`;
+
+// ❌ 避免：路径不清晰
+const imageUrl = 'https://meituan-tavern-xjia.pages.dev/苏晴.jpg';
+```
+
+### 2️⃣ 版本管理和缓存策略
+
+```typescript
+// 方法1：使用日期作为缓存版本（强制更新）
+const version = new Date().toISOString().split('T')[0];
+const imageUrl = `https://meituan-tavern-xjia.pages.dev/image/苏晴.jpg?v=${version}`;
+
+// 方法2：在 package.json 中维护版本号
+import { version } from './package.json';
+const CDN_PREFIX = `https://meituan-tavern-xjia.pages.dev/dist?v=${version}`;
+```
+
+### 3️⃣ 错误处理
+
+```typescript
+// 提供备选方案
+const loadImageFromCDN = async (url: string, fallbackUrl?: string) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return url;
+  } catch (error) {
+    console.warn(`Failed to load ${url}:`, error);
+    if (fallbackUrl) {
+      console.log(`Trying fallback: ${fallbackUrl}`);
+      return fallbackUrl;
+    }
+    return null;
+  }
+};
+
+// 使用
+const imageUrl = await loadImageFromCDN(
+  'https://meituan-tavern-xjia.pages.dev/image/苏晴.jpg',
+  'https://fallback-cdn.example.com/苏晴.jpg'
+);
+```
+
+### 4️⃣ 性能优化
+
+```typescript
+// 预加载资源
+const preloadImages = (urls: string[]) => {
+  urls.forEach(url => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = url;
+    document.head.appendChild(link);
+  });
+};
+
+// 使用
+preloadImages([
+  'https://meituan-tavern-xjia.pages.dev/image/苏晴.jpg',
+  'https://meituan-tavern-xjia.pages.dev/image/苏晴1.jpg',
+]);
+```
+
+---
+
+## 常见问题
+
+### Q1: 文件更新后多久生效？
+
+**A**: 通常立即生效（<10 秒）。Cloudflare Pages 会自动清除文件的缓存。如果遇到旧文件，可以：
+1. 强制刷新浏览器（Ctrl+Shift+R）
+2. 使用查询参数绕过缓存：`?t=时间戳`
+
+### Q2: 如何处理 CORS 问题？
+
+**A**: Cloudflare Pages 默认允许跨域访问，但可以在 `_headers` 文件中自定义：
+
+```
+# 在 dist 文件夹根目录创建 _headers 文件
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+```
+
+### Q3: 能否使用自定义域名？
+
+**A**: 可以。在 Cloudflare 后台：
+1. Pages 项目 → Settings → Custom domains
+2. 添加你的域名（需要 DNS 指向 Cloudflare）
+3. 使用自定义域名：`https://cdn.你的域名.com/image/苏晴.jpg`
+
+### Q4: 文件大小有限制吗？
+
+**A**:
+- 单个文件：无特定限制，但推荐 <100MB
+- 项目总大小：取决于 GitHub 仓库限制（建议 <1GB）
+- 建议对大文件进行压缩优化
+
+### Q5: 能否隐藏某些文件？
+
+**A**: 可以。在 `_redirects` 或 `_headers` 中配置：
+
+```
+# 限制对某些路径的访问
+/private/* 404
+
+# 或要求身份验证
+/admin/* 401
+```
+
+---
+
+## 迁移指南
+
+如果你之前用的是 GitHub + jsdelivr，迁移到 Cloudflare Pages 很简单：
+
+### 步骤1：修改所有 CDN 前缀
+
+```typescript
+// 旧代码
+const CDN_PREFIX = 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia@main/image';
+
+// 新代码
+const CDN_PREFIX = 'https://meituan-tavern-xjia.pages.dev/image';
+```
+
+### 步骤2：构建并部署
+
+```bash
+pnpm build
+git add .
+git commit -m "Migrate from jsDelivr to Cloudflare Pages"
+git push origin main
+# Cloudflare 自动部署，无需其他操作
+```
+
+### 步骤3：验证
+
+在浏览器中测试新 URL 是否正常工作。
+
+---
+
+## 性能指标对比
+
+| 指标 | jsDelivr | Cloudflare Pages |
+|------|----------|------------------|
+| **平均延迟** | 100-300ms | 20-50ms |
+| **缓存更新** | 12-24 小时 | <10 秒 |
+| **全球节点** | ~300+ | ✅ 300+ (Cloudflare) |
+| **国内速度** | 中等（依赖运营商） | ⭐⭐⭐⭐⭐ 优秀 |
+
+---
+
+## 总结
+
+**使用 Cloudflare Pages 的核心优势**：
+
+✅ **自动化部署** - 推送即部署，无需手动刷新缓存
+✅ **全球 CDN** - Cloudflare 全球 300+ 个数据中心
+✅ **国内优化** - 在国内有优化的网络路由
+✅ **零成本** - 完全免费
+✅ **实时更新** - 文件更新立即生效
+✅ **无缓存烦恼** - 自动管理缓存策略
+
+**URL 格式**：`https://你的项目名.pages.dev/文件路径`
+
+立即开始使用 Cloudflare Pages 吧！🚀

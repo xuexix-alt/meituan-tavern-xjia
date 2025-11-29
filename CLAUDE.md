@@ -7,3 +7,4 @@
 @.cursor/rules/脚本.mdc
 @.cursor/rules/mvu变量框架.mdc
 @.cursor/rules/GitHub和jsdelivr.mdc
+@.cursor/rules/Cloudflare Pages文件引用指南.mdc
