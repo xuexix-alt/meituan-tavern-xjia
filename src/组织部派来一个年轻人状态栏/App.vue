@@ -171,6 +171,130 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { StatData, CharacterData } from './types';
 
+// ✅ 并行加载图片函数（改进版）
+// 一次性发起所有请求，大幅提升加载速度
+// ⚠️ 仅加载 JPG 格式，避免加载体积巨大的 PNG
+// 💡 使用 Cloudflare Pages 托管，无缓存问题，国内访问快
+const loadImagesParallel = async (roleName: string): Promise<string[]> => {
+  // Cloudflare Pages 完整自动部署，无缓存烦恼
+  const CDN_PREFIX = 'https://meituan-tavern-xjia.pages.dev/image';
+  // 备选方案（如果 pages.dev 域名被屏蔽）：
+  // - 绑定自定义域名后可以在 Cloudflare 后台配置
+  const maxAttempts = 5; // 尝试前5个数字后缀
+
+  // 生成所有可能的 URL（仅 JPG 格式）
+  const imageUrls: Array<{ url: string; name: string }> = [];
+
+  // 基础文件名（无数字后缀）- 仅加载 JPG
+  imageUrls.push({
+    url: `${CDN_PREFIX}/${encodeURIComponent(roleName)}.jpg`,
+    name: `${roleName}.jpg`,
+  });
+
+  // 带数字后缀的文件 - 仅加载 JPG
+  for (let i = 1; i <= maxAttempts; i++) {
+    imageUrls.push({
+      url: `${CDN_PREFIX}/${encodeURIComponent(roleName)}${i}.jpg`,
+      name: `${roleName}${i}.jpg`,
+    });
+  }
+
+  console.log(`[图片] 🔍 开始并行加载 "${roleName}" 的所有 JPG 图片 (共 ${imageUrls.length} 个 URL)...`);
+
+  // 并行发起所有请求
+  const results = await Promise.allSettled(
+    imageUrls.map(({ url, name }) => loadImageAsBlob(url, name))
+  );
+
+  // 筛选成功的图片
+  const blobUrls: string[] = [];
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value) {
+      blobUrls.push(result.value);
+      console.log(`[图片] ✅ 成功加载: ${imageUrls[index].name}`);
+    }
+  });
+
+  console.log(`[图片] 📊 共找到 ${blobUrls.length} 张 JPG 图片`);
+  return blobUrls;
+};
+
+// 从 URL 加载单个图片为 Blob URL
+const loadImageAsBlob = (url: string, fileName: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    // 使用 fetch 加载图片，避免 Canvas 转换的性能开销
+    fetch(url, { mode: 'cors' })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        // 创建 Blob URL，比 Base64 快得多
+        const blobUrl = URL.createObjectURL(blob);
+        console.log(
+          `[图片] ✅ 成功加载并转换: ${fileName} (${(blob.size / 1024).toFixed(2)} KB)`
+        );
+        resolve(blobUrl);
+      })
+      .catch((error) => {
+        console.warn(`[图片] ❌ 加载失败: ${fileName}`, error.message);
+        resolve(null);
+      });
+  });
+};
+
+// ✅ 改进的图片缓存获取函数
+const getImageFromCache = async (roleName: string): Promise<string | null> => {
+  try {
+    // 检查缓存是否已加载（使用sessionStorage防止同一会话重复加载）
+    const cacheKey = `image_cache_${roleName}`;
+    const cachedImage = sessionStorage.getItem(cacheKey);
+
+    if (cachedImage) {
+      console.log(`[图片] ✅ 从缓存获取 "${roleName}" 的图片`);
+      return cachedImage;
+    }
+
+    console.log(
+      `[图片] 📡 缓存未命中，正在加载 "${roleName}" 的图片...（使用并行加载，速度更快）`
+    );
+
+    // 使用并行加载获取所有可用图片
+    const blobUrls = await loadImagesParallel(roleName);
+
+    if (blobUrls.length === 0) {
+      console.log(`[图片] ❌ "${roleName}" 没有找到任何图片文件`);
+      return null;
+    }
+
+    // 随机选择一张图片
+    const randomIndex = Math.floor(Math.random() * blobUrls.length);
+    const selectedImage = blobUrls[randomIndex];
+
+    console.log(
+      `[图片] 🎲 为 "${roleName}" 随机选择第 ${randomIndex + 1} 张图片（共 ${blobUrls.length} 张）`
+    );
+
+    // 存储到sessionStorage（每个角色固定一张，避免每次都重新加载）
+    sessionStorage.setItem(cacheKey, selectedImage);
+    console.log(`[图片] 💾 已缓存 "${roleName}" 的图片`);
+
+    // 清理其他未使用的 Blob URL（防止内存泄漏）
+    blobUrls.forEach((url, index) => {
+      if (index !== randomIndex) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    return selectedImage;
+  } catch (e) {
+    console.warn(`[图片] 获取图片失败:`, e);
+    return null;
+  }
+};
+
 // --- 状态管理 ---
 const containerRef = ref<HTMLElement | null>(null);
 const statData = ref<StatData>({
@@ -203,185 +327,173 @@ const isImageLoading = ref(false);
 const characterNames = computed(() => Object.keys(statData.value.角色 || {}));
 const hasCharacters = computed(() => characterNames.value.length > 0);
 
+// ✅ 图片加载状态
+const imagesLoaded = computed(() => {
+  // 检查是否有缓存的图片
+  const currentIndex = characterNames.value.indexOf(activeChar.value);
+  if (currentIndex === -1) return false;
+
+  const imageKey = mapRoleToImageName(activeChar.value, currentIndex);
+  const cacheKey = `image_cache_${imageKey}`;
+  return sessionStorage.getItem(cacheKey) !== null;
+});
+
 // ✅ 默认选中第一个角色（{{user}}）
 const defaultActiveChar = computed(() => {
   return characterNames.value.length > 0 ? characterNames.value[0] : '';
 });
 
-// ✅ 清理后的角色名列表（用于显示）
+// ✅ 角色名列表（用于显示，直接使用酒馆解析后的原名）
+// 例如：["小哥哥", "苏晴", "丁小芹"] - 图片文件名与角色名一致
 const cleanedCharacterNames = computed(() => {
   return characterNames.value.map(name => cleanCharName(name));
 });
 const activeCharData = computed<CharacterData | null>(() => {
   if (!activeChar.value) return null;
-  // ✅ 从当前选中的角色名获取数据（{{user}} 已经被酒馆替换为实际用户名）
+  // ✅ 从当前选中的角色名获取数据（{{user}} 已被酒馆替换为实际用户名）
   const data = statData.value.角色?.[activeChar.value];
   console.log(`[数据] 从"${activeChar.value}"获取数据`);
   return data || null;
 });
 
-// ✅ 清理角色名函数 - 提取纯名字，去除额外信息
+// ✅ 简化版清理角色名函数（仅用于安全检查）
 const cleanCharName = (name: string) => {
   if (!name) return '';
-
-  // 去除括号及括号内的所有内容：藤原千惠 (东京某大型商社的社长千金) → 藤原千惠
-  let cleaned = name.replace(/\s*\([^)]*\)\s*/g, '');
-
-  // 去除可能的冒号和后续内容：藤原千惠: 某角色 → 藤原千惠
-  cleaned = cleaned.replace(/:\s*.*$/, '');
-
-  // ✅ 特殊处理：{{user}} 硬解码为 陆副厂长
-  if (cleaned.includes('{{user}}') || cleaned.includes('user') || cleaned === '用户') {
-    cleaned = cleaned.replace(/{{user}}|user|用户/gi, '陆副厂长');
-  }
-
-  // ✅ 去除数字后缀（保持与缓存键一致）：小哥哥1 → 小哥哥
-  cleaned = cleaned.replace(/\d+$/, '');
-
-  // 去除前后空格
-  cleaned = cleaned.trim();
-
-  return cleaned;
+  // 只做基本的安全检查和空格清理
+  return name.trim();
 };
 
-// ✅ 图片缓存系统 - 直接加载 image 目录
-const imageMap = new Map<string, string[]>(); // key: 角色名, value: 图片URL列表（base64）
-const isPreloading = ref(false);
-const imagesLoaded = ref(false); // ✅ 图片缓存是否加载完成
+// ✅ 将角色名映射到图片名
+// 注意：第一个角色无论用户名是什么，都使用"陆副厂长"的图片
+const mapRoleToImageName = (roleName: string, roleIndex: number): string => {
+  // 第一个角色（索引0）永远映射为"陆副厂长"（玩家角色{{user}}）
+  // 不管用户名是"小哥哥"、"张三"还是其他，都使用"陆副厂长"图片
+  if (roleIndex === 0) {
+    return '陆副厂长';
+  }
+
+  // ✅ 其他角色直接使用角色名作为图片名
+  // 苏晴 → 苏晴
+  // 丁小芹 → 丁小芹
+  // 林婉仪 → 林婉仪
+  // 王春燕 → 王春燕
+  // 白慧 → 白慧
+
+  return cleanCharName(roleName);
+};
+
+// ✅ 图片缓存已由独立的脚本管理器处理
+// 前端界面直接从全局缓存获取图片
+
+
+
+// ✅ 当前显示的图片URL（响应式）
+const currentPhotoUrl = ref<string>('');
+
+// ✅ 预加载缓存（后台预加载下一个角色的图片，消除切换延迟）
+const preloadCache = ref<Map<string, string>>(new Map());
 
 /**
- * 加载 GitHub image 目录下的所有图片
+ * 后台预加载指定角色的图片
+ * 不会阻塞 UI，用户切换时可以立即显示
  */
-const loadAllImages = async () => {
-  if (isPreloading.value) return;
-  isPreloading.value = true;
+const preloadNextCharacter = async (nextCharName: string) => {
+  if (!nextCharName) return;
 
-  console.log('[照片缓存] 开始加载 image 目录...');
+  // 如果已经在缓存中，跳过
+  if (preloadCache.value.has(nextCharName)) {
+    console.log(`[预加载] ⏭️ "${nextCharName}" 已在预加载缓存中，跳过`);
+    return;
+  }
+
+  // 如果已经在 sessionStorage 中，跳过
+  const cacheKey = `image_cache_${nextCharName}`;
+  if (sessionStorage.getItem(cacheKey)) {
+    console.log(`[预加载] ⏭️ "${nextCharName}" 已在 sessionStorage 中，跳过`);
+    return;
+  }
+
+  console.log(`[预加载] 🚀 后台预加载 "${nextCharName}" 的图片...`);
 
   try {
-    // 使用 GitHub API 获取目录内容
-    const response = await fetch('https://api.github.com/repos/xuexix-alt/meituan-tavern-xjia/contents/image');
-    const files = await response.json();
+    // 使用 loadImagesParallel 并行加载所有图片
+    const blobUrls = await loadImagesParallel(nextCharName);
 
-    // 过滤出 PNG 图片文件
-    const pngFiles = files.filter((file: any) => file.name.toLowerCase().endsWith('.png'));
+    if (blobUrls.length === 0) {
+      console.log(`[预加载] ❌ "${nextCharName}" 没有可用的图片`);
+      return;
+    }
 
-    console.log(`[照片缓存] 发现 ${pngFiles.length} 张图片`);
+    // 随机选择一张图片
+    const randomIndex = Math.floor(Math.random() * blobUrls.length);
+    const selectedImage = blobUrls[randomIndex];
 
-    // 并行加载所有图片
-    await Promise.all(
-      pngFiles.map(async (file: any) => {
-        // 加载图片到缓存
-        await loadImageToCache(file.name);
-      }),
+    // 存储到预加载缓存
+    preloadCache.value.set(nextCharName, selectedImage);
+    console.log(
+      `[预加载] ✅ "${nextCharName}" 预加载完成 (选择第 ${randomIndex + 1} 张，共 ${blobUrls.length} 张)`
     );
 
-    console.log(`[照片缓存] 加载完成！缓存了 ${imageMap.size} 个角色的图片`);
-    imagesLoaded.value = true; // ✅ 标记缓存加载完成
-    isPreloading.value = false;
-  } catch (e) {
-    console.error('[照片缓存] 加载失败:', e);
-    isPreloading.value = false;
-  }
-};
-
-/**
- * 加载单张图片到缓存
- */
-const loadImageToCache = async (fileName: string): Promise<void> => {
-  return new Promise(resolve => {
-    const CDN_PREFIX = 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia@main/image';
-    const url = `${CDN_PREFIX}/${fileName}`;
-
-    // 提取角色名（去除 .png 和数字后缀）
-    const charName = extractCharName(fileName);
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      // ✅ 转换为 base64 存储到缓存
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL('image/png');
-
-        // 添加到角色的图片列表中
-        if (!imageMap.has(charName)) {
-          imageMap.set(charName, []);
-        }
-        imageMap.get(charName)?.push(dataUrl);
-
-        console.log(`[照片缓存] ${charName}: ${fileName}`);
-        resolve();
-      } catch (e) {
-        console.warn(`[照片缓存] 缓存失败: ${fileName}`, e);
-        resolve();
+    // 清理其他未使用的 Blob URL
+    blobUrls.forEach((url, index) => {
+      if (index !== randomIndex) {
+        URL.revokeObjectURL(url);
       }
-    };
-
-    img.onerror = () => {
-      console.log(`[照片缓存] 跳过不存在的图片: ${fileName}`);
-      resolve();
-    };
-
-    img.src = url;
-  });
+    });
+  } catch (e) {
+    console.warn(`[预加载] ❌ 预加载 "${nextCharName}" 失败:`, e);
+  }
 };
 
 /**
- * 从文件名提取角色名
- * 例如：
- *   "丁小芹1.png" -> "丁小芹"
- *   "藤原千惠.png" -> "藤原千惠"
- *   "林婉仪23.png" -> "林婉仪"
+ * 加载当前角色的图片
+ * 优先使用预加载缓存，其次使用 sessionStorage 缓存
  */
-const extractCharName = (fileName: string): string => {
-  // 去除扩展名
-  let name = fileName.replace(/\.png$/i, '');
-
-  // 去除数字后缀（支持多位数）
-  name = name.replace(/\d+$/, '');
-
-  return name;
-};
-
-/**
- * 获取当前角色的随机图片
- */
-const currentPhotoUrl = computed(() => {
-  // ✅ 只有在缓存加载完成后才返回图片
-  if (!imagesLoaded.value) {
-    return '';
+const loadCurrentPhoto = async () => {
+  // ✅ 获取当前角色在列表中的索引
+  const currentIndex = characterNames.value.indexOf(activeChar.value);
+  if (currentIndex === -1) {
+    console.log(`[照片] 当前角色"${activeChar.value}"不在角色列表中`);
+    currentPhotoUrl.value = '';
+    return;
   }
 
-  let imageKey = '';
+  // ✅ 获取角色名（作为图片文件名）
+  // {{user}} 已被酒馆替换为实际用户名，如"小哥哥"
+  const imageKey = mapRoleToImageName(activeChar.value, currentIndex);
 
-  // ✅ 第一个角色（{{user}}）：永远显示陆副厂长的图片
-  if (activeChar.value === '{{user}}' || characterNames.value[0] === activeChar.value) {
-    imageKey = '陆副厂长';
-    console.log(`[照片] 第一个角色，显示"陆副厂长"的图片`);
+  console.log(`[照片] 角色索引: ${currentIndex}, 角色名: "${activeChar.value}", 图片名: "${imageKey}"`);
+
+  // ✅ 优先查询预加载缓存
+  if (preloadCache.value.has(imageKey)) {
+    const preloadedUrl = preloadCache.value.get(imageKey);
+    currentPhotoUrl.value = preloadedUrl || '';
+    console.log(`[照片] ${imageKey}: 从预加载缓存加载 ⚡`);
+
+    // 加载完成后预加载下一个角色
+    const nextIndex = (currentIndex + 1) % characterNames.value.length;
+    const nextCharName = characterNames.value[nextIndex];
+    const nextImageKey = mapRoleToImageName(nextCharName, nextIndex);
+    preloadNextCharacter(nextImageKey);
+    return;
+  }
+
+  // ✅ 从独立缓存中获取图片
+  const imageUrl = await getImageFromCache(imageKey);
+  if (imageUrl) {
+    currentPhotoUrl.value = imageUrl;
+    console.log(`[照片] ${imageKey}: 加载成功`);
+
+    // 加载完成后预加载下一个角色
+    const nextIndex = (currentIndex + 1) % characterNames.value.length;
+    const nextCharName = characterNames.value[nextIndex];
+    const nextImageKey = mapRoleToImageName(nextCharName, nextIndex);
+    preloadNextCharacter(nextImageKey);
   } else {
-    // ✅ 其他角色：使用角色同名的图片
-    imageKey = cleanCharName(activeChar.value);
-    console.log(`[照片] 其他角色，显示"${imageKey}"的图片`);
+    currentPhotoUrl.value = '';
+    console.log(`[照片] ${imageKey}: 暂无图片，暂不显示`);
   }
-
-  const images = imageMap.get(imageKey);
-  if (images && images.length > 0) {
-    // 随机选择一张
-    const randomIndex = Math.floor(Math.random() * images.length);
-    const selectedImage = images[randomIndex];
-    console.log(`[照片] 从"${imageKey}"缓存随机选择第 ${randomIndex + 1} 张图片（共 ${images.length} 张）`);
-    return selectedImage;
-  }
-
-  console.log(`[照片] ${imageKey}: 缓存中暂无图片，暂不显示`);
-  return '';
-});
+};
 
 // 基础信息映射
 const basicInfo = computed(() => ({
@@ -471,17 +583,50 @@ const handleManualRefresh = () => {
   }, 1000);
 };
 
-const switchCharacter = (name: string) => {
-  console.log(`[照片] 切换角色: "${name}"`);
-  activeChar.value = name;
-  isImageLoading.value = true; // 切换时重置加载状态
-  // 切换角色后调整高度
-  nextTick(adjustHeight);
+const switchCharacter = async (name: string) => {
+  console.log(`[切换] 💫 切换角色: "${name}"`);
+
+  // 设置加载状态
+  isImageLoading.value = true;
+
+  try {
+    activeChar.value = name;
+
+    // 获取新角色的索引，用于映射图片文件名
+    const newIndex = characterNames.value.indexOf(name);
+    const imageKey = mapRoleToImageName(name, newIndex);
+
+    // 检查预加载缓存，如果已预加载则直接使用
+    if (preloadCache.value.has(imageKey)) {
+      const preloadedUrl = preloadCache.value.get(imageKey);
+      currentPhotoUrl.value = preloadedUrl || '';
+      console.log(`[切换] ⚡ 使用预加载的图片，零延迟切换完成`);
+      isImageLoading.value = false;
+
+      // 预加载下一个角色
+      const nextIndex = (newIndex + 1) % characterNames.value.length;
+      const nextCharName = characterNames.value[nextIndex];
+      const nextImageKey = mapRoleToImageName(nextCharName, nextIndex);
+      preloadNextCharacter(nextImageKey);
+      return;
+    }
+
+    // 如果没有预加载，则加载新角色的图片
+    await loadCurrentPhoto();
+    console.log(`[切换] ✅ 切换完成: "${name}"`);
+  } catch (e) {
+    console.error(`[切换] ❌ 切换失败:`, e);
+  } finally {
+    isImageLoading.value = false;
+
+    // 切换角色后调整高度
+    nextTick(adjustHeight);
+  }
 };
 
 const handleImageLoad = () => {
   isImageLoading.value = false;
-  console.log('[照片] 图片加载成功');
+  console.log('[照片] ✅ 图片加载成功并显示在页面中');
   // 图片加载完可能影响高度
   nextTick(() => setTimeout(adjustHeight, 100));
 };
@@ -489,12 +634,28 @@ const handleImageLoad = () => {
 const handleImageError = (e: Event) => {
   isImageLoading.value = false;
   const img = e.target as HTMLImageElement;
-  console.warn('[照片] 图片加载失败:', img.src);
-  // 使用缓存系统后，不再需要复杂的重试逻辑
+  console.warn('[照片] ⚠️ 页面图片加载失败（但缓存中存在该图片URL）:', {
+    src: img.src.substring(0, 50) + '...',
+    reason: 'Blob URL 可能已被释放或浏览器环境变化',
+  });
+
+  // 尝试重新加载当前角色的图片（这次会跳过预加载缓存，从源头重新加载）
+  console.log('[照片] 🔄 尝试重新加载图片...');
+  loadCurrentPhoto().catch((err) => {
+    console.error('[照片] ❌ 重新加载失败:', err);
+  });
 };
 
 const toggleThemeModal = () => {
   showThemeModal.value = !showThemeModal.value;
+};
+
+const handlePhotoClick = () => {
+  // 可以在这里添加点击照片的交互逻辑，如：
+  // - 切换到下一张图片
+  // - 打开大图预览
+  // - 重新随机选择图片
+  // 目前暂不实现具体功能
 };
 
 // --- 高度自适应逻辑 (优化版) ---
@@ -524,7 +685,7 @@ const adjustHeight = () => {
 // 监听器
 let resizeObserver: ResizeObserver | null = null;
 
-onMounted(() => {
+onMounted(async () => {
   // 1. 初始化数据
   fetchData();
 
@@ -546,15 +707,40 @@ onMounted(() => {
   // 4. 恢复主题
   document.documentElement.setAttribute('data-theme', currentTheme.value);
 
-  // 5. 立即加载所有图片（页面加载时就加载）
-  loadAllImages();
+  // 5. 等待数据加载完成后，加载图片
+  const unwatch = watch(
+    () => statData.value.角色,
+    async (newRoles) => {
+      if (newRoles && Object.keys(newRoles).length > 0) {
+        // 等待角色自动选中完成后再加载图片
+        if (activeChar.value) {
+          await loadCurrentPhoto();
+          unwatch(); // 只执行一次
+        }
+      }
+    },
+    { immediate: true }
+  );
+
+  // 同时监听 activeChar 的变化，一旦设置就加载图片
+  const unwatchChar = watch(activeChar, async (newChar) => {
+    if (newChar && characterNames.value.length > 0) {
+      await loadCurrentPhoto();
+      unwatchChar(); // 只执行一次
+    }
+  });
 });
 
 onUnmounted(() => {
   if (resizeObserver) resizeObserver.disconnect();
 
-  // ✅ 清理图片缓存
-  imageMap.clear();
+  // ✅ 清理预加载缓存中的 Blob URL，防止内存泄漏
+  preloadCache.value.forEach((blobUrl) => {
+    URL.revokeObjectURL(blobUrl);
+  });
+  preloadCache.value.clear();
+
+  console.log('[清理] 已释放预加载缓存中的所有 Blob URL');
 });
 
 watch(activeChar, () => {

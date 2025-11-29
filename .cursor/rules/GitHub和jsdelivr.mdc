@@ -1,0 +1,113 @@
+# GitHub 和 jsdelivr CDN
+
+## 利用 GitHub 和 jsdelivr 分发资源
+
+最简单的方式是利用 jsdelivr 为 GitHub 文件提供的 CDN 功能。对于上传在 `github.com/组织名/仓库名` 中 `路径` 下的文件，你可以直接用以下 URL 来访问它们：
+
+```
+https://testingcf.jsdelivr.net/gh/组织名/仓库名/路径
+```
+
+### 示例
+
+**酒馆助手内置库**采用了这种方法。例如，如果你从酒馆助手 → 脚本库 → 内置库中导入"标签化"，编辑它就会发现代码里仅有一行：
+
+```typescript
+import 'https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/酒馆助手/标签化/index.js'
+```
+
+**前端界面**可以写成：
+
+```html
+<body>
+<script>
+  $('body').load('https://testingcf.jsdelivr.net/gh/lolo-desu/lolocard/dist/日记络络/界面/介绍页/index.html')
+</script>
+</body>
+```
+
+**酒馆美化**可以用 jsdelivr 发布会自动更新的样式：
+
+```css
+@import url("https://testingcf.jsdelivr.net/gh/lolo-desu/lolocard/src/思维链美化/酒馆自带推理块版/暗色.css");
+```
+
+## 自动工作流和编译
+
+为了方便获得 jsdelivr 链接，编写模板已经配置了 GitHub 自动工作流。你可以在 [StageDog/tavern_helper_template](https://github.com/StageDog/tavern_helper_template) 用 `Use this template` 来创建一个新仓库，将它克隆到本地使用。
+
+**工作流流程**：
+
+1. 只需要负责在 `src` 文件夹下修改代码
+2. 完成后上传到 GitHub 仓库
+3. 自动工作流将会为你自动打包最新结果到 `dist` 文件夹
+
+## 📌 重要：CDN 缓存问题
+
+jsdelivr 主服务器、jsdelivr 镜像服务器（为了国内直连）和玩家的浏览器都会缓存文件，因此并不是 GitHub 上文件更新后，这个链接就会立即得到最新的打包结果。
+
+### 缓存刷新方式
+
+#### 方式1：自动版本更新（推荐）
+如果你是从 `StageDog/tavern_helper_template` 创建的新仓库，其自动工作流会自动打包结果并更新版本号，从而做到 **12 小时刷新 jsdelivr 主服务器缓存**。
+
+#### 方式2：手动刷新主服务器缓存（立即生效）
+等仓库更新版本号后，在 https://www.testingcf.com/tools/purge 中：
+1. 输入要使用的链接
+2. 将 `testingcf.jsdelivr.net` 改成 `cdn.jsdelivr.net`
+3. 点击确认
+4. **立即刷新** jsdelivr 主服务器缓存（但镜像服务器缓存不会刷新）
+
+#### 方式3：玩家主动清除缓存
+让玩家手动清除浏览器缓存
+
+#### 方式4：使用其他镜像网站（临时方案）
+如果某个镜像网站的缓存还未更新，可以暂时换个还没缓存你文件的镜像网站来访问：
+
+```
+https://testingcf.jsdelivr.net    // 国内优化镜像
+https://fastly.jsdelivr.net        // Fastly 镜像
+https://gcore.jsdelivr.net         // Gcore 镜像
+```
+
+## 最佳实践
+
+### 国内访问优化
+
+对于国内网络环境，**推荐使用** `https://testingcf.jsdelivr.net` 镜像以确保可靠的连接：
+
+```typescript
+// ✅ 正确：使用国内可访问的镜像
+import something from 'https://testingcf.jsdelivr.net/gh/组织/仓库/路径';
+
+// ❌ 不推荐：可能无法在国内访问
+import something from 'https://cdn.jsdelivr.net/gh/组织/仓库/路径';
+```
+
+### 避免热链接问题
+
+GitHub 仓库的图片和资源通过 jsdelivr CDN 访问时，确保：
+1. GitHub 仓库是**公开的**（Public）
+2. 文件路径正确
+3. 使用正确的镜像地址
+
+### 调试缓存问题
+
+如果你的资源更新后仍然看到旧版本：
+
+1. **检查 GitHub 上的文件是否真的更新了**
+   - 登录 GitHub，进入你的仓库，确认文件已被替换或删除
+
+2. **清除浏览器缓存**
+   - 开发工具 → 应用 → 缓存存储 → 清除所有
+
+3. **尝试使用不同的 CDN 镜像**
+   - 某些镜像可能缓存时间不同
+
+4. **强制刷新主服务器缓存**
+   - 使用 https://www.testingcf.com/tools/purge 手动刷新
+
+5. **使用查询参数绕过缓存**（临时方案）
+   ```
+   https://testingcf.jsdelivr.net/gh/组织/仓库/文件?t=时间戳
+   ```
