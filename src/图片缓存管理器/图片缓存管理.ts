@@ -30,10 +30,11 @@ export const initImageCache = async () => {
     const files = await response.json();
 
     // 过滤图片文件
-    const imageFiles = files.filter((file: any) =>
-      file.name.toLowerCase().endsWith('.png') ||
-      file.name.toLowerCase().endsWith('.jpg') ||
-      file.name.toLowerCase().endsWith('.jpeg')
+    const imageFiles = files.filter(
+      (file: any) =>
+        file.name.toLowerCase().endsWith('.png') ||
+        file.name.toLowerCase().endsWith('.jpg') ||
+        file.name.toLowerCase().endsWith('.jpeg'),
     );
 
     console.log(`[图片缓存] 发现 ${imageFiles.length} 张图片`);
@@ -91,7 +92,7 @@ const loadImagesForRole = async (imageRoleName: string, fileNames: string[]): Pr
   const base64Images: string[] = [];
 
   await Promise.all(
-    fileNames.map(async (fileName) => {
+    fileNames.map(async fileName => {
       const base64 = await loadImageAsBase64(fileName);
       if (base64) {
         base64Images.push(base64);
@@ -109,7 +110,7 @@ const loadImagesForRole = async (imageRoleName: string, fileNames: string[]): Pr
  * 将图片加载为base64编码
  */
 const loadImageAsBase64 = async (fileName: string): Promise<string | null> => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const CDN_PREFIX = 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia@main/image';
     const url = `${CDN_PREFIX}/${fileName}`;
 
@@ -125,12 +126,9 @@ const loadImageAsBase64 = async (fileName: string): Promise<string | null> => {
         ctx?.drawImage(img, 0, 0);
 
         // JPEG压缩，PNG保持原格式
-        const isJpeg = fileName.toLowerCase().endsWith('.jpg') ||
-                       fileName.toLowerCase().endsWith('.jpeg');
+        const isJpeg = fileName.toLowerCase().endsWith('.jpg') || fileName.toLowerCase().endsWith('.jpeg');
 
-        const dataUrl = isJpeg
-          ? canvas.toDataURL('image/jpeg', 0.7)
-          : canvas.toDataURL('image/png');
+        const dataUrl = isJpeg ? canvas.toDataURL('image/jpeg', 0.7) : canvas.toDataURL('image/png');
 
         resolve(dataUrl);
       } catch (e) {

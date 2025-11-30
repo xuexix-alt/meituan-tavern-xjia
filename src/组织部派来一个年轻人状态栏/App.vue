@@ -285,29 +285,56 @@ const loadImagesParallel = async (
     }
   }
 
+<<<<<<< HEAD
   // 所有镜像都失败
   console.error(`[图片] ❌ 所有 CDN 镜像都无法加载 "${roleName}"`, lastError);
   return [];
+=======
+  console.log(`[图片] 🔍 开始并行加载 "${roleName}" 的所有 JPG 图片 (共 ${imageUrls.length} 个 URL)...`);
+
+  // 并行发起所有请求
+  const results = await Promise.allSettled(imageUrls.map(({ url, name }) => loadImageAsBlob(url, name)));
+
+  // 筛选成功的图片
+  const blobUrls: string[] = [];
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value) {
+      blobUrls.push(result.value);
+      console.log(`[图片] ✅ 成功加载: ${imageUrls[index].name}`);
+    }
+  });
+
+  console.log(`[图片] 📊 共找到 ${blobUrls.length} 张 JPG 图片`);
+  return blobUrls;
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
 };
 
 // 从 URL 加载单个图片为 Blob URL
 const loadImageAsBlob = (url: string, fileName: string): Promise<string | null> => {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     // 使用 fetch 加载图片，避免 Canvas 转换的性能开销
     fetch(url, { mode: 'cors' })
-      .then((response) => {
+      .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
         return response.blob();
       })
-      .then((blob) => {
+      .then(blob => {
         // 创建 Blob URL，比 Base64 快得多
         const blobUrl = URL.createObjectURL(blob);
+<<<<<<< HEAD
         resolve(blobUrl);
       })
       .catch((error) => {
         // 失败直接返回 null，上层会汇总统计
+=======
+        console.log(`[图片] ✅ 成功加载并转换: ${fileName} (${(blob.size / 1024).toFixed(2)} KB)`);
+        resolve(blobUrl);
+      })
+      .catch(error => {
+        console.warn(`[图片] ❌ 加载失败: ${fileName}`, error.message);
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
         resolve(null);
       });
   });
@@ -428,9 +455,7 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
       console.warn(`[图片] ⚠️ IndexedDB 缓存被损坏（0 bytes），删除并重新加载...`);
     }
 
-    console.log(
-      `[图片] 📡 缓存未命中，正在加载 "${roleName}" 的图片...（使用并行加载，速度更快）`
-    );
+    console.log(`[图片] 📡 缓存未命中，正在加载 "${roleName}" 的图片...（使用并行加载，速度更快）`);
 
     // 2. 使用并行加载获取所有可用图片
     const blobUrls = await loadImagesParallel(roleName);
@@ -444,9 +469,13 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
     const randomIndex = Math.floor(Math.random() * blobUrls.length);
     const selectedImageUrl = blobUrls[randomIndex];
 
+<<<<<<< HEAD
     console.log(
       `[图片] 🎲 从 ${blobUrls.length} 张图片中随机选择第 ${randomIndex + 1} 张（${selectedImageUrl ? '成功' : '失败'}）`
     );
+=======
+    console.log(`[图片] 🎲 为 "${roleName}" 随机选择第 ${randomIndex + 1} 张图片（共 ${blobUrls.length} 张）`);
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
 
     // 4. ✅ 改进：保存到 IndexedDB 时检查数据完整性
     // 使用 Promise.race 实现超时保护
@@ -609,9 +638,13 @@ const mapRoleToImageName = (roleName: string, roleIndex: number): string => {
 // ✅ 图片缓存已由独立的脚本管理器处理
 // 前端界面直接从全局缓存获取图片
 
+<<<<<<< HEAD
 
 
 // ? 当前显示的图片URL（响应式）
+=======
+// ✅ 当前显示的图片URL（响应式）
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
 const currentPhotoUrl = ref<string>('');
 
 // ? 延迟释放旧 Blob URL（等待 <img> 完全切换后再释放）
@@ -742,9 +775,15 @@ const preloadCharacterImages = async (imageName: string, rangeStart: number, ran
     const existingUrls = preloadCache.value.get(imageName) || [];
     preloadCache.value.set(imageName, [...existingUrls, ...blobUrls]);
 
+<<<<<<< HEAD
     console.log(
       `[预加载] ✅ "${imageName}" 范围${rangeStart}-${rangeEnd}加载完成 (${blobUrls.length}张)`
     );
+=======
+    // 存储到预加载缓存
+    preloadCache.value.set(nextCharName, selectedImage);
+    console.log(`[预加载] ✅ "${nextCharName}" 预加载完成 (选择第 ${randomIndex + 1} 张，共 ${blobUrls.length} 张)`);
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
 
     // 同时保存到 IndexedDB
     for (const blobUrl of blobUrls) {
@@ -1000,6 +1039,7 @@ const handleImageError = (e: Event) => {
     reason: 'Blob URL 可能已被释放或浏览器环境变化',
   });
 
+<<<<<<< HEAD
   // 尝试重新加载当前角色的图片
   // 这次会跳过预加载缓存，直接从 CDN 网络加载，不依赖 IndexedDB
   const currentIndex = characterNames.value.indexOf(activeChar.value);
@@ -1057,6 +1097,13 @@ const handleImageError = (e: Event) => {
     .catch((err) => {
       console.error('[照片] ❌ 从网络重新加载失败:', err);
     });
+=======
+  // 尝试重新加载当前角色的图片（这次会跳过预加载缓存，从源头重新加载）
+  console.log('[照片] 🔄 尝试重新加载图片...');
+  loadCurrentPhoto().catch(err => {
+    console.error('[照片] ❌ 重新加载失败:', err);
+  });
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
 };
 
 const toggleThemeModal = () => {
@@ -1160,7 +1207,7 @@ onMounted(async () => {
   // 5. 等待数据加载完成后，启动智能分批预加载
   const unwatch = watch(
     () => statData.value.角色,
-    async (newRoles) => {
+    async newRoles => {
       if (newRoles && Object.keys(newRoles).length > 0) {
         // 等待角色自动选中完成后再启动预加载
         if (activeChar.value) {
@@ -1172,11 +1219,16 @@ onMounted(async () => {
         }
       }
     },
-    { immediate: true }
+    { immediate: true },
   );
 
+<<<<<<< HEAD
   // 同时监听 activeChar 的变化（用户切换角色或初始化时触发）
   watch(activeChar, (newChar) => {
+=======
+  // 同时监听 activeChar 的变化，一旦设置就加载图片
+  const unwatchChar = watch(activeChar, async newChar => {
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
     if (newChar && characterNames.value.length > 0) {
       // 初次加载角色图片
       loadCurrentPhoto();
@@ -1205,12 +1257,17 @@ onUnmounted(() => {
 
   // ✅ 清理之前保存的 URL
   // ✅ 清理预加载缓存中的 Blob URL，防止内存泄漏
+<<<<<<< HEAD
   preloadCache.value.forEach((blobUrl) => {
     try {
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
       console.warn('[清理] ⚠️ 释放预加载缓存 Blob URL 失败:', e);
     }
+=======
+  preloadCache.value.forEach(blobUrl => {
+    URL.revokeObjectURL(blobUrl);
+>>>>>>> 5651bec0a39294209d1a1d015ce4fff46f83aa5e
   });
   preloadCache.value.clear();
 
