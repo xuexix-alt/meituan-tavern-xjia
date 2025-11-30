@@ -26,10 +26,7 @@
             <span class="progress-count">{{ loadingProgress }} / {{ totalImages }}</span>
           </div>
           <div class="progress-bar">
-            <div
-              class="progress-fill"
-              :style="{ width: `${(loadingProgress / totalImages) * 100}%` }"
-            ></div>
+            <div class="progress-fill" :style="{ width: `${(loadingProgress / totalImages) * 100}%` }"></div>
           </div>
         </div>
       </Transition>
@@ -204,7 +201,7 @@ const loadImagesParallel = async (
   roleName: string,
   rangeStart = 0,
   rangeEnd = 30,
-  onProgress?: (loaded: number) => void
+  onProgress?: (loaded: number) => void,
 ): Promise<string[]> => {
   // CDN 镜像列表（按优先级排列）
   const cdnMirrors = [
@@ -238,9 +235,7 @@ const loadImagesParallel = async (
         });
       }
 
-      const rangeDesc = rangeStart === 0 && rangeEnd === 30
-        ? '全部图片（0-30）'
-        : `第${rangeStart}-${rangeEnd}张`;
+      const rangeDesc = rangeStart === 0 && rangeEnd === 30 ? '全部图片（0-30）' : `第${rangeStart}-${rangeEnd}张`;
       console.log(`[图片] 🔍 开始加载 "${roleName}" 的${rangeDesc}...`);
 
       // 并行发起所有请求，带进度回调
@@ -251,7 +246,7 @@ const loadImagesParallel = async (
             onProgress(1); // 成功加载一张，通知进度+1
           }
           return result;
-        })
+        }),
       );
 
       // 筛选成功的图片 + 统计失败数量
@@ -330,7 +325,7 @@ const initImageDatabase = async (): Promise<IDBDatabase | null> => {
         resolve(db);
       };
 
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = event => {
         const db = (event.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains('images')) {
           db.createObjectStore('images', { keyPath: 'roleName' });
@@ -354,7 +349,7 @@ const getImageFromDB = async (roleName: string): Promise<Blob | null> => {
       if (!imageDatabase) return null;
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const transaction = imageDatabase!.transaction(['images'], 'readonly');
       const store = transaction.objectStore('images');
       const request = store.get(roleName);
@@ -393,7 +388,7 @@ const saveImageToDB = async (roleName: string, blob: Blob): Promise<boolean> => 
       if (!imageDatabase) return false;
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const transaction = imageDatabase!.transaction(['images'], 'readwrite');
       const store = transaction.objectStore('images');
       const request = store.put({ roleName, blob });
@@ -443,12 +438,12 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
     const selectedImageUrl = blobUrls[randomIndex];
 
     console.log(
-      `[图片] 🎲 从 ${blobUrls.length} 张图片中随机选择第 ${randomIndex + 1} 张（${selectedImageUrl ? '成功' : '失败'}）`
+      `[图片] 🎲 从 ${blobUrls.length} 张图片中随机选择第 ${randomIndex + 1} 张（${selectedImageUrl ? '成功' : '失败'}）`,
     );
 
     // 4. ✅ 改进：保存到 IndexedDB 时检查数据完整性
     // 使用 Promise.race 实现超时保护
-    const savePromise = new Promise<void>((resolve) => {
+    const savePromise = new Promise<void>(resolve => {
       fetch(selectedImageUrl)
         .then(r => r.blob())
         .then(blob => {
@@ -602,8 +597,6 @@ const mapRoleToImageName = (roleName: string, roleIndex: number): string => {
 // ✅ 图片缓存已由独立的脚本管理器处理
 // 前端界面直接从全局缓存获取图片
 
-
-
 // ? 当前显示的图片URL（响应式）
 const currentPhotoUrl = ref<string>('');
 
@@ -627,7 +620,6 @@ watch(currentPhotoUrl, (_newUrl, oldUrl) => {
     }, 500);
   }
 });
-
 
 // ✅ 预加载缓存（后台预加载下一个角色的图片，消除切换延迟）
 const preloadCache = ref<Map<string, string[]>>(new Map()); // 改为存储所有图片数组
@@ -735,9 +727,7 @@ const preloadCharacterImages = async (imageName: string, rangeStart: number, ran
     const existingUrls = preloadCache.value.get(imageName) || [];
     preloadCache.value.set(imageName, [...existingUrls, ...blobUrls]);
 
-    console.log(
-      `[预加载] ✅ "${imageName}" 范围${rangeStart}-${rangeEnd}加载完成 (${blobUrls.length}张)`
-    );
+    console.log(`[预加载] ✅ "${imageName}" 范围${rangeStart}-${rangeEnd}加载完成 (${blobUrls.length}张)`);
 
     // 同时保存到 IndexedDB
     for (const blobUrl of blobUrls) {
@@ -830,7 +820,7 @@ const loadCurrentPhoto = async () => {
 
       // 后台补全全量图片，填充可切换列表
       loadImagesParallel(imageKey, 0, 30)
-        .then((urls) => {
+        .then(urls => {
           if (!urls.length) return;
           const merged = Array.from(new Set([...(preloadCache.value.get(imageKey) || []), ...urls]));
           preloadCache.value.set(imageKey, merged);
@@ -959,7 +949,9 @@ const switchCharacter = async (name: string) => {
 
         const currentIdx = imageIndexMap.value.get(imageKey) || 0;
         currentPhotoUrl.value = preloadedUrls[currentIdx];
-        console.log(`[切换] ⚡ 使用预加载的图片，零延迟切换完成 (共${preloadedUrls.length}张，显示第${currentIdx + 1}张)`);
+        console.log(
+          `[切换] ⚡ 使用预加载的图片，零延迟切换完成 (共${preloadedUrls.length}张，显示第${currentIdx + 1}张)`,
+        );
         isImageLoading.value = false;
         return;
       }
@@ -1047,7 +1039,7 @@ const handleImageError = (e: Event) => {
         })
         .catch(err => console.warn('[照片] 保存到 IndexedDB 失败:', err));
     })
-    .catch((err) => {
+    .catch(err => {
       console.error('[照片] ❌ 从网络重新加载失败:', err);
     });
 };
@@ -1088,9 +1080,7 @@ const handlePhotoClick = async () => {
 
   currentPhotoUrl.value = images[nextIndex];
 
-  console.log(
-    `[照片] ?? 切换图片: ${imageKey} (第${nextIndex + 1}/${images.length}张)`
-  );
+  console.log(`[照片] ?? 切换图片: ${imageKey} (第${nextIndex + 1}/${images.length}张)`);
 
   // 触发点击动画
   const photoFrame = document.querySelector('.photo-frame');
@@ -1158,7 +1148,7 @@ onMounted(async () => {
         // 等待角色自动选中完成后再启动预加载
         if (activeChar.value) {
           // ✨ 启动智能分批预加载（不await，不阻塞UI）
-          smartBatchPreload().catch((e) => {
+          smartBatchPreload().catch(e => {
             console.error('[预加载] 启动失败:', e);
           });
           unwatch(); // 只执行一次
@@ -1169,7 +1159,7 @@ onMounted(async () => {
   );
 
   // 同时监听 activeChar 的变化（用户切换角色或初始化时触发）
-  watch(activeChar, (newChar) => {
+  watch(activeChar, newChar => {
     if (newChar && characterNames.value.length > 0) {
       // 初次加载角色图片
       loadCurrentPhoto();
@@ -1198,8 +1188,8 @@ onUnmounted(() => {
 
   // ✅ 清理之前保存的 URL
   // ✅ 清理预加载缓存中的 Blob URL，防止内存泄漏
-  preloadCache.value.forEach((blobUrls) => {
-    blobUrls.forEach((url) => {
+  preloadCache.value.forEach(blobUrls => {
+    blobUrls.forEach(url => {
       if (!url.startsWith('blob:')) return;
       try {
         URL.revokeObjectURL(url);
@@ -1338,12 +1328,7 @@ watch(currentTheme, val => {
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-      );
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
       animation: shimmer 1.5s infinite;
     }
   }

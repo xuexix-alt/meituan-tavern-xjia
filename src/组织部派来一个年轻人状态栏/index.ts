@@ -27,4 +27,3 @@ $(() => {
     console.log('LingDong: Vue App Unmounted.');
   });
 });
-
