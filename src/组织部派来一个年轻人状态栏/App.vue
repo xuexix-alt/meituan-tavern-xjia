@@ -17,6 +17,23 @@
         </div>
       </div>
 
+      <!-- ✨ 加载进度条 -->
+      <Transition name="fade-slide">
+        <div v-if="isPreloading || preloadPhase" class="progress-bar-container">
+          <div class="progress-info">
+            <span class="progress-icon">📦</span>
+            <span class="progress-text">{{ preloadPhase || '加载中' }}</span>
+            <span class="progress-count">{{ loadingProgress }} / {{ totalImages }}</span>
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              :style="{ width: `${(loadingProgress / totalImages) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+      </Transition>
+
       <!-- 基础信息卡片 -->
       <div class="info-layout">
         <div class="global-info-bar">
@@ -74,6 +91,14 @@
           <div class="photo-caption">
             <span class="char-name">{{ cleanCharName(activeChar || '未知角色') }}</span>
             <span class="char-status-dot" :class="{ active: hasCharacters }"></span>
+            <!-- ✨ 图片计数显示 -->
+            <span
+              v-if="currentImageInfo && currentImageInfo.hasMultiple"
+              class="image-counter"
+              :title="`点击图片切换（共${currentImageInfo.total}张）`"
+            >
+              {{ currentImageInfo.currentIndex + 1 }}/{{ currentImageInfo.total }}
+            </span>
           </div>
         </div>
       </div>
@@ -171,19 +196,22 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { StatData, CharacterData } from './types';
 
-// ✅ 并行加载图片函数（改进版）+ 多镜像支持
+// ✅ 并行加载图片函数（改进版）+ 多镜像支持 + 进度回调
 // 一次性发起所有请求，大幅提升加载速度
 // ⚠️ 仅加载 JPG 格式，避免加载体积巨大的 PNG
-// 💡 使用 Cloudflare Pages 托管，无缓存问题，国内访问快
-const loadImagesParallel = async (roleName: string): Promise<string[]> => {
+// 💡 使用多镜像 CDN 策略，自动级联故障转移，确保快速稳定的加载
+const loadImagesParallel = async (
+  roleName: string,
+  rangeStart = 0,
+  rangeEnd = 30,
+  onProgress?: (loaded: number) => void
+): Promise<string[]> => {
   // CDN 镜像列表（按优先级排列）
   const cdnMirrors = [
-    'https://meituan-tavern-xjia.pages.dev/image', // Cloudflare Pages（推荐，无缓存）
-    'https://fastly.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // jsdelivr Fastly 镜像（备选1）
-    'https://gcore.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // jsdelivr Gcore 镜像（备选2）
+    'https://fastly.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // Fastly 镜像（主要，速度快）
+    'https://gcore.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // Gcore 镜像（备选1）
+    'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // testingcf 镜像（备选2，国内优化）
   ];
-
-  const maxAttempts = 5; // 尝试前5个数字后缀
 
   let lastError: Error | null = null;
 
@@ -195,36 +223,55 @@ const loadImagesParallel = async (roleName: string): Promise<string[]> => {
       const imageUrls: Array<{ url: string; name: string }> = [];
 
       // 基础文件名（无数字后缀）- 仅加载 JPG
-      imageUrls.push({
-        url: `${cdnPrefix}/${encodeURIComponent(roleName)}.jpg`,
-        name: `${roleName}.jpg`,
-      });
+      if (rangeStart === 0) {
+        imageUrls.push({
+          url: `${cdnPrefix}/${encodeURIComponent(roleName)}.jpg`,
+          name: `${roleName}.jpg`,
+        });
+      }
 
       // 带数字后缀的文件 - 仅加载 JPG
-      for (let i = 1; i <= maxAttempts; i++) {
+      for (let i = Math.max(1, rangeStart); i <= rangeEnd; i++) {
         imageUrls.push({
           url: `${cdnPrefix}/${encodeURIComponent(roleName)}${i}.jpg`,
           name: `${roleName}${i}.jpg`,
         });
       }
 
-      console.log(`[图片] 🔍 开始并行加载 "${roleName}" 的所有 JPG 图片 (共 ${imageUrls.length} 个 URL)...`);
+      const rangeDesc = rangeStart === 0 && rangeEnd === 30
+        ? '全部图片（0-30）'
+        : `第${rangeStart}-${rangeEnd}张`;
+      console.log(`[图片] 🔍 开始加载 "${roleName}" 的${rangeDesc}...`);
 
-      // 并行发起所有请求
+      // 并行发起所有请求，带进度回调
       const results = await Promise.allSettled(
-        imageUrls.map(({ url, name }) => loadImageAsBlob(url, name))
+        imageUrls.map(async ({ url, name }) => {
+          const result = await loadImageAsBlob(url, name);
+          if (result && onProgress) {
+            onProgress(1); // 成功加载一张，通知进度+1
+          }
+          return result;
+        })
       );
 
-      // 筛选成功的图片
+      // 筛选成功的图片 + 统计失败数量
       const blobUrls: string[] = [];
+      let failedCount = 0;
+
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value) {
           blobUrls.push(result.value);
           console.log(`[图片] ✅ 成功加载: ${imageUrls[index].name}`);
+        } else {
+          failedCount++;
         }
       });
 
-      console.log(`[图片] 📊 共找到 ${blobUrls.length} 张 JPG 图片`);
+      // 汇总日志：成功的输出详情，失败的只显示数量
+      if (failedCount > 0) {
+        console.log(`[图片] ⏭️  其余 ${failedCount} 个请求无图片文件（属正常情况）`);
+      }
+      console.log(`[图片] 📊 成功找到 ${blobUrls.length} 张可用图片（扫描范围：${imageUrls.length} 个 URL）`);
 
       if (blobUrls.length > 0) {
         console.log(`[图片] ✅ 使用镜像 "${cdnPrefix}" 加载成功`);
@@ -257,13 +304,10 @@ const loadImageAsBlob = (url: string, fileName: string): Promise<string | null> 
       .then((blob) => {
         // 创建 Blob URL，比 Base64 快得多
         const blobUrl = URL.createObjectURL(blob);
-        console.log(
-          `[图片] ✅ 成功加载并转换: ${fileName} (${(blob.size / 1024).toFixed(2)} KB)`
-        );
         resolve(blobUrl);
       })
       .catch((error) => {
-        console.warn(`[图片] ❌ 加载失败: ${fileName}`, error.message);
+        // 失败直接返回 null，上层会汇总统计
         resolve(null);
       });
   });
@@ -317,9 +361,15 @@ const getImageFromDB = async (roleName: string): Promise<Blob | null> => {
 
       request.onsuccess = () => {
         if (request.result && request.result.blob) {
-          console.log(`[数据库] ✅ 从 IndexedDB 获取 "${roleName}" 的图片`);
-          resolve(request.result.blob);
+          const blob = request.result.blob;
+          const size = blob.size;
+          console.log(`[数据库] ✅ 从 IndexedDB 获取 "${roleName}" 的图片 (${(size / 1024).toFixed(2)} KB)`);
+          if (size === 0) {
+            console.warn(`[数据库] ⚠️ 警告: "${roleName}" 的 Blob 数据为空 (0 bytes)`);
+          }
+          resolve(blob);
         } else {
+          console.log(`[数据库] ℹ️ "${roleName}" 在 IndexedDB 中无数据`);
           resolve(null);
         }
       };
@@ -369,10 +419,13 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
   try {
     // 1. 首先尝试从 IndexedDB 获取
     const cachedBlob = await getImageFromDB(roleName);
-    if (cachedBlob) {
+    if (cachedBlob && cachedBlob.size > 0) {
       const blobUrl = URL.createObjectURL(cachedBlob);
       console.log(`[图片] ✅ 使用 IndexedDB 缓存（无需重新加载）`);
       return blobUrl;
+    } else if (cachedBlob && cachedBlob.size === 0) {
+      // ⚠️ 缓存数据被损坏，删除后重新加载
+      console.warn(`[图片] ⚠️ IndexedDB 缓存被损坏（0 bytes），删除并重新加载...`);
     }
 
     console.log(
@@ -392,14 +445,34 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
     const selectedImageUrl = blobUrls[randomIndex];
 
     console.log(
-      `[图片] 🎲 为 "${roleName}" 随机选择第 ${randomIndex + 1} 张图片（共 ${blobUrls.length} 张）`
+      `[图片] 🎲 从 ${blobUrls.length} 张图片中随机选择第 ${randomIndex + 1} 张（${selectedImageUrl ? '成功' : '失败'}）`
     );
 
-    // 4. 异步保存到 IndexedDB（不阻塞 UI）
-    fetch(selectedImageUrl)
-      .then(r => r.blob())
-      .then(blob => saveImageToDB(roleName, blob))
-      .catch(e => console.warn('[数据库] 后台保存失败:', e));
+    // 4. ✅ 改进：保存到 IndexedDB 时检查数据完整性
+    // 使用 Promise.race 实现超时保护
+    const savePromise = new Promise<void>((resolve) => {
+      fetch(selectedImageUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          // ✅ 确保保存的不是空 Blob
+          if (blob.size > 0) {
+            console.log(`[图片] 💾 正在保存 "${roleName}" 到 IndexedDB (${(blob.size / 1024).toFixed(2)} KB)...`);
+            saveImageToDB(roleName, blob)
+              .then(() => resolve())
+              .catch(e => {
+                console.warn('[数据库] 后台保存失败:', e);
+                resolve();
+              });
+          } else {
+            console.warn(`[图片] ⚠️ 无法保存空 Blob，跳过 IndexedDB 缓存`);
+            resolve();
+          }
+        })
+        .catch(e => {
+          console.warn('[数据库] 后台保存失败（读取失败）:', e);
+          resolve();
+        });
+    });
 
     // 5. 清理其他未使用的 Blob URL（防止内存泄漏）
     blobUrls.forEach((url, index) => {
@@ -407,6 +480,9 @@ const getImageFromCache = async (roleName: string): Promise<string | null> => {
         URL.revokeObjectURL(url);
       }
     });
+
+    // 6. 不等待保存完成，但确保至少尝试了
+    savePromise.catch(() => {});
 
     return selectedImageUrl;
   } catch (e) {
@@ -443,19 +519,47 @@ const showThemeModal = ref(false);
 const currentTheme = ref(localStorage.getItem('tavern_helper_theme') || 'default');
 const isImageLoading = ref(false);
 
+// ✅ 图片预加载进度跟踪
+const loadingProgress = ref(0); // 当前已加载数量
+const totalImages = ref(0); // 总图片数量（预估）
+const isPreloading = ref(false); // 是否正在预加载
+const preloadPhase = ref(''); // 当前加载阶段描述
+
 // --- 计算属性 ---
 const characterNames = computed(() => Object.keys(statData.value.角色 || {}));
 const hasCharacters = computed(() => characterNames.value.length > 0);
 
-// ✅ 图片加载状态
-const imagesLoaded = computed(() => {
-  // 检查是否有缓存的图片
+// ✅ 当前角色的图片信息
+const currentImageInfo = computed(() => {
+  if (!activeChar.value) return null;
+
   const currentIndex = characterNames.value.indexOf(activeChar.value);
-  if (currentIndex === -1) return false;
+  if (currentIndex === -1) return null;
 
   const imageKey = mapRoleToImageName(activeChar.value, currentIndex);
-  const cacheKey = `image_cache_${imageKey}`;
-  return sessionStorage.getItem(cacheKey) !== null;
+  const images = preloadCache.value.get(imageKey);
+  const currentIdx = imageIndexMap.value.get(imageKey) || 0;
+
+  return {
+    imageKey,
+    images: images || [],
+    currentIndex: currentIdx,
+    total: images?.length || 0,
+    hasMultiple: (images?.length || 0) > 1,
+  };
+});
+
+// ✅ 初始化完成标志（是否已尝试加载过图片）
+const initializationComplete = ref(false);
+
+// ✅ 图片加载完成状态（简化逻辑：基于是否有 currentPhotoUrl）
+const imagesLoaded = computed(() => {
+  // 如果初始化还未完成，返回 false（显示加载中）
+  if (!initializationComplete.value) return false;
+  // 如果有 currentPhotoUrl，说明加载成功
+  if (currentPhotoUrl.value) return true;
+  // 否则返回 true（初始化完成但没有图片，显示占位符）
+  return true;
 });
 
 // ✅ 默认选中第一个角色（{{user}}）
@@ -507,114 +611,247 @@ const mapRoleToImageName = (roleName: string, roleIndex: number): string => {
 
 
 
-// ✅ 当前显示的图片URL（响应式）
+// ? 当前显示的图片URL（响应式）
 const currentPhotoUrl = ref<string>('');
 
+// ? 延迟释放旧 Blob URL（等待 <img> 完全切换后再释放）
+let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+watch(currentPhotoUrl, (newUrl, oldUrl) => {
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
+  }
+
+  if (oldUrl && oldUrl.startsWith('blob:')) {
+    releaseTimer = setTimeout(() => {
+      try {
+        URL.revokeObjectURL(oldUrl);
+        console.log(`[清理] 已释放旧 Blob URL: ${oldUrl.substring(0, 50)}...`);
+      } catch (e) {
+        console.warn('[清理] 释放 Blob URL 失败:', e);
+      }
+      releaseTimer = null;
+    }, 500);
+  }
+});
+
+
 // ✅ 预加载缓存（后台预加载下一个角色的图片，消除切换延迟）
-const preloadCache = ref<Map<string, string>>(new Map());
+const preloadCache = ref<Map<string, string[]>>(new Map()); // 改为存储所有图片数组
+
+// ✅ 图片索引跟踪（记录每个角色当前显示的是第几张图片）
+const imageIndexMap = ref<Map<string, number>>(new Map());
 
 /**
- * 后台预加载指定角色的图片
- * 不会阻塞 UI，用户切换时可以立即显示
+ * ✨ 智能分批预加载所有角色的所有图片
+ *
+ * 策略：
+ * - 第1批（立即）：陆副厂长的全部31张图片 → 首屏立即可用
+ * - 第2批（3秒后）：其他角色的前5张图片 → 快速切换支持
+ * - 第3批（10秒后）：其他角色的剩余图片（6-30） → 完整图库
  */
-const preloadNextCharacter = async (nextCharName: string) => {
-  if (!nextCharName) return;
-
-  // 如果已经在缓存中，跳过
-  if (preloadCache.value.has(nextCharName)) {
-    console.log(`[预加载] ⏭️ "${nextCharName}" 已在预加载缓存中，跳过`);
+const smartBatchPreload = async () => {
+  if (isPreloading.value) {
+    console.log('[预加载] ⚠️ 已有预加载任务在进行中，跳过');
     return;
   }
 
-  // 如果已经在 sessionStorage 中，跳过
-  const cacheKey = `image_cache_${nextCharName}`;
-  if (sessionStorage.getItem(cacheKey)) {
-    console.log(`[预加载] ⏭️ "${nextCharName}" 已在 sessionStorage 中，跳过`);
-    return;
-  }
+  isPreloading.value = true;
+  loadingProgress.value = 0;
 
-  console.log(`[预加载] 🚀 后台预加载 "${nextCharName}" 的图片...`);
+  // 计算总图片数：每个角色31张（0-30）
+  const charCount = characterNames.value.length;
+  totalImages.value = charCount * 31;
+
+  console.log(`[预加载] 🚀 开始智能分批预加载 (共${charCount}个角色, 预计${totalImages.value}张图片)`);
 
   try {
-    // 使用 loadImagesParallel 并行加载所有图片
-    const blobUrls = await loadImagesParallel(nextCharName);
+    // 🎯 第1批：立即加载陆副厂长的全部图片（0-30）
+    preloadPhase.value = '首屏加载中';
+    console.log('[预加载] 📦 第1批：陆副厂长全部图片（立即）');
+
+    const lufuIndex = characterNames.value.indexOf(characterNames.value[0]); // 第一个角色
+    if (lufuIndex !== -1) {
+      const lufuImageName = mapRoleToImageName(characterNames.value[0], lufuIndex);
+      await preloadCharacterImages(lufuImageName, 0, 30);
+    }
+
+    // 🎯 第2批：延迟3秒后加载其他角色的前5张（0-4）
+    setTimeout(async () => {
+      if (!isPreloading.value) return; // 如果已经取消预加载，则退出
+
+      preloadPhase.value = '快速切换准备中';
+      console.log('[预加载] 📦 第2批：其他角色前5张（延迟3秒）');
+
+      for (let i = 1; i < characterNames.value.length; i++) {
+        const charName = characterNames.value[i];
+        const imageName = mapRoleToImageName(charName, i);
+        await preloadCharacterImages(imageName, 0, 4);
+      }
+
+      // 🎯 第3批：延迟10秒后加载其他角色的剩余图片（5-30）
+      setTimeout(async () => {
+        if (!isPreloading.value) return;
+
+        preloadPhase.value = '完整图库加载中';
+        console.log('[预加载] 📦 第3批：其他角色剩余图片（延迟10秒）');
+
+        for (let i = 1; i < characterNames.value.length; i++) {
+          const charName = characterNames.value[i];
+          const imageName = mapRoleToImageName(charName, i);
+          await preloadCharacterImages(imageName, 5, 30);
+        }
+
+        // 全部加载完成
+        isPreloading.value = false;
+        preloadPhase.value = '加载完成';
+        console.log(`[预加载] ✅ 全部加载完成！共加载 ${loadingProgress.value} 张图片`);
+
+        // 3秒后隐藏进度条
+        setTimeout(() => {
+          preloadPhase.value = '';
+        }, 3000);
+      }, 7000); // 第2批完成后再延迟7秒（总计10秒）
+    }, 3000); // 第1批完成后延迟3秒
+  } catch (e) {
+    console.error('[预加载] ❌ 智能分批预加载失败:', e);
+    isPreloading.value = false;
+    preloadPhase.value = '加载失败';
+  }
+};
+
+/**
+ * 预加载指定角色的指定范围图片
+ */
+const preloadCharacterImages = async (imageName: string, rangeStart: number, rangeEnd: number) => {
+  try {
+    // 使用进度回调
+    const onProgress = (loaded: number) => {
+      loadingProgress.value += loaded;
+    };
+
+    // 加载图片
+    const blobUrls = await loadImagesParallel(imageName, rangeStart, rangeEnd, onProgress);
 
     if (blobUrls.length === 0) {
-      console.log(`[预加载] ❌ "${nextCharName}" 没有可用的图片`);
+      console.log(`[预加载] ⚠️ "${imageName}" 范围${rangeStart}-${rangeEnd}没有可用图片`);
       return;
     }
 
-    // 随机选择一张图片
-    const randomIndex = Math.floor(Math.random() * blobUrls.length);
-    const selectedImage = blobUrls[randomIndex];
+    // 将所有图片存储到预加载缓存中
+    const existingUrls = preloadCache.value.get(imageName) || [];
+    preloadCache.value.set(imageName, [...existingUrls, ...blobUrls]);
 
-    // 存储到预加载缓存
-    preloadCache.value.set(nextCharName, selectedImage);
     console.log(
-      `[预加载] ✅ "${nextCharName}" 预加载完成 (选择第 ${randomIndex + 1} 张，共 ${blobUrls.length} 张)`
+      `[预加载] ✅ "${imageName}" 范围${rangeStart}-${rangeEnd}加载完成 (${blobUrls.length}张)`
     );
 
-    // 清理其他未使用的 Blob URL
-    blobUrls.forEach((url, index) => {
-      if (index !== randomIndex) {
-        URL.revokeObjectURL(url);
-      }
-    });
+    // 同时保存到 IndexedDB
+    for (const blobUrl of blobUrls) {
+      fetch(blobUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          if (blob.size > 0) {
+            saveImageToDB(imageName, blob).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
   } catch (e) {
-    console.warn(`[预加载] ❌ 预加载 "${nextCharName}" 失败:`, e);
+    console.warn(`[预加载] ❌ 预加载 "${imageName}" 范围${rangeStart}-${rangeEnd}失败:`, e);
   }
 };
 
 /**
  * 加载当前角色的图片
- * 优先使用预加载缓存，其次使用 sessionStorage 缓存
+ * 优先使用预加载缓存，其次使用 IndexedDB 缓存
  */
 const loadCurrentPhoto = async () => {
-  // ✅ 获取当前角色在列表中的索引
-  const currentIndex = characterNames.value.indexOf(activeChar.value);
-  if (currentIndex === -1) {
-    console.log(`[照片] 当前角色"${activeChar.value}"不在角色列表中`);
-    currentPhotoUrl.value = '';
-    return;
-  }
+  try {
+    // ✅ 记录当前的 activeChar，用于竞态条件检查
+    const targetChar = activeChar.value;
 
-  // ✅ 获取角色名（作为图片文件名）
-  // {{user}} 已被酒馆替换为实际用户名，如"小哥哥"
-  const imageKey = mapRoleToImageName(activeChar.value, currentIndex);
+    // ✅ 获取当前角色在列表中的索引
+    const currentIndex = characterNames.value.indexOf(targetChar);
+    if (currentIndex === -1) {
+      console.log(`[照片] 当前角色"${targetChar}"不在角色列表中`);
+      currentPhotoUrl.value = '';
+      return;
+    }
 
-  console.log(`[照片] 角色索引: ${currentIndex}, 角色名: "${activeChar.value}", 图片名: "${imageKey}"`);
+    // ✅ 获取角色名（作为图片文件名）
+    const imageKey = mapRoleToImageName(targetChar, currentIndex);
 
-  // ✅ 优先查询预加载缓存
-  if (preloadCache.value.has(imageKey)) {
-    const preloadedUrl = preloadCache.value.get(imageKey);
-    currentPhotoUrl.value = preloadedUrl || '';
-    console.log(`[照片] ${imageKey}: 从预加载缓存加载 ⚡`);
+    console.log(`[照片] 角色索引: ${currentIndex}, 角色名: "${targetChar}", 图片名: "${imageKey}"`);
 
-    // 加载完成后预加载下一个角色
-    const nextIndex = (currentIndex + 1) % characterNames.value.length;
-    const nextCharName = characterNames.value[nextIndex];
-    const nextImageKey = mapRoleToImageName(nextCharName, nextIndex);
-    preloadNextCharacter(nextImageKey);
-    return;
-  }
+    // ✅ 优先查询预加载缓存（改为数组）
+    if (preloadCache.value.has(imageKey)) {
+      const preloadedUrls = preloadCache.value.get(imageKey);
 
-  // ✅ 从独立缓存中获取图片
-  const imageUrl = await getImageFromCache(imageKey);
-  if (imageUrl) {
-    currentPhotoUrl.value = imageUrl;
-    console.log(`[照片] ${imageKey}: 加载成功`);
+      // ⚠️ 竞态条件检查：确保 activeChar 没有变化
+      if (activeChar.value !== targetChar) {
+        console.log(`[照片] ⚠️ 用户已切换角色，放弃设置旧图片`);
+        return;
+      }
 
-    // 加载完成后预加载下一个角色
-    const nextIndex = (currentIndex + 1) % characterNames.value.length;
-    const nextCharName = characterNames.value[nextIndex];
-    const nextImageKey = mapRoleToImageName(nextCharName, nextIndex);
-    preloadNextCharacter(nextImageKey);
-  } else {
-    currentPhotoUrl.value = '';
-    console.log(`[照片] ${imageKey}: 暂无图片，暂不显示`);
+      if (preloadedUrls && preloadedUrls.length > 0) {
+        // 初始化或获取当前索引
+        if (!imageIndexMap.value.has(imageKey)) {
+          // 首次加载，随机选择一张
+          const randomIndex = Math.floor(Math.random() * preloadedUrls.length);
+          imageIndexMap.value.set(imageKey, randomIndex);
+        }
+
+        const currentIdx = imageIndexMap.value.get(imageKey) || 0;
+        currentPhotoUrl.value = preloadedUrls[currentIdx];
+        console.log(`[照片] ${imageKey}: 从预加载缓存加载 ⚡ (共${preloadedUrls.length}张，显示第${currentIdx + 1}张)`);
+        return;
+      }
+    }
+
+    // ✅ 从 IndexedDB 缓存中获取图片
+    const imageUrl = await getImageFromCache(imageKey);
+
+    // ?? 竞态条件检查：等待完成后，检查 activeChar 是否变化
+    if (activeChar.value !== targetChar) {
+      console.log(`[照片] ?? 用户已切换角色（${activeChar.value}），放弃设置"${targetChar}"的图片`);
+      // 释放这个 Blob URL，因为我们不需要它了
+      if (imageUrl && imageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrl);
+      }
+      return;
+    }
+
+    if (imageUrl) {
+      currentPhotoUrl.value = imageUrl;
+      console.log(`[照片] ${imageKey}: 加载成功`);
+
+      // 将命中的图片加入预加载缓存，确保后续可切换
+      const cachedList = preloadCache.value.get(imageKey) || [];
+      if (!cachedList.includes(imageUrl)) {
+        preloadCache.value.set(imageKey, [...cachedList, imageUrl]);
+      }
+      if (!imageIndexMap.value.has(imageKey)) {
+        imageIndexMap.value.set(imageKey, 0);
+      }
+
+      // 后台补全全量图片，填充可切换列表
+      loadImagesParallel(imageKey, 0, 30)
+        .then((urls) => {
+          if (!urls.length) return;
+          const merged = Array.from(new Set([...(preloadCache.value.get(imageKey) || []), ...urls]));
+          preloadCache.value.set(imageKey, merged);
+        })
+        .catch(() => {});
+    } else {
+      currentPhotoUrl.value = '';
+      console.log(`[照片] ${imageKey}: 暂无图片，暂不显示`);
+    }
+  } finally {
+    // ? 标记初始化完成（无论成功或失败）
+    initializationComplete.value = true;
   }
 };
-
 // 基础信息映射
 const basicInfo = computed(() => ({
   '🎂 年龄': activeCharData.value?.年龄,
@@ -716,19 +953,23 @@ const switchCharacter = async (name: string) => {
     const newIndex = characterNames.value.indexOf(name);
     const imageKey = mapRoleToImageName(name, newIndex);
 
-    // 检查预加载缓存，如果已预加载则直接使用
+    // 检查预加载缓存（改为数组），如果已预加载则直接使用
     if (preloadCache.value.has(imageKey)) {
-      const preloadedUrl = preloadCache.value.get(imageKey);
-      currentPhotoUrl.value = preloadedUrl || '';
-      console.log(`[切换] ⚡ 使用预加载的图片，零延迟切换完成`);
-      isImageLoading.value = false;
+      const preloadedUrls = preloadCache.value.get(imageKey);
+      if (preloadedUrls && preloadedUrls.length > 0) {
+        // 初始化或获取当前索引
+        if (!imageIndexMap.value.has(imageKey)) {
+          // 首次切换到该角色，随机选择一张
+          const randomIndex = Math.floor(Math.random() * preloadedUrls.length);
+          imageIndexMap.value.set(imageKey, randomIndex);
+        }
 
-      // 预加载下一个角色
-      const nextIndex = (newIndex + 1) % characterNames.value.length;
-      const nextCharName = characterNames.value[nextIndex];
-      const nextImageKey = mapRoleToImageName(nextCharName, nextIndex);
-      preloadNextCharacter(nextImageKey);
-      return;
+        const currentIdx = imageIndexMap.value.get(imageKey) || 0;
+        currentPhotoUrl.value = preloadedUrls[currentIdx];
+        console.log(`[切换] ⚡ 使用预加载的图片，零延迟切换完成 (共${preloadedUrls.length}张，显示第${currentIdx + 1}张)`);
+        isImageLoading.value = false;
+        return;
+      }
     }
 
     // 如果没有预加载，则加载新角色的图片
@@ -759,25 +1000,114 @@ const handleImageError = (e: Event) => {
     reason: 'Blob URL 可能已被释放或浏览器环境变化',
   });
 
-  // 尝试重新加载当前角色的图片（这次会跳过预加载缓存，从源头重新加载）
-  console.log('[照片] 🔄 尝试重新加载图片...');
-  loadCurrentPhoto().catch((err) => {
-    console.error('[照片] ❌ 重新加载失败:', err);
-  });
+  // 尝试重新加载当前角色的图片
+  // 这次会跳过预加载缓存，直接从 CDN 网络加载，不依赖 IndexedDB
+  const currentIndex = characterNames.value.indexOf(activeChar.value);
+  const imageKey = mapRoleToImageName(activeChar.value, currentIndex);
+
+  console.log('[照片] 🔄 清除 IndexedDB 缓存并从网络重新加载...');
+
+  // 删除 IndexedDB 中可能损坏的缓存
+  if (imageDatabase) {
+    const transaction = imageDatabase.transaction(['images'], 'readwrite');
+    const store = transaction.objectStore('images');
+    const deleteRequest = store.delete(imageKey);
+
+    deleteRequest.onsuccess = () => {
+      console.log(`[照片] 🗑️ 已删除 "${imageKey}" 的缓存数据`);
+    };
+
+    deleteRequest.onerror = () => {
+      console.warn(`[照片] ⚠️ 删除缓存失败: ${imageKey}`);
+    };
+  }
+
+  // 直接从网络加载（跳过 IndexedDB）
+  loadImagesParallel(imageKey, 0, 30) // 加载全部范围（0-30）
+    .then(blobUrls => {
+      if (blobUrls.length === 0) {
+        console.error(`[照片] ❌ 无法从网络加载 "${imageKey}"`);
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * blobUrls.length);
+      const selectedUrl = blobUrls[randomIndex];
+
+      console.log(`[照片] ✅ 从网络成功加载，设置为 Blob URL...`);
+      currentPhotoUrl.value = selectedUrl;
+
+      // 清理其他未使用的 URL
+      blobUrls.forEach((url, idx) => {
+        if (idx !== randomIndex) {
+          URL.revokeObjectURL(url);
+        }
+      });
+
+      // 异步保存到 IndexedDB（不阻塞 UI）
+      fetch(selectedUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          if (blob.size > 0) {
+            console.log(`[照片] 💾 重新保存到 IndexedDB...`);
+            saveImageToDB(imageKey, blob);
+          }
+        })
+        .catch(err => console.warn('[照片] 保存到 IndexedDB 失败:', err));
+    })
+    .catch((err) => {
+      console.error('[照片] ❌ 从网络重新加载失败:', err);
+    });
 };
 
 const toggleThemeModal = () => {
   showThemeModal.value = !showThemeModal.value;
 };
 
-const handlePhotoClick = () => {
-  // 可以在这里添加点击照片的交互逻辑，如：
-  // - 切换到下一张图片
-  // - 打开大图预览
-  // - 重新随机选择图片
-  // 目前暂不实现具体功能
-};
+const handlePhotoClick = async () => {
+  const imageKey = mapRoleToImageName(activeChar.value, characterNames.value.indexOf(activeChar.value));
+  let info = currentImageInfo.value;
+  let images = info?.images || [];
+  let currentIndex = info?.currentIndex || 0;
 
+  if (!info || !info.hasMultiple) {
+    const freshUrls = await loadImagesParallel(imageKey, 0, 30).catch(() => []);
+    if (freshUrls && freshUrls.length) {
+      const merged = Array.from(new Set([...(preloadCache.value.get(imageKey) || []), ...freshUrls]));
+      preloadCache.value.set(imageKey, merged);
+      imageIndexMap.value.set(imageKey, imageIndexMap.value.get(imageKey) ?? 0);
+      images = merged;
+      currentIndex = imageIndexMap.value.get(imageKey) || 0;
+      info = {
+        imageKey,
+        images,
+        currentIndex,
+        total: images.length,
+        hasMultiple: images.length > 1,
+      };
+    } else {
+      console.log('[照片] 当前角色只有一张图片或未加载，无法切换');
+      return;
+    }
+  }
+
+  const nextIndex = ((currentIndex || 0) + 1) % images.length;
+  imageIndexMap.value.set(imageKey, nextIndex);
+
+  currentPhotoUrl.value = images[nextIndex];
+
+  console.log(
+    `[照片] ?? 切换图片: ${imageKey} (第${nextIndex + 1}/${images.length}张)`
+  );
+
+  // 触发点击动画
+  const photoFrame = document.querySelector('.photo-frame');
+  if (photoFrame) {
+    photoFrame.classList.add('photo-clicked');
+    setTimeout(() => {
+      photoFrame.classList.remove('photo-clicked');
+    }, 300);
+  }
+};
 // --- 高度自适应逻辑 (优化版) ---
 
 const adjustHeight = () => {
@@ -827,14 +1157,17 @@ onMounted(async () => {
   // 4. 恢复主题
   document.documentElement.setAttribute('data-theme', currentTheme.value);
 
-  // 5. 等待数据加载完成后，加载图片
+  // 5. 等待数据加载完成后，启动智能分批预加载
   const unwatch = watch(
     () => statData.value.角色,
     async (newRoles) => {
       if (newRoles && Object.keys(newRoles).length > 0) {
-        // 等待角色自动选中完成后再加载图片
+        // 等待角色自动选中完成后再启动预加载
         if (activeChar.value) {
-          await loadCurrentPhoto();
+          // ✨ 启动智能分批预加载（不await，不阻塞UI）
+          smartBatchPreload().catch((e) => {
+            console.error('[预加载] 启动失败:', e);
+          });
           unwatch(); // 只执行一次
         }
       }
@@ -842,11 +1175,11 @@ onMounted(async () => {
     { immediate: true }
   );
 
-  // 同时监听 activeChar 的变化，一旦设置就加载图片
-  const unwatchChar = watch(activeChar, async (newChar) => {
+  // 同时监听 activeChar 的变化（用户切换角色或初始化时触发）
+  watch(activeChar, (newChar) => {
     if (newChar && characterNames.value.length > 0) {
-      await loadCurrentPhoto();
-      unwatchChar(); // 只执行一次
+      // 初次加载角色图片
+      loadCurrentPhoto();
     }
   });
 });
@@ -854,9 +1187,30 @@ onMounted(async () => {
 onUnmounted(() => {
   if (resizeObserver) resizeObserver.disconnect();
 
+  // ✅ 清理延迟释放定时器
+  if (releaseTimer) {
+    clearTimeout(releaseTimer);
+    releaseTimer = null;
+  }
+
+  // ✅ 清理当前显示的 Blob URL
+  if (currentPhotoUrl.value && currentPhotoUrl.value.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(currentPhotoUrl.value);
+      console.log('[清理] ✅ 已释放当前显示的 Blob URL');
+    } catch (e) {
+      console.warn('[清理] ⚠️ 释放当前 Blob URL 失败:', e);
+    }
+  }
+
+  // ✅ 清理之前保存的 URL
   // ✅ 清理预加载缓存中的 Blob URL，防止内存泄漏
   preloadCache.value.forEach((blobUrl) => {
-    URL.revokeObjectURL(blobUrl);
+    try {
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.warn('[清理] ⚠️ 释放预加载缓存 Blob URL 失败:', e);
+    }
   });
   preloadCache.value.clear();
 
@@ -866,7 +1220,7 @@ onUnmounted(() => {
     console.log('[清理] 已关闭 IndexedDB 连接');
   }
 
-  console.log('[清理] 已释放预加载缓存中的所有 Blob URL');
+  console.log('[清理] 已释放所有 Blob URL 和资源');
 });
 
 watch(activeChar, () => {
@@ -925,6 +1279,112 @@ watch(currentTheme, val => {
   gap: 8px;
 }
 
+/* ✨ 加载进度条样式 */
+.progress-bar-container {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  animation: slideDown 0.3s ease-out;
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: var(--c-text-sub);
+
+  .progress-icon {
+    font-size: 1.1rem;
+    animation: pulse 2s infinite;
+  }
+
+  .progress-text {
+    flex: 1;
+    font-weight: 600;
+    color: var(--c-text-main);
+  }
+
+  .progress-count {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    background: var(--glass-panel);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+  }
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--glass-panel);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--c-primary), hsl(var(--hue-primary) 80% 70%));
+    border-radius: 3px;
+    transition: width 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+
+    // 闪光动画
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      animation: shimmer 1.5s infinite;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    left: 100%;
+  }
+}
+
+/* 淡入淡出动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
 .icon-btn {
   width: 36px;
   height: 36px;
@@ -964,24 +1424,28 @@ watch(currentTheme, val => {
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
     grid-template-areas:
-      'photo'
-      'info';
+      'info'
+      'photo';
 
     .photo-section {
       grid-area: photo;
-      flex-direction: row;
+      flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      gap: 16px;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
     }
     .global-info-bar {
       grid-area: info;
     }
 
     .photo-frame {
-      width: 100px;
-      height: 100px;
-      aspect-ratio: 0.67;
+      width: 100%;
+      max-width: 520px;
+      aspect-ratio: 3 / 4;
+      min-height: clamp(220px, 34vw, 420px);
+      max-height: 420px;
+      margin: 0 auto;
     }
   }
 }
@@ -1050,9 +1514,15 @@ watch(currentTheme, val => {
   background: var(--glass-panel);
   box-shadow: var(--glass-shadow);
   transition: all 0.3s;
+  cursor: pointer; /* 添加鼠标指针提示可点击 */
 
   &.has-photo {
     border-color: var(--c-primary);
+  }
+
+  /* ✨ 点击动画效果 */
+  &.photo-clicked {
+    animation: photoClick 0.3s ease-out;
   }
 
   .char-photo {
@@ -1065,6 +1535,26 @@ watch(currentTheme, val => {
 
   &:hover .char-photo {
     transform: scale(1.05);
+  }
+
+  /* 添加点击提示 */
+  &.has-photo::after {
+    content: '点击切换';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 0.7rem;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  &.has-photo:hover::after {
+    opacity: 1;
   }
 
   .photo-placeholder {
@@ -1116,6 +1606,7 @@ watch(currentTheme, val => {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap; /* 允许换行 */
 
   .char-name {
     font-weight: 700;
@@ -1132,6 +1623,26 @@ watch(currentTheme, val => {
     &.active {
       background: hsl(var(--hue-success) 80% 60%);
       box-shadow: 0 0 8px hsl(var(--hue-success) 80% 60%);
+    }
+  }
+
+  /* ✨ 图片计数器样式 */
+  .image-counter {
+    margin-left: auto; /* 推到右侧 */
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--c-text-sub);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    transition: all 0.3s;
+
+    &:hover {
+      background: var(--c-primary);
+      color: white;
+      border-color: var(--c-primary);
+      transform: scale(1.05);
     }
   }
 }
@@ -1168,6 +1679,23 @@ watch(currentTheme, val => {
       box-shadow: 0 4px 12px hsla(var(--hue-primary), 80%, 60%, 0.3);
       font-weight: 600;
     }
+  }
+}
+
+/* 窄屏下人物选择标签换行展示，避免被截断 */
+@media (max-width: 520px) {
+  .tabs-nav {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: 6px;
+  }
+
+  .tabs-nav .tab-button {
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    min-width: 96px;
+    flex: 1 1 46%;
+    text-align: center;
   }
 }
 
@@ -1227,6 +1755,59 @@ watch(currentTheme, val => {
 @media (max-width: 599px) {
   .info-grid .card.two-column-split {
     grid-column: 1 / -1;
+  }
+}
+
+/* 移动端整体压缩与层级调整 */
+@media (max-width: 540px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .progress-bar-container {
+    padding: 8px 10px;
+  }
+
+  .info-layout {
+    gap: 14px;
+  }
+
+  .info-item {
+    padding: 12px 14px;
+  }
+
+  .photo-section {
+    gap: 8px;
+  }
+
+  .photo-caption .char-name {
+    font-size: 0.95rem;
+  }
+
+  .tabs-nav {
+    gap: 6px;
+  }
+
+  .tabs-nav .tab-button {
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    min-height: 36px;
+  }
+
+  .card {
+    padding: 12px;
+    min-height: 120px;
+  }
+
+  .text-box {
+    font-size: 0.9rem;
   }
 }
 
@@ -1414,11 +1995,93 @@ watch(currentTheme, val => {
   }
 }
 
+/* 设置弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+}
+
+.modal-content {
+  width: min(92vw, 360px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow);
+  padding: 18px;
+  color: var(--c-text-main);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+}
+
+.btn-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  background: var(--glass-panel);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--c-primary);
+    color: white;
+    border-color: var(--c-primary);
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-weight: 600;
+    color: var(--c-text-sub);
+  }
+
+  select {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    background: var(--glass-panel);
+    color: var(--c-text-main);
+    outline: none;
+
+    &:focus {
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 2px hsla(var(--hue-primary), 80%, 60%, 0.15);
+    }
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
+
 @keyframes pulse {
   0%,
   100% {
@@ -1426,6 +2089,19 @@ watch(currentTheme, val => {
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+/* ✨ 点击图片时的动画效果 */
+@keyframes photoClick {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 </style>
