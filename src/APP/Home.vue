@@ -93,11 +93,7 @@
         <div class="feature-button-grid">
           <!-- DLC按钮 -->
           <div class="feature-button-item">
-            <button
-              class="dlc-button"
-              @click="generateDLCContent"
-              title="点击生成国企往事DLC内容"
-            >
+            <button class="dlc-button" @click="generateDLCContent" title="点击生成国企往事DLC内容">
               <div class="dlc-icon">
                 <i class="fas fa-history"></i>
               </div>
@@ -168,7 +164,8 @@ function sendToAI(message: string) {
 
 // DLC内容生成功能
 function generateDLCContent() {
-  const dlcMessage = '生成-首页-店铺列表：1个名为"组织部派来一个年轻人"。其中包含6个套餐，女孩名字分别是：1苏晴；2白慧；3丁小芹；4王春燕；5林婉仪；6秦舒澜。套餐内容严格按照设定。';
+  const dlcMessage =
+    '生成-首页-店铺列表：1个名为"组织部派来一个年轻人"。其中包含6个套餐，女孩名字分别是：1苏晴；2白慧；3丁小芹；4王春燕；5林婉仪；6秦舒澜。套餐内容严格按照设定。';
   search(dlcMessage);
 }
 </script>
@@ -993,7 +990,8 @@ function generateDLCContent() {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
