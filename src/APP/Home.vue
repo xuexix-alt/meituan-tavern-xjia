@@ -91,7 +91,20 @@
           <h3>特色玩法</h3>
         </div>
         <div class="feature-button-grid">
-          <!-- 特色玩法按钮已移除，测试酒馆信息解析功能 -->
+          <!-- DLC按钮 -->
+          <div class="feature-button-item">
+            <button
+              class="dlc-button"
+              @click="generateDLCContent"
+              title="点击生成国企往事DLC内容"
+            >
+              <div class="dlc-icon">
+                <i class="fas fa-history"></i>
+              </div>
+              <span class="dlc-text">DLC:1995国企往事</span>
+              <div class="dlc-badge">NEW</div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -151,6 +164,12 @@ function sendToAI(message: string) {
   } else {
     console.log(`[模拟发送至AI - 完整指令]: ${fullCommand}`);
   }
+}
+
+// DLC内容生成功能
+function generateDLCContent() {
+  const dlcMessage = '生成-首页-店铺列表：1个名为"组织部派来一个年轻人"。其中包含6个套餐，女孩名字分别是：1苏晴；2白慧；3丁小芹；4王春燕；5林婉仪；6秦舒澜。套餐内容严格按照设定。';
+  search(dlcMessage);
 }
 </script>
 
@@ -760,6 +779,105 @@ function sendToAI(message: string) {
   margin-bottom: 0;
 }
 
+.feature-button-item {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.dlc-button {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-width: 280px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 60, 114, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(30, 60, 114, 0.3);
+  }
+
+  .dlc-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    flex-shrink: 0;
+
+    i {
+      color: #ffd700;
+      font-size: 1.1rem;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+  }
+
+  .dlc-text {
+    flex-grow: 1;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dlc-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(238, 90, 36, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+}
+
 .nav-bar {
   display: flex;
   border-top: 1px solid var(--border-color);
@@ -875,14 +993,13 @@ function sendToAI(message: string) {
 }
 
 @keyframes pulse {
-  0% {
+  0%, 100% {
     transform: scale(1);
+    opacity: 1;
   }
   50% {
     transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
+    opacity: 0.9;
   }
 }
 
