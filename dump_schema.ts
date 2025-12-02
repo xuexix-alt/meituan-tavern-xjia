@@ -3,10 +3,19 @@
 import _ from 'lodash';
 import fs from 'node:fs';
 import path from 'node:path';
+<<<<<<< HEAD
 import { z } from 'zod';
 
 fs.globSync('src/**/schema.ts').forEach(async schema_file => {
   try {
+=======
+import z from 'zod';
+
+fs.globSync('src/**/schema.ts').forEach(async schema_file => {
+  try {
+    globalThis._ = _;
+    globalThis.z = z;
+>>>>>>> 196debabfc73b024b9546a8de9e18354ab779af3
     const module = await import(path.resolve(import.meta.dirname, schema_file));
     if (_.has(module, 'Schema')) {
       fs.writeFileSync(
@@ -15,6 +24,10 @@ fs.globSync('src/**/schema.ts').forEach(async schema_file => {
       );
     }
   } catch (e) {
+<<<<<<< HEAD
     /** ignore */
+=======
+    console.error(`生成 '${schema_file}' 对应的 schema.json 失败: ${e}`);
+>>>>>>> 196debabfc73b024b9546a8de9e18354ab779af3
   }
 });
