@@ -13,7 +13,12 @@
         <div class="card-title"><i class="fas fa-history"></i>历史订单</div>
         <div v-if="historyItems.length === 0" class="empty-state">暂无历史订单</div>
         <div v-else v-bind="wrapperProps">
-          <div v-for="item in virtualHistoryItems" :key="item.data.order_time" class="history-card" @click="reorder(item.data)">
+          <div
+            v-for="item in virtualHistoryItems"
+            :key="item.data.order_time"
+            class="history-card"
+            @click="reorder(item.data)"
+          >
             <!-- 头部：姓名套餐和价格 -->
             <div class="history-header">
               <div class="title-section">
@@ -282,7 +287,11 @@ const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
 // 虚拟列表配置
 const containerRef = ref<HTMLElement>();
 const ITEM_HEIGHT = 150; // 每个历史卡片预估高度（包括间距）
-const { list: virtualHistoryItems, containerProps, wrapperProps } = useVirtualList(historyItems, {
+const {
+  list: virtualHistoryItems,
+  containerProps,
+  wrapperProps,
+} = useVirtualList(historyItems, {
   itemHeight: ITEM_HEIGHT,
   overscan: 5, // 预渲染额外5个项目，确保滚动流畅
 });

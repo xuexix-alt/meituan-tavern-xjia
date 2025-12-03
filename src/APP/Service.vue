@@ -384,7 +384,6 @@ const currentGirl = computed(() => girlsData.value[currentGirlIndex.value] || nu
 
 // ================ 数据工具函数 ================
 
-
 /**
  * 获取女孩姓名
  */

@@ -163,11 +163,23 @@ onErrorCaptured((err: Error) => {
 
 /* 全局字体优化 */
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1, "liga" 1;
+  font-feature-settings:
+    'kern' 1,
+    'liga' 1;
   font-variant-ligatures: common-ligatures;
 }
 
@@ -206,7 +218,9 @@ body {
   body .nav-item:active {
     opacity: 0.7;
     transform: scale(0.95);
-    transition: opacity 0.1s ease, transform 0.1s ease;
+    transition:
+      opacity 0.1s ease,
+      transform 0.1s ease;
   }
 
   /* 增加触控目标最小尺寸（WCAG 2.1 AA标准） */

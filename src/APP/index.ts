@@ -13,7 +13,7 @@ const perfStartTime = performance.now();
 const initWebVitalsMonitoring = () => {
   try {
     // 监控LCP (Largest Contentful Paint)
-    const lcpObserver = new PerformanceObserver((entryList) => {
+    const lcpObserver = new PerformanceObserver(entryList => {
       const entries = entryList.getEntries();
       const lastEntry = entries[entries.length - 1];
       console.log(`[Web Vitals] LCP: ${lastEntry.startTime.toFixed(2)}ms`, lastEntry);
@@ -21,7 +21,7 @@ const initWebVitalsMonitoring = () => {
     lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
 
     // 监控FID (First Input Delay) - 通过Event Timing API
-    const fidObserver = new PerformanceObserver((entryList) => {
+    const fidObserver = new PerformanceObserver(entryList => {
       for (const entry of entryList.getEntries()) {
         if (entry.entryType === 'first-input') {
           console.log(`[Web Vitals] FID: ${entry.processingStart - entry.startTime}ms`, entry);
@@ -33,7 +33,7 @@ const initWebVitalsMonitoring = () => {
     // 监控CLS (Cumulative Layout Shift)
     let clsValue = 0;
     let clsEntries: any[] = [];
-    const clsObserver = new PerformanceObserver((entryList) => {
+    const clsObserver = new PerformanceObserver(entryList => {
       for (const entry of entryList.getEntries()) {
         if (!entry.hadRecentInput) {
           clsEntries.push(entry);
@@ -45,9 +45,10 @@ const initWebVitalsMonitoring = () => {
     clsObserver.observe({ type: 'layout-shift', buffered: true });
 
     // 监控长任务 (Long Tasks)
-    const longTaskObserver = new PerformanceObserver((entryList) => {
+    const longTaskObserver = new PerformanceObserver(entryList => {
       for (const entry of entryList.getEntries()) {
-        if (entry.duration > 50) { // 超过50ms的任务
+        if (entry.duration > 50) {
+          // 超过50ms的任务
           console.log(`[性能] 长任务检测: ${entry.duration.toFixed(2)}ms`, entry);
         }
       }
@@ -66,14 +67,16 @@ const initMemoryMonitoring = () => {
     // 检查performance.memory API是否可用
     if ('memory' in performance) {
       const memory = (performance as any).memory;
-      console.log(`[内存监控] 初始化内存状态: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB / ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)}MB`);
+      console.log(
+        `[内存监控] 初始化内存状态: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB / ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)}MB`,
+      );
 
       // 定期监控内存使用
       setInterval(() => {
         const mem = (performance as any).memory;
         const usedMB = mem.usedJSHeapSize / 1024 / 1024;
         const totalMB = mem.totalJSHeapSize / 1024 / 1024;
-        const percentage = (usedMB / totalMB * 100).toFixed(1);
+        const percentage = ((usedMB / totalMB) * 100).toFixed(1);
 
         // 仅在高内存使用或增长时记录
         if (usedMB > 50 || percentage > 80) {

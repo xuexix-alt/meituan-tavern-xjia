@@ -10,7 +10,12 @@
       <div ref="containerRef" v-bind="containerProps" class="shop-list-container">
         <div v-if="shops.length === 0" class="empty-state">暂无发现，请先让AI生成内容。</div>
         <div v-else v-bind="wrapperProps">
-          <div v-for="shop in virtualShops" :key="shop.data.id" class="shop-card" @click="$router.push(`/shop/${shop.data.id}`)">
+          <div
+            v-for="shop in virtualShops"
+            :key="shop.data.id"
+            class="shop-card"
+            @click="$router.push(`/shop/${shop.data.id}`)"
+          >
             <div class="avatar-text">
               <i
                 v-if="(shop.data.packages || []).find((p: any) => p.icon)"
@@ -67,7 +72,11 @@ const shops = ref<any[]>([]);
 // 虚拟列表配置
 const containerRef = ref<HTMLElement>();
 const ITEM_HEIGHT = 100; // 每个店铺卡片预估高度（包括间距）
-const { list: virtualShops, containerProps, wrapperProps } = useVirtualList(shops, {
+const {
+  list: virtualShops,
+  containerProps,
+  wrapperProps,
+} = useVirtualList(shops, {
   itemHeight: ITEM_HEIGHT,
   overscan: 5, // 预渲染额外5个项目，确保滚动流畅
 });
