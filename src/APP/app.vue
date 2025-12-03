@@ -163,10 +163,12 @@ onErrorCaptured((err: Error) => {
 
 /* 全局字体优化 */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+  font-variant-ligatures: common-ligatures;
 }
 
 /* 深色模式下字体渲染优化 */
@@ -188,6 +190,56 @@ body {
 [data-theme='dark'] * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 移动端触控优化 - 针对无hover设备和粗指针（触摸屏） */
+@media (hover: none) and (pointer: coarse) {
+  /* 移除移动端无效的hover效果，增强点击反馈 */
+  body button:hover,
+  body .nav-item:hover,
+  body .category-item:hover {
+    transform: none;
+  }
+
+  body .category-item:active .icon-wrapper,
+  body button:active,
+  body .nav-item:active {
+    opacity: 0.7;
+    transform: scale(0.95);
+    transition: opacity 0.1s ease, transform 0.1s ease;
+  }
+
+  /* 增加触控目标最小尺寸（WCAG 2.1 AA标准） */
+  body button,
+  body .nav-item,
+  body .category-item,
+  body .dlc-button,
+  body .search-btn,
+  body .retry-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 导航项特别优化 */
+  body .nav-item {
+    padding: 12px 0;
+  }
+
+  /* 输入框增加触控区域 */
+  body input,
+  body select,
+  body textarea {
+    font-size: 16px; /* 防止iOS自动缩放 */
+    min-height: 44px;
+  }
+
+  /* 移除移动端不需要的复杂hover动画 */
+  body .icon-wrapper:hover::before,
+  body .search-bar-container:hover::before,
+  body .dlc-button:hover::before {
+    animation: none;
+    transition: none;
+  }
 }
 </style>
 

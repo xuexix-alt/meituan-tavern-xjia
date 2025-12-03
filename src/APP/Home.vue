@@ -244,9 +244,19 @@ function generateDLCContent() {
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 16px;
+  grid-template-columns: repeat(4, 1fr); /* 桌面端默认值 */
+
+  /* 手机端：2列 */
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 平板端：3列 */
+  @media (min-width: 481px) and (max-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .category-item {

@@ -9,37 +9,39 @@
     </div>
 
     <div class="app-content">
-      <div class="card">
+      <div ref="containerRef" v-bind="containerProps" class="card">
         <div class="card-title"><i class="fas fa-history"></i>历史订单</div>
         <div v-if="historyItems.length === 0" class="empty-state">暂无历史订单</div>
-        <div v-for="item in historyItems" :key="item.order_time" class="history-card" @click="reorder(item)">
-          <!-- 头部：姓名套餐和价格 -->
-          <div class="history-header">
-            <div class="title-section">
-              <h3 class="history-title">{{ item.girl_name || '-' }} - {{ item.package_name || '-' }}</h3>
+        <div v-else v-bind="wrapperProps">
+          <div v-for="item in virtualHistoryItems" :key="item.data.order_time" class="history-card" @click="reorder(item.data)">
+            <!-- 头部：姓名套餐和价格 -->
+            <div class="history-header">
+              <div class="title-section">
+                <h3 class="history-title">{{ item.data.girl_name || '-' }} - {{ item.data.package_name || '-' }}</h3>
+              </div>
+              <div class="price-section">
+                <div class="history-price">{{ item.data.price || '-' }}</div>
+              </div>
             </div>
-            <div class="price-section">
-              <div class="history-price">{{ item.price || '-' }}</div>
-            </div>
-          </div>
 
-          <!-- 中部：身份信息 -->
-          <div class="identity-section">
-            <i class="fas fa-user"></i>
-            <span class="identity-text">{{ item.identity || '-' }}</span>
-          </div>
-
-          <!-- 底部：时间和状态 + 按钮 -->
-          <div class="bottom-section">
-            <div class="status-time">
-              <span class="order-time">{{ item.order_time || '-' }}</span>
-              <span :style="getStatusStyle(item.order_status)" class="status-badge">{{
-                item.order_status || '-'
-              }}</span>
+            <!-- 中部：身份信息 -->
+            <div class="identity-section">
+              <i class="fas fa-user"></i>
+              <span class="identity-text">{{ item.data.identity || '-' }}</span>
             </div>
-            <div class="quick-reorder-btn">
-              <i class="fas fa-redo"></i>
-              <span>再次下单</span>
+
+            <!-- 底部：时间和状态 + 按钮 -->
+            <div class="bottom-section">
+              <div class="status-time">
+                <span class="order-time">{{ item.data.order_time || '-' }}</span>
+                <span :style="getStatusStyle(item.data.order_status)" class="status-badge">{{
+                  item.data.order_status || '-'
+                }}</span>
+              </div>
+              <div class="quick-reorder-btn">
+                <i class="fas fa-redo"></i>
+                <span>再次下单</span>
+              </div>
             </div>
           </div>
         </div>
@@ -265,7 +267,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { useVirtualList } from '@vueuse/core';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { getNestedValue } from './utils';
 
 // 响应式数据
 const historyItems = ref<any[]>([]);
@@ -275,20 +279,13 @@ const showModal = ref(false);
 const orderRemark = ref('');
 const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
 
-// 安全获取嵌套值
-function getNestedValue(obj: any, path: string, fallback: any = '--') {
-  if (!obj) return fallback;
-  const keys = path
-    .replace(/\[(\d+)\]/g, '.$1')
-    .split('.')
-    .filter(Boolean);
-  let current = obj;
-  for (const key of keys) {
-    if (current == null) return fallback;
-    current = current[key];
-  }
-  return current ?? fallback;
-}
+// 虚拟列表配置
+const containerRef = ref<HTMLElement>();
+const ITEM_HEIGHT = 150; // 每个历史卡片预估高度（包括间距）
+const { list: virtualHistoryItems, containerProps, wrapperProps } = useVirtualList(historyItems, {
+  itemHeight: ITEM_HEIGHT,
+  overscan: 5, // 预渲染额外5个项目，确保滚动流畅
+});
 
 // 状态样式
 function getStatusStyle(status: string) {

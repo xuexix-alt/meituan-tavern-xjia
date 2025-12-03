@@ -7,24 +7,26 @@
     </div>
 
     <div class="app-content">
-      <div class="shop-list">
+      <div ref="containerRef" v-bind="containerProps" class="shop-list-container">
         <div v-if="shops.length === 0" class="empty-state">暂无发现，请先让AI生成内容。</div>
-        <div v-for="shop in shops" :key="shop.id" class="shop-card" @click="$router.push(`/shop/${shop.id}`)">
-          <div class="avatar-text">
-            <i
-              v-if="(shop.packages || []).find((p: any) => p.icon)"
-              :class="(shop.packages || []).find((p: any) => p.icon).icon"
-            ></i>
-            <i v-else class="fas fa-store"></i>
-          </div>
-          <div class="info">
-            <div class="name">{{ shop.name }}</div>
-            <div class="desc">
-              <span class="slogan-text">{{ shop.slogan }}</span>
-              <span v-if="shop.packages && shop.packages.length > 0" class="package-count">
-                <i class="fas fa-layer-group"></i>
-                {{ shop.packages.length }} 个套餐
-              </span>
+        <div v-else v-bind="wrapperProps">
+          <div v-for="shop in virtualShops" :key="shop.data.id" class="shop-card" @click="$router.push(`/shop/${shop.data.id}`)">
+            <div class="avatar-text">
+              <i
+                v-if="(shop.data.packages || []).find((p: any) => p.icon)"
+                :class="(shop.data.packages || []).find((p: any) => p.icon).icon"
+              ></i>
+              <i v-else class="fas fa-store"></i>
+            </div>
+            <div class="info">
+              <div class="name">{{ shop.data.name }}</div>
+              <div class="desc">
+                <span class="slogan-text">{{ shop.data.slogan }}</span>
+                <span v-if="shop.data.packages && shop.data.packages.length > 0" class="package-count">
+                  <i class="fas fa-layer-group"></i>
+                  {{ shop.data.packages.length }} 个套餐
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -57,9 +59,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useVirtualList } from '@vueuse/core';
 
 const shops = ref<any[]>([]);
+
+// 虚拟列表配置
+const containerRef = ref<HTMLElement>();
+const ITEM_HEIGHT = 100; // 每个店铺卡片预估高度（包括间距）
+const { list: virtualShops, containerProps, wrapperProps } = useVirtualList(shops, {
+  itemHeight: ITEM_HEIGHT,
+  overscan: 5, // 预渲染额外5个项目，确保滚动流畅
+});
 
 // 从酒馆消息提取数据 - 直接获取，不使用缓存
 function extractDataFromMessage(): { shops: any[]; packages: any[] } {

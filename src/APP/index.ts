@@ -9,6 +9,87 @@ vueApp.use(router);
 // 性能监控标记
 const perfStartTime = performance.now();
 
+// Web Vitals性能监控
+const initWebVitalsMonitoring = () => {
+  try {
+    // 监控LCP (Largest Contentful Paint)
+    const lcpObserver = new PerformanceObserver((entryList) => {
+      const entries = entryList.getEntries();
+      const lastEntry = entries[entries.length - 1];
+      console.log(`[Web Vitals] LCP: ${lastEntry.startTime.toFixed(2)}ms`, lastEntry);
+    });
+    lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+
+    // 监控FID (First Input Delay) - 通过Event Timing API
+    const fidObserver = new PerformanceObserver((entryList) => {
+      for (const entry of entryList.getEntries()) {
+        if (entry.entryType === 'first-input') {
+          console.log(`[Web Vitals] FID: ${entry.processingStart - entry.startTime}ms`, entry);
+        }
+      }
+    });
+    fidObserver.observe({ type: 'first-input', buffered: true });
+
+    // 监控CLS (Cumulative Layout Shift)
+    let clsValue = 0;
+    let clsEntries: any[] = [];
+    const clsObserver = new PerformanceObserver((entryList) => {
+      for (const entry of entryList.getEntries()) {
+        if (!entry.hadRecentInput) {
+          clsEntries.push(entry);
+          clsValue += entry.value;
+          console.log(`[Web Vitals] CLS累计: ${clsValue.toFixed(4)}`, entry);
+        }
+      }
+    });
+    clsObserver.observe({ type: 'layout-shift', buffered: true });
+
+    // 监控长任务 (Long Tasks)
+    const longTaskObserver = new PerformanceObserver((entryList) => {
+      for (const entry of entryList.getEntries()) {
+        if (entry.duration > 50) { // 超过50ms的任务
+          console.log(`[性能] 长任务检测: ${entry.duration.toFixed(2)}ms`, entry);
+        }
+      }
+    });
+    longTaskObserver.observe({ type: 'longtask', buffered: true });
+
+    console.log('[性能监控] Web Vitals监控已启动');
+  } catch (error) {
+    console.warn('[性能监控] Web Vitals监控初始化失败:', error);
+  }
+};
+
+// 内存使用监控（仅Chrome支持）
+const initMemoryMonitoring = () => {
+  try {
+    // 检查performance.memory API是否可用
+    if ('memory' in performance) {
+      const memory = (performance as any).memory;
+      console.log(`[内存监控] 初始化内存状态: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB / ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)}MB`);
+
+      // 定期监控内存使用
+      setInterval(() => {
+        const mem = (performance as any).memory;
+        const usedMB = mem.usedJSHeapSize / 1024 / 1024;
+        const totalMB = mem.totalJSHeapSize / 1024 / 1024;
+        const percentage = (usedMB / totalMB * 100).toFixed(1);
+
+        // 仅在高内存使用或增长时记录
+        if (usedMB > 50 || percentage > 80) {
+          console.log(`[内存监控] 内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentage}%)`);
+        }
+      }, 30000); // 每30秒检查一次
+
+      console.log('[内存监控] 内存监控已启动');
+    } else {
+      console.log('[内存监控] performance.memory API不可用');
+    }
+  } catch (error) {
+    console.warn('[内存监控] 内存监控初始化失败:', error);
+  }
+};
+
 // 预加载关键路由组件
 const preloadCriticalRoutes = async () => {
   try {
@@ -76,6 +157,11 @@ const initApp = async () => {
 
     // 等待所有初始化任务完成
     const [mvuReady] = await initTasks;
+
+    // 启动Web Vitals性能监控
+    initWebVitalsMonitoring();
+    // 启动内存使用监控
+    initMemoryMonitoring();
 
     // 记录初始化耗时
     const initTime = performance.now() - perfStartTime;

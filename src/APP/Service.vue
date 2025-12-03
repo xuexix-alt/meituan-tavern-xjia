@@ -356,7 +356,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import _ from 'lodash';
+import { getNestedValue } from './utils';
 
 // 响应式数据
 const girlsData = ref<any[]>([]);
@@ -384,22 +384,6 @@ const currentGirl = computed(() => girlsData.value[currentGirlIndex.value] || nu
 
 // ================ 数据工具函数 ================
 
-/**
- * 安全获取嵌套值
- */
-function getNestedValue(obj: any, path: string, fallback: any = '--') {
-  if (!obj) return fallback;
-  const keys = path
-    .replace(/\[(\d+)\]/g, '.$1')
-    .split('.')
-    .filter(Boolean);
-  let current = obj;
-  for (const key of keys) {
-    if (current == null) return fallback;
-    current = current[key];
-  }
-  return current ?? fallback;
-}
 
 /**
  * 获取女孩姓名
