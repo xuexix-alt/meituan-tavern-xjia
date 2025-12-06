@@ -21,13 +21,19 @@ export function extractDataFromMessage(): { shops: any[]; packages: any[] } {
     console.log('[DataParser] 当前楼层无数据，尝试从最近楼层获取...');
     // 确保 currentMessageId 是字符串
     const currentIdStr = String(currentMessageId || '');
-    for (let i = 1; i <= 10; i++) {
-      const historicalMessageId = `msg_${parseInt(currentIdStr.replace('msg_', '')) - i}`;
-      const historicalData = extractDataFromSpecificMessage(historicalMessageId);
-      if (historicalData) {
-        console.log(`[DataParser] 从 ${i} 个楼层前找到数据`);
-        return historicalData;
+    const currentIdNum = parseInt(currentIdStr.replace('msg_', ''));
+
+    if (!isNaN(currentIdNum)) {
+      for (let i = 1; i <= 10; i++) {
+        const historicalMessageId = `msg_${currentIdNum - i}`;
+        const historicalData = extractDataFromSpecificMessage(historicalMessageId);
+        if (historicalData) {
+          console.log(`[DataParser] 从 ${i} 个楼层前找到数据`);
+          return historicalData;
+        }
       }
+    } else {
+      console.warn('[DataParser] 无法解析当前消息ID，跳过历史回溯:', currentIdStr);
     }
 
     // 所有方式都失败，返回空数据
@@ -52,13 +58,16 @@ export function extractDataFromSpecificMessage(messageId: string): { shops: any[
     }
 
     const messageContent = messages[0].message;
-    const match = messageContent.match(/\[手机界面开始\](.*?)\[手机界面结束\]/s);
+    // 支持不区分大小写的标签匹配，并处理可能的空白字符
+    const match = messageContent.match(/\[手机界面开始\]([\s\S]*?)\[手机界面结束\]/i);
 
     if (!match || !match[1]) {
       return null;
     }
 
     const dataText = match[1].trim();
+    if (!dataText) return null;
+
     return parseShopData(dataText);
   } catch (e) {
     return null;
