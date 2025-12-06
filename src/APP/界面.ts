@@ -13,10 +13,13 @@ const ItemDetail = () => import('./ItemDetail.vue');
 /**
  * 智能导航函数 - 根据服务状态决定默认页面
  */
-export async function navigateToDefaultPage(router: any) {
+export async function navigateToDefaultPage() {
   try {
-    // 等待MVU初始化
-    await waitGlobalInitialized('Mvu');
+    // 等待MVU初始化 (最多等待2秒)
+    await Promise.race([
+      waitGlobalInitialized('Mvu'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('MVU初始化超时')), 2000)),
+    ]);
 
     // 获取MVU数据
     const mvuData = Mvu.getMvuData({ type: 'message', message_id: 'latest' }) as any;

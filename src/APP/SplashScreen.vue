@@ -68,7 +68,7 @@ async function skipSplash() {
   try {
     isFading.value = true;
     // 调用智能导航函数决定目标页面
-    const targetPath = await navigateToDefaultPage(router);
+    const targetPath = await navigateToDefaultPage();
     console.log(`[智能导航] 启动画面跳过，跳转到: ${targetPath}`);
 
     setTimeout(() => {

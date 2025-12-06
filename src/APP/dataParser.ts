@@ -62,6 +62,12 @@ export function extractDataFromSpecificMessage(messageId: string): { shops: any[
     const match = messageContent.match(/\[手机界面开始\]([\s\S]*?)\[手机界面结束\]/i);
 
     if (!match || !match[1]) {
+      // 尝试匹配不带结束标签的情况（容错）
+      const startMatch = messageContent.match(/\[手机界面开始\]([\s\S]*)/i);
+      if (startMatch && startMatch[1]) {
+        const dataText = startMatch[1].trim();
+        if (dataText) return parseShopData(dataText);
+      }
       return null;
     }
 

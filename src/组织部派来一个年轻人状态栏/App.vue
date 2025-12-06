@@ -193,296 +193,60 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { StatData, CharacterData } from './types';
 
-// ✅ 并行加载图片函数（改进版）+ 多镜像支持 + 进度回调
-// 一次性发起所有请求，大幅提升加载速度
-// ⚠️ 仅加载 JPG 格式，避免加载体积巨大的 PNG
-// 💡 使用多镜像 CDN 策略，自动级联故障转移，确保快速稳定的加载
-const loadImagesParallel = async (
-  roleName: string,
-  rangeStart = 0,
-  rangeEnd = 30,
-  onProgress?: (loaded: number) => void,
-): Promise<string[]> => {
-  // CDN 镜像列表（按优先级排列）
-  const cdnMirrors = [
-    'https://fastly.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // Fastly 镜像（主要，速度快）
-    'https://gcore.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // Gcore 镜像（备选1）
-    'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image', // testingcf 镜像（备选2，国内优化）
-  ];
+// 轻量级图片加载：小批次顺序探测 + 内存缓存，舍弃 IndexedDB 与大规模并行
+const cdnMirrors = [
+  'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image',
+  'https://gcore.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/image',
+];
 
-  let lastError: Error | null = null;
+const MAX_CANDIDATES = 3; // 单角色最多尝试 3 张，兼顾切换体验与流量
 
-  // 遍历所有 CDN 镜像，直到找到可用的
-  for (const cdnPrefix of cdnMirrors) {
-    try {
-      console.log(`[图片] 🔄 尝试使用镜像: ${cdnPrefix}`);
-
-      const imageUrls: Array<{ url: string; name: string }> = [];
-
-      // 基础文件名（无数字后缀）- 仅加载 JPG
-      if (rangeStart === 0) {
-        imageUrls.push({
-          url: `${cdnPrefix}/${encodeURIComponent(roleName)}.jpg`,
-          name: `${roleName}.jpg`,
-        });
-      }
-
-      // 带数字后缀的文件 - 仅加载 JPG
-      for (let i = Math.max(1, rangeStart); i <= rangeEnd; i++) {
-        imageUrls.push({
-          url: `${cdnPrefix}/${encodeURIComponent(roleName)}${i}.jpg`,
-          name: `${roleName}${i}.jpg`,
-        });
-      }
-
-      const rangeDesc = rangeStart === 0 && rangeEnd === 30 ? '全部图片（0-30）' : `第${rangeStart}-${rangeEnd}张`;
-      console.log(`[图片] 🔍 开始加载 "${roleName}" 的${rangeDesc}...`);
-
-      // 并行发起所有请求，带进度回调
-      const results = await Promise.allSettled(
-        imageUrls.map(async ({ url, name }) => {
-          const result = await loadImageAsBlob(url, name);
-          if (result && onProgress) {
-            onProgress(1); // 成功加载一张，通知进度+1
-          }
-          return result;
-        }),
-      );
-
-      // 筛选成功的图片 + 统计失败数量
-      const blobUrls: string[] = [];
-      let failedCount = 0;
-
-      results.forEach((result, index) => {
-        if (result.status === 'fulfilled' && result.value) {
-          blobUrls.push(result.value);
-          console.log(`[图片] ✅ 成功加载: ${imageUrls[index].name}`);
-        } else {
-          failedCount++;
-        }
-      });
-
-      // 汇总日志：成功的输出详情，失败的只显示数量
-      if (failedCount > 0) {
-        console.log(`[图片] ⏭️  其余 ${failedCount} 个请求无图片文件（属正常情况）`);
-      }
-      console.log(`[图片] 📊 成功找到 ${blobUrls.length} 张可用图片（扫描范围：${imageUrls.length} 个 URL）`);
-
-      if (blobUrls.length > 0) {
-        console.log(`[图片] ✅ 使用镜像 "${cdnPrefix}" 加载成功`);
-        return blobUrls;
-      }
-    } catch (error) {
-      lastError = error as Error;
-      console.warn(`[图片] ⚠️ 镜像失败: ${cdnPrefix}`, lastError.message);
-      // 继续尝试下一个镜像
-      continue;
+const buildImageUrls = (imageKey: string, limit = MAX_CANDIDATES) => {
+  const urls: string[] = [];
+  for (let idx = 0; idx < limit; idx++) {
+    const suffix = idx === 0 ? '' : `${idx}`;
+    for (const mirror of cdnMirrors) {
+      urls.push(`${mirror}/${encodeURIComponent(imageKey)}${suffix}.jpg`);
     }
   }
-
-  // 所有镜像都失败
-  console.error(`[图片] ❌ 所有 CDN 镜像都无法加载 "${roleName}"`, lastError);
-  return [];
+  return urls;
 };
 
-// 从 URL 加载单个图片为 Blob URL
-const loadImageAsBlob = (url: string, fileName: string): Promise<string | null> => {
-  return new Promise(resolve => {
-    // 使用 fetch 加载图片，避免 Canvas 转换的性能开销
-    fetch(url, { mode: 'cors' })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        return response.blob();
-      })
-      .then(blob => {
-        // 创建 Blob URL，比 Base64 快得多
-        const blobUrl = URL.createObjectURL(blob);
-        resolve(blobUrl);
-      })
-      .catch(() => {
-        // 失败直接返回 null，上层会汇总统计
-        resolve(null);
-      });
+const probeImage = (url: string): Promise<boolean> =>
+  new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
   });
-};
 
-// ✅ IndexedDB 初始化
-const initImageDatabase = async (): Promise<IDBDatabase | null> => {
-  try {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('TavernImageCache', 1);
+const imageCache = ref<Map<string, string[]>>(new Map());
 
-      request.onerror = () => {
-        console.warn('[数据库] ❌ IndexedDB 打开失败');
-        reject(request.error);
-      };
+const fetchAvailableImages = async (imageKey: string, need = 1): Promise<string[]> => {
+  const cached = imageCache.value.get(imageKey);
+  if (cached && cached.length >= need) return cached.slice(0, need);
 
-      request.onsuccess = () => {
-        const db = request.result;
-        console.log('[数据库] ✅ IndexedDB 已初始化');
-        resolve(db);
-      };
+  const candidates = buildImageUrls(imageKey, MAX_CANDIDATES);
+  const found: string[] = [];
 
-      request.onupgradeneeded = event => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('images')) {
-          db.createObjectStore('images', { keyPath: 'roleName' });
-          console.log('[数据库] 📦 创建 images 对象存储');
-        }
-      };
-    });
-  } catch (e) {
-    console.warn('[数据库] ❌ 初始化失败:', e);
-    return null;
-  }
-};
-
-let imageDatabase: IDBDatabase | null = null;
-
-// ✅ 从 IndexedDB 获取图片二进制数据
-const getImageFromDB = async (roleName: string): Promise<Blob | null> => {
-  try {
-    if (!imageDatabase) {
-      imageDatabase = await initImageDatabase();
-      if (!imageDatabase) return null;
+  for (const url of candidates) {
+    if (found.length >= need) break;
+    const ok = await probeImage(url);
+    if (ok) {
+      found.push(url);
+      if (isPreloading.value) loadingProgress.value += 1;
     }
-
-    return new Promise(resolve => {
-      const transaction = imageDatabase!.transaction(['images'], 'readonly');
-      const store = transaction.objectStore('images');
-      const request = store.get(roleName);
-
-      request.onsuccess = () => {
-        if (request.result && request.result.blob) {
-          const blob = request.result.blob;
-          const size = blob.size;
-          console.log(`[数据库] ✅ 从 IndexedDB 获取 "${roleName}" 的图片 (${(size / 1024).toFixed(2)} KB)`);
-          if (size === 0) {
-            console.warn(`[数据库] ⚠️ 警告: "${roleName}" 的 Blob 数据为空 (0 bytes)`);
-          }
-          resolve(blob);
-        } else {
-          console.log(`[数据库] ℹ️ "${roleName}" 在 IndexedDB 中无数据`);
-          resolve(null);
-        }
-      };
-
-      request.onerror = () => {
-        console.warn(`[数据库] ❌ 查询失败: ${roleName}`);
-        resolve(null);
-      };
-    });
-  } catch (e) {
-    console.warn('[数据库] ❌ 获取失败:', e);
-    return null;
   }
+
+  if (found.length) {
+    imageCache.value.set(imageKey, found);
+  }
+  return found;
 };
 
-// ✅ 保存图片到 IndexedDB
-const saveImageToDB = async (roleName: string, blob: Blob): Promise<boolean> => {
-  try {
-    if (!imageDatabase) {
-      imageDatabase = await initImageDatabase();
-      if (!imageDatabase) return false;
-    }
+// --- 状态管理 ---
 
-    return new Promise(resolve => {
-      const transaction = imageDatabase!.transaction(['images'], 'readwrite');
-      const store = transaction.objectStore('images');
-      const request = store.put({ roleName, blob });
-
-      request.onsuccess = () => {
-        console.log(`[数据库] 💾 已保存 "${roleName}" 到 IndexedDB`);
-        resolve(true);
-      };
-
-      request.onerror = () => {
-        console.warn(`[数据库] ❌ 保存失败: ${roleName}`);
-        resolve(false);
-      };
-    });
-  } catch (e) {
-    console.warn('[数据库] ❌ 保存失败:', e);
-    return false;
-  }
-};
-
-// ✅ 改进的图片缓存获取函数（添加 IndexedDB + 多镜像支持）
-const getImageFromCache = async (roleName: string): Promise<string | null> => {
-  try {
-    // 1. 首先尝试从 IndexedDB 获取
-    const cachedBlob = await getImageFromDB(roleName);
-    if (cachedBlob && cachedBlob.size > 0) {
-      const blobUrl = URL.createObjectURL(cachedBlob);
-      console.log(`[图片] ✅ 使用 IndexedDB 缓存（无需重新加载）`);
-      return blobUrl;
-    } else if (cachedBlob && cachedBlob.size === 0) {
-      // ⚠️ 缓存数据被损坏，删除后重新加载
-      console.warn(`[图片] ⚠️ IndexedDB 缓存被损坏（0 bytes），删除并重新加载...`);
-    }
-
-    console.log(`[图片] 📡 缓存未命中，正在加载 "${roleName}" 的图片...（使用并行加载，速度更快）`);
-
-    // 2. 使用并行加载获取所有可用图片
-    const blobUrls = await loadImagesParallel(roleName);
-
-    if (blobUrls.length === 0) {
-      console.log(`[图片] ❌ "${roleName}" 没有找到任何图片文件`);
-      return null;
-    }
-
-    // 3. 随机选择一张图片
-    const randomIndex = Math.floor(Math.random() * blobUrls.length);
-    const selectedImageUrl = blobUrls[randomIndex];
-
-    console.log(
-      `[图片] 🎲 从 ${blobUrls.length} 张图片中随机选择第 ${randomIndex + 1} 张（${selectedImageUrl ? '成功' : '失败'}）`,
-    );
-
-    // 4. ✅ 改进：保存到 IndexedDB 时检查数据完整性
-    // 使用 Promise.race 实现超时保护
-    const savePromise = new Promise<void>(resolve => {
-      fetch(selectedImageUrl)
-        .then(r => r.blob())
-        .then(blob => {
-          // ✅ 确保保存的不是空 Blob
-          if (blob.size > 0) {
-            console.log(`[图片] 💾 正在保存 "${roleName}" 到 IndexedDB (${(blob.size / 1024).toFixed(2)} KB)...`);
-            saveImageToDB(roleName, blob)
-              .then(() => resolve())
-              .catch(e => {
-                console.warn('[数据库] 后台保存失败:', e);
-                resolve();
-              });
-          } else {
-            console.warn(`[图片] ⚠️ 无法保存空 Blob，跳过 IndexedDB 缓存`);
-            resolve();
-          }
-        })
-        .catch(e => {
-          console.warn('[数据库] 后台保存失败（读取失败）:', e);
-          resolve();
-        });
-    });
-
-    // 5. 清理其他未使用的 Blob URL（防止内存泄漏）
-    blobUrls.forEach((url, index) => {
-      if (index !== randomIndex) {
-        URL.revokeObjectURL(url);
-      }
-    });
-
-    // 6. 不等待保存完成，但确保至少尝试了
-    savePromise.catch(() => {});
-
-    return selectedImageUrl;
-  } catch (e) {
-    console.warn(`[图片] 获取图片失败:`, e);
-    return null;
-  }
-};
+// --- 状态管理 ---
 
 // --- 状态管理 ---
 const containerRef = ref<HTMLElement | null>(null);
@@ -514,7 +278,7 @@ const isImageLoading = ref(false);
 
 // ✅ 图片预加载进度跟踪
 const loadingProgress = ref(0); // 当前已加载数量
-const totalImages = ref(0); // 总图片数量（预估）
+const totalImages = ref(1); // 总图片数量（预估）
 const isPreloading = ref(false); // 是否正在预加载
 const preloadPhase = ref(''); // 当前加载阶段描述
 
@@ -600,161 +364,51 @@ const mapRoleToImageName = (roleName: string, roleIndex: number): string => {
 // ? 当前显示的图片URL（响应式）
 const currentPhotoUrl = ref<string>('');
 
-// ? 延迟释放旧 Blob URL（等待 <img> 完全切换后再释放）
-let releaseTimer: ReturnType<typeof setTimeout> | null = null;
-watch(currentPhotoUrl, (_newUrl, oldUrl) => {
-  if (releaseTimer) {
-    clearTimeout(releaseTimer);
-    releaseTimer = null;
-  }
-
-  if (oldUrl && oldUrl.startsWith('blob:')) {
-    releaseTimer = setTimeout(() => {
-      try {
-        URL.revokeObjectURL(oldUrl);
-        console.log(`[清理] 已释放旧 Blob URL: ${oldUrl.substring(0, 50)}...`);
-      } catch (e) {
-        console.warn('[清理] 释放 Blob URL 失败:', e);
-      }
-      releaseTimer = null;
-    }, 500);
-  }
-});
-
-// ✅ 预加载缓存（后台预加载下一个角色的图片，消除切换延迟）
-const preloadCache = ref<Map<string, string[]>>(new Map()); // 改为存储所有图片数组
+const preloadCache = imageCache; // 复用轻量内存缓存
 
 // ✅ 图片索引跟踪（记录每个角色当前显示的是第几张图片）
 const imageIndexMap = ref<Map<string, number>>(new Map());
 
 /**
- * ✨ 智能分批预加载所有角色的所有图片
- *
- * 策略：
- * - 第1批（立即）：陆副厂长的全部31张图片 → 首屏立即可用
- * - 第2批（3秒后）：其他角色的前5张图片 → 快速切换支持
- * - 第3批（10秒后）：其他角色的剩余图片（6-30） → 完整图库
+ * 轻量预热：每个角色顺序探测首张图片，低并发低内存。
  */
 const smartBatchPreload = async () => {
   if (isPreloading.value) {
-    console.log('[预加载] ⚠️ 已有预加载任务在进行中，跳过');
+    console.log('[预加载] 已有任务在进行中，跳过');
     return;
   }
 
   isPreloading.value = true;
   loadingProgress.value = 0;
 
-  // 计算总图片数：每个角色31张（0-30）
   const charCount = characterNames.value.length;
-  totalImages.value = charCount * 31;
-
-  console.log(`[预加载] 🚀 开始智能分批预加载 (共${charCount}个角色, 预计${totalImages.value}张图片)`);
+  totalImages.value = Math.max(1, charCount);
+  preloadPhase.value = '快速预热中';
 
   try {
-    // 🎯 第1批：立即加载陆副厂长的全部图片（0-30）
-    preloadPhase.value = '首屏加载中';
-    console.log('[预加载] 📦 第1批：陆副厂长全部图片（立即）');
-
-    const lufuIndex = characterNames.value.indexOf(characterNames.value[0]); // 第一个角色
-    if (lufuIndex !== -1) {
-      const lufuImageName = mapRoleToImageName(characterNames.value[0], lufuIndex);
-      await preloadCharacterImages(lufuImageName, 0, 30);
-    }
-
-    // 🎯 第2批：延迟3秒后加载其他角色的前5张（0-4）
-    setTimeout(async () => {
-      if (!isPreloading.value) return; // 如果已经取消预加载，则退出
-
-      preloadPhase.value = '快速切换准备中';
-      console.log('[预加载] 📦 第2批：其他角色前5张（延迟3秒）');
-
-      for (let i = 1; i < characterNames.value.length; i++) {
-        const charName = characterNames.value[i];
-        const imageName = mapRoleToImageName(charName, i);
-        await preloadCharacterImages(imageName, 0, 4);
+    for (let i = 0; i < charCount; i++) {
+      const imageKey = mapRoleToImageName(characterNames.value[i], i);
+      const urls = await fetchAvailableImages(imageKey, 1);
+      if (urls.length) {
+        preloadCache.value.set(imageKey, urls);
       }
-
-      // 🎯 第3批：延迟10秒后加载其他角色的剩余图片（5-30）
-      setTimeout(async () => {
-        if (!isPreloading.value) return;
-
-        preloadPhase.value = '完整图库加载中';
-        console.log('[预加载] 📦 第3批：其他角色剩余图片（延迟10秒）');
-
-        for (let i = 1; i < characterNames.value.length; i++) {
-          const charName = characterNames.value[i];
-          const imageName = mapRoleToImageName(charName, i);
-          await preloadCharacterImages(imageName, 5, 30);
-        }
-
-        // 全部加载完成
-        isPreloading.value = false;
-        preloadPhase.value = '加载完成';
-        console.log(`[预加载] ✅ 全部加载完成！共加载 ${loadingProgress.value} 张图片`);
-
-        // 3秒后隐藏进度条
-        setTimeout(() => {
-          preloadPhase.value = '';
-        }, 3000);
-      }, 7000); // 第2批完成后再延迟7秒（总计10秒）
-    }, 3000); // 第1批完成后延迟3秒
+    }
+    preloadPhase.value = '完成';
+    setTimeout(() => (preloadPhase.value = ''), 1500);
   } catch (e) {
-    console.error('[预加载] ❌ 智能分批预加载失败:', e);
-    isPreloading.value = false;
+    console.error('[预加载] 失败:', e);
     preloadPhase.value = '加载失败';
+  } finally {
+    isPreloading.value = false;
   }
 };
 
 /**
- * 预加载指定角色的指定范围图片
- */
-const preloadCharacterImages = async (imageName: string, rangeStart: number, rangeEnd: number) => {
-  try {
-    // 使用进度回调
-    const onProgress = (loaded: number) => {
-      loadingProgress.value += loaded;
-    };
-
-    // 加载图片
-    const blobUrls = await loadImagesParallel(imageName, rangeStart, rangeEnd, onProgress);
-
-    if (blobUrls.length === 0) {
-      console.log(`[预加载] ⚠️ "${imageName}" 范围${rangeStart}-${rangeEnd}没有可用图片`);
-      return;
-    }
-
-    // 将所有图片存储到预加载缓存中
-    const existingUrls = preloadCache.value.get(imageName) || [];
-    preloadCache.value.set(imageName, [...existingUrls, ...blobUrls]);
-
-    console.log(`[预加载] ✅ "${imageName}" 范围${rangeStart}-${rangeEnd}加载完成 (${blobUrls.length}张)`);
-
-    // 同时保存到 IndexedDB
-    for (const blobUrl of blobUrls) {
-      fetch(blobUrl)
-        .then(r => r.blob())
-        .then(blob => {
-          if (blob.size > 0) {
-            saveImageToDB(imageName, blob).catch(() => {});
-          }
-        })
-        .catch(() => {});
-    }
-  } catch (e) {
-    console.warn(`[预加载] ❌ 预加载 "${imageName}" 范围${rangeStart}-${rangeEnd}失败:`, e);
-  }
-};
-
-/**
- * 加载当前角色的图片
- * 优先使用预加载缓存，其次使用 IndexedDB 缓存
+ * 加载当前角色的图片\n * 优先使用预加载缓存，不命中则即时小批次探测
  */
 const loadCurrentPhoto = async () => {
   try {
-    // ✅ 记录当前的 activeChar，用于竞态条件检查
     const targetChar = activeChar.value;
-
-    // ✅ 获取当前角色在列表中的索引
     const currentIndex = characterNames.value.indexOf(targetChar);
     if (currentIndex === -1) {
       console.log(`[照片] 当前角色"${targetChar}"不在角色列表中`);
@@ -762,79 +416,34 @@ const loadCurrentPhoto = async () => {
       return;
     }
 
-    // ✅ 获取角色名（作为图片文件名）
     const imageKey = mapRoleToImageName(targetChar, currentIndex);
-
     console.log(`[照片] 角色索引: ${currentIndex}, 角色名: "${targetChar}", 图片名: "${imageKey}"`);
 
-    // ✅ 优先查询预加载缓存（改为数组）
-    if (preloadCache.value.has(imageKey)) {
-      const preloadedUrls = preloadCache.value.get(imageKey);
+    // 优先使用已缓存列表，否则即时探测首张
+    const cached = preloadCache.value.get(imageKey);
+    const urls = cached && cached.length ? cached : await fetchAvailableImages(imageKey, 1);
 
-      // ⚠️ 竞态条件检查：确保 activeChar 没有变化
-      if (activeChar.value !== targetChar) {
-        console.log(`[照片] ⚠️ 用户已切换角色，放弃设置旧图片`);
-        return;
-      }
-
-      if (preloadedUrls && preloadedUrls.length > 0) {
-        // 初始化或获取当前索引
-        if (!imageIndexMap.value.has(imageKey)) {
-          // 首次加载，随机选择一张
-          const randomIndex = Math.floor(Math.random() * preloadedUrls.length);
-          imageIndexMap.value.set(imageKey, randomIndex);
-        }
-
-        const currentIdx = imageIndexMap.value.get(imageKey) || 0;
-        currentPhotoUrl.value = preloadedUrls[currentIdx];
-        console.log(`[照片] ${imageKey}: 从预加载缓存加载 ⚡ (共${preloadedUrls.length}张，显示第${currentIdx + 1}张)`);
-        return;
-      }
-    }
-
-    // ✅ 从 IndexedDB 缓存中获取图片
-    const imageUrl = await getImageFromCache(imageKey);
-
-    // ?? 竞态条件检查：等待完成后，检查 activeChar 是否变化
     if (activeChar.value !== targetChar) {
-      console.log(`[照片] ?? 用户已切换角色（${activeChar.value}），放弃设置"${targetChar}"的图片`);
-      // 释放这个 Blob URL，因为我们不需要它了
-      if (imageUrl && imageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(imageUrl);
-      }
+      console.log('[照片] 用户已切换角色，放弃旧请求');
       return;
     }
 
-    if (imageUrl) {
-      currentPhotoUrl.value = imageUrl;
-      console.log(`[照片] ${imageKey}: 加载成功`);
-
-      // 将命中的图片加入预加载缓存，确保后续可切换
-      const cachedList = preloadCache.value.get(imageKey) || [];
-      if (!cachedList.includes(imageUrl)) {
-        preloadCache.value.set(imageKey, [...cachedList, imageUrl]);
-      }
-      if (!imageIndexMap.value.has(imageKey)) {
-        imageIndexMap.value.set(imageKey, 0);
-      }
-
-      // 后台补全全量图片，填充可切换列表
-      loadImagesParallel(imageKey, 0, 30)
-        .then(urls => {
-          if (!urls.length) return;
-          const merged = Array.from(new Set([...(preloadCache.value.get(imageKey) || []), ...urls]));
-          preloadCache.value.set(imageKey, merged);
-        })
-        .catch(() => {});
+    if (urls && urls.length) {
+      if (!imageIndexMap.value.has(imageKey)) imageIndexMap.value.set(imageKey, 0);
+      const currentIdx = imageIndexMap.value.get(imageKey) || 0;
+      const picked = urls[currentIdx % urls.length];
+      preloadCache.value.set(imageKey, urls);
+      currentPhotoUrl.value = picked;
+      console.log(`[照片] ${imageKey}: 命中${urls.length}张中的第${currentIdx + 1}张`);
     } else {
       currentPhotoUrl.value = '';
-      console.log(`[照片] ${imageKey}: 暂无图片，暂不显示`);
+      console.log(`[照片] ${imageKey}: 未找到可用图片`);
     }
   } finally {
-    // ? 标记初始化完成（无论成功或失败）
     initializationComplete.value = true;
   }
 };
+
 // 基础信息映射
 const basicInfo = computed(() => ({
   '🎂 年龄': activeCharData.value?.年龄,
@@ -980,68 +589,26 @@ const handleImageLoad = () => {
 const handleImageError = (e: Event) => {
   isImageLoading.value = false;
   const img = e.target as HTMLImageElement;
-  console.warn('[照片] ⚠️ 页面图片加载失败（但缓存中存在该图片URL）:', {
-    src: img.src.substring(0, 50) + '...',
-    reason: 'Blob URL 可能已被释放或浏览器环境变化',
+  console.warn('[照片] 加载失败，尝试下一个可用源', {
+    src: img?.src?.substring(0, 50) + '...',
   });
 
-  // 尝试重新加载当前角色的图片
-  // 这次会跳过预加载缓存，直接从 CDN 网络加载，不依赖 IndexedDB
   const currentIndex = characterNames.value.indexOf(activeChar.value);
   const imageKey = mapRoleToImageName(activeChar.value, currentIndex);
 
-  console.log('[照片] 🔄 清除 IndexedDB 缓存并从网络重新加载...');
+  // 清除内存缓存并重新探测
+  imageCache.value.delete(imageKey);
 
-  // 删除 IndexedDB 中可能损坏的缓存
-  if (imageDatabase) {
-    const transaction = imageDatabase.transaction(['images'], 'readwrite');
-    const store = transaction.objectStore('images');
-    const deleteRequest = store.delete(imageKey);
+  fetchAvailableImages(imageKey, Math.min(MAX_CANDIDATES, 2)).then(urls => {
+    if (!urls.length) {
+      currentPhotoUrl.value = '';
+      return;
+    }
 
-    deleteRequest.onsuccess = () => {
-      console.log(`[照片] 🗑️ 已删除 "${imageKey}" 的缓存数据`);
-    };
-
-    deleteRequest.onerror = () => {
-      console.warn(`[照片] ⚠️ 删除缓存失败: ${imageKey}`);
-    };
-  }
-
-  // 直接从网络加载（跳过 IndexedDB）
-  loadImagesParallel(imageKey, 0, 30) // 加载全部范围（0-30）
-    .then(blobUrls => {
-      if (blobUrls.length === 0) {
-        console.error(`[照片] ❌ 无法从网络加载 "${imageKey}"`);
-        return;
-      }
-
-      const randomIndex = Math.floor(Math.random() * blobUrls.length);
-      const selectedUrl = blobUrls[randomIndex];
-
-      console.log(`[照片] ✅ 从网络成功加载，设置为 Blob URL...`);
-      currentPhotoUrl.value = selectedUrl;
-
-      // 清理其他未使用的 URL
-      blobUrls.forEach((url, idx) => {
-        if (idx !== randomIndex) {
-          URL.revokeObjectURL(url);
-        }
-      });
-
-      // 异步保存到 IndexedDB（不阻塞 UI）
-      fetch(selectedUrl)
-        .then(r => r.blob())
-        .then(blob => {
-          if (blob.size > 0) {
-            console.log(`[照片] 💾 重新保存到 IndexedDB...`);
-            saveImageToDB(imageKey, blob);
-          }
-        })
-        .catch(err => console.warn('[照片] 保存到 IndexedDB 失败:', err));
-    })
-    .catch(err => {
-      console.error('[照片] ❌ 从网络重新加载失败:', err);
-    });
+    imageIndexMap.value.set(imageKey, 0);
+    preloadCache.value.set(imageKey, urls);
+    currentPhotoUrl.value = urls[0];
+  });
 };
 
 const toggleThemeModal = () => {
@@ -1055,12 +622,11 @@ const handlePhotoClick = async () => {
   let currentIndex = info?.currentIndex || 0;
 
   if (!info || !info.hasMultiple) {
-    const freshUrls = await loadImagesParallel(imageKey, 0, 30).catch(() => []);
+    const freshUrls = await fetchAvailableImages(imageKey, MAX_CANDIDATES).catch(() => []);
     if (freshUrls && freshUrls.length) {
-      const merged = Array.from(new Set([...(preloadCache.value.get(imageKey) || []), ...freshUrls]));
-      preloadCache.value.set(imageKey, merged);
+      preloadCache.value.set(imageKey, freshUrls);
       imageIndexMap.value.set(imageKey, imageIndexMap.value.get(imageKey) ?? 0);
-      images = merged;
+      images = freshUrls;
       currentIndex = imageIndexMap.value.get(imageKey) || 0;
       info = {
         imageKey,
@@ -1080,9 +646,8 @@ const handlePhotoClick = async () => {
 
   currentPhotoUrl.value = images[nextIndex];
 
-  console.log(`[照片] ?? 切换图片: ${imageKey} (第${nextIndex + 1}/${images.length}张)`);
+  console.log(`[#照片] 切换图片: ${imageKey} (第${nextIndex + 1}/${images.length}张)`);
 
-  // 触发点击动画
   const photoFrame = document.querySelector('.photo-frame');
   if (photoFrame) {
     photoFrame.classList.add('photo-clicked');
@@ -1169,45 +734,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (resizeObserver) resizeObserver.disconnect();
-
-  // ✅ 清理延迟释放定时器
-  if (releaseTimer) {
-    clearTimeout(releaseTimer);
-    releaseTimer = null;
-  }
-
-  // ✅ 清理当前显示的 Blob URL
-  if (currentPhotoUrl.value && currentPhotoUrl.value.startsWith('blob:')) {
-    try {
-      URL.revokeObjectURL(currentPhotoUrl.value);
-      console.log('[清理] ✅ 已释放当前显示的 Blob URL');
-    } catch (e) {
-      console.warn('[清理] ⚠️ 释放当前 Blob URL 失败:', e);
-    }
-  }
-
-  // ✅ 清理之前保存的 URL
-  // ✅ 清理预加载缓存中的 Blob URL，防止内存泄漏
-  preloadCache.value.forEach(blobUrls => {
-    blobUrls.forEach(url => {
-      if (!url.startsWith('blob:')) return;
-      try {
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        console.warn('[清理] ⚠️ 释放预加载缓存 Blob URL 失败:', e);
-      }
-    });
-  });
-  preloadCache.value.clear();
-
-  // ✅ 关闭 IndexedDB 连接
-  if (imageDatabase) {
-    imageDatabase.close();
-    console.log('[清理] 已关闭 IndexedDB 连接');
-  }
-
-  console.log('[清理] 已释放所有 Blob URL 和资源');
+  console.log('[清理] 已断开观察器');
 });
+
 
 watch(activeChar, () => {
   nextTick(adjustHeight);
@@ -2084,3 +1613,9 @@ watch(currentTheme, val => {
   }
 }
 </style>
+
+
+
+
+
+

@@ -21,8 +21,8 @@
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
 
   /* ⬆️ 调整：基础字号提升 */
-  --text-base: 18px; /* 桌面端默认 18px (原16px) */
-  --text-base-mobile: 16px; /* 移动端保持 16px 以防溢出 */
+  --text-base: 16px; /* 桌面端默认 18px (原16px) */
+  --text-base-mobile: 15px; /* 移动端保持 16px 以防溢出 */
   --text-scale-ratio: 1.25; /* 字体阶梯比例 */
 
   --c-text-main: hsl(220 25% 20%); /* 浅色模式下增加对比度 */
@@ -49,8 +49,8 @@
   --glass-bg: hsla(0, 0%, 100%, 0.75); /* 稍微增加不透明度以提高文字对比度 */
   --glass-border: hsla(0, 0%, 100%, 0.6);
   --glass-highlight: hsla(0, 0%, 100%, 0.8);
-  --glass-shadow: 0 8px 32px -4px hsla(220, 20%, 10%, 0.08), 0 2px 4px 0 hsla(220, 20%, 10%, 0.02);
-  --glass-blur: 28px;
+  --glass-shadow: 0 6px 18px -6px hsla(220, 20%, 10%, 0.08), 0 1px 3px 0 hsla(220, 20%, 10%, 0.02);
+  --glass-blur: 18px;
   --glass-saturate: 190%;
 
   /* 📐 布局与物理引擎 */
@@ -60,7 +60,7 @@
   --radius-sm: 8px;
 
   /* ⬆️ 调整：间距基准增加，配合大字体 */
-  --space-base: 5px;
+  --space-base: 4px;
   --space-unit: calc(var(--space-base) * 4); /* 20px */
 
   /* ⚡ 动效曲线 */
@@ -197,7 +197,7 @@
   .glass-container {
     position: relative;
     width: 100%;
-    max-width: 860px; /* 稍微加宽容器以容纳大字体 */
+    max-width: 820px; /* 稍微加宽容器以容纳大字体 */
     margin: 0 auto;
 
     /* ✅ 修复：移除固定最小高度，改为内容驱动 */
@@ -277,7 +277,7 @@
     aspect-ratio: 3 / 4;
     /* 保持最小面积≈容器的 1/3，窄屏下不被压得过小 */
     min-height: clamp(240px, 34vw, 420px);
-    max-height: 420px;
+    max-height: 320px;
     margin: 0 auto;
   }
 
@@ -296,7 +296,7 @@
   .glass-container .photo-frame {
     max-width: 420px;
     min-height: clamp(220px, 38vw, 360px);
-    max-height: 360px;
+    max-height: 320px;
     border-width: 2px;
   }
 }
@@ -327,3 +327,5 @@
     gap: 10px;
   }
 }
+
+
