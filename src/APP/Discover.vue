@@ -10,12 +10,7 @@
       <div class="shop-list">
         <div v-if="shops.length === 0" class="empty-state">暂无发现，请先让AI生成内容。</div>
         <div v-else class="shop-list-items">
-          <div
-            v-for="shop in shops"
-            :key="shop.id"
-            class="shop-card"
-            @click="$router.push(`/shop/${shop.id}`)"
-          >
+          <div v-for="shop in shops" :key="shop.id" class="shop-card" @click="$router.push(`/shop/${shop.id}`)">
             <div class="avatar-text">
               <i
                 v-if="(shop.packages || []).find((p: any) => p.icon)"
