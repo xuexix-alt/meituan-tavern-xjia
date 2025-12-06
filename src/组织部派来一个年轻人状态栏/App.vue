@@ -737,7 +737,6 @@ onUnmounted(() => {
   console.log('[清理] 已断开观察器');
 });
 
-
 watch(activeChar, () => {
   nextTick(adjustHeight);
 });
@@ -1613,9 +1612,3 @@ watch(currentTheme, val => {
   }
 }
 </style>
-
-
-
-
-
-

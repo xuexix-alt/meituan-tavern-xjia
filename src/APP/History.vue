@@ -13,12 +13,7 @@
         <div class="card-title"><i class="fas fa-history"></i>历史订单</div>
         <div v-if="historyItems.length === 0" class="empty-state">暂无历史订单</div>
         <div v-else>
-          <div
-            v-for="item in historyItems"
-            :key="item.order_time"
-            class="history-card"
-            @click="reorder(item)"
-          >
+          <div v-for="item in historyItems" :key="item.order_time" class="history-card" @click="reorder(item)">
             <!-- 头部：姓名套餐和价格 -->
             <div class="history-header">
               <div class="title-section">
@@ -282,7 +277,6 @@ const currentView = ref('history');
 const showModal = ref(false);
 const orderRemark = ref('');
 const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
-
 
 // 状态样式
 function getStatusStyle(status: string) {
