@@ -85,7 +85,6 @@ export function generateId(length: number = 8): string {
   return result;
 }
 
-
 /**
  * 智能导航函数 - 根据服务状态决定默认页面
  */
