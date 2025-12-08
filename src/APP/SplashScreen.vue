@@ -35,7 +35,7 @@
       <!-- 底部信息 -->
       <div class="footer-section">
         <div class="version-info">
-          <span>v1.0.0</span>
+          <span>v2.6.0</span>
         </div>
         <div class="skip-button" :class="{ 'fade-out': isFading }" @click="skipSplash">
           <span>跳过</span>
