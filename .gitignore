@@ -16,3 +16,6 @@ components.d.ts
 .claude/
 .claude/settings.json
 .claude/settings.local.json
+
+# Kilocode settings
+.kilocode/mcp.json
