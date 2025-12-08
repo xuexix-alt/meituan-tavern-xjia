@@ -8,7 +8,10 @@
 
     <div class="app-content">
       <div class="shop-list">
-        <div v-if="shops.length === 0" class="empty-state">暂无发现，请先让AI生成内容。</div>
+        <div v-if="shops.length === 0" class="empty-state">
+          <i class="fas fa-search"></i>
+          <p>暂无发现，请先让AI生成内容</p>
+        </div>
         <div v-else class="shop-list-items">
           <div v-for="shop in shops" :key="shop.id" class="shop-card" @click="$router.push(`/shop/${shop.id}`)">
             <div class="avatar-text">
@@ -86,12 +89,14 @@ onMounted(() => {
 
 .app-header {
   background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
-  padding: 48px 20px 16px 20px;
+  padding: 20px 20px 16px 20px;
+  padding-top: max(20px, env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   position: relative;
 
@@ -106,11 +111,12 @@ onMounted(() => {
   }
 
   .title {
-    font-size: 1.4rem;
-    font-weight: 800;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
     color: var(--text-primary);
-    letter-spacing: 0.5px;
-    text-shadow: 0 1px 2px rgba(255, 195, 0, 0.1);
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(255, 195, 0, 0.15);
 
     span {
       background: linear-gradient(135deg, var(--text-primary) 0%, #333333 100%);
@@ -145,15 +151,15 @@ onMounted(() => {
 
 .shop-card {
   background: var(--bg-card);
-  border-radius: 20px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow:
     var(--shadow-sm),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   cursor: pointer;
   border: 1px solid var(--border-accent);
   position: relative;
@@ -254,12 +260,13 @@ onMounted(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 1.05rem;
-    letter-spacing: 0.2px;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
   }
 
   .desc {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
@@ -273,6 +280,7 @@ onMounted(() => {
       min-width: 100px;
       display: -webkit-box;
       -webkit-line-clamp: 1;
+      line-clamp: 1;
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -304,8 +312,10 @@ onMounted(() => {
   display: flex;
   border-top: 1px solid var(--border-accent);
   background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
-  padding: 10px 8px;
+  padding: 8px 12px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   position: relative;
 
@@ -377,26 +387,43 @@ onMounted(() => {
     }
 
     i {
-      font-size: 1.3rem;
-      margin-bottom: 4px;
+      font-size: 1.4rem;
+      margin-bottom: 2px;
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
       z-index: 1;
     }
 
     span {
-      font-weight: 500;
+      font-size: 0.7rem;
+      font-weight: 600;
       transition: all 0.3s ease;
       position: relative;
       z-index: 1;
+      letter-spacing: 0.5px;
     }
   }
 }
 
 .empty-state {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
   color: var(--text-secondary);
-  padding: 40px 20px;
-  line-height: 1.6;
+  text-align: center;
+
+  i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.8;
+  }
 }
 </style>

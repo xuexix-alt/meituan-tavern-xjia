@@ -22,7 +22,10 @@
           <h3>精选套餐</h3>
         </div>
         <div class="package-list">
-          <div v-if="shopPackages.length === 0" class="empty-state">该店铺暂无套餐。</div>
+          <div v-if="shopPackages.length === 0" class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>该店铺暂无套餐</p>
+          </div>
           <div v-for="pkg in shopPackages" :key="pkg.id" class="package-card" @click="$router.push(`/item/${pkg.id}`)">
             <div class="avatar-text">
               <i v-if="pkg.icon" :class="pkg.icon"></i>
@@ -89,12 +92,14 @@ onMounted(() => {
 
 .app-header {
   background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
-  padding: 35px 16px 12px 16px;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   position: relative;
 
@@ -135,8 +140,8 @@ onMounted(() => {
 
 .shop-header-card {
   background: var(--bg-card);
-  border-radius: 24px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 24px 20px;
   margin: 16px;
   text-align: center;
   box-shadow:
@@ -212,20 +217,22 @@ onMounted(() => {
   }
 
   .shop-name {
-    font-size: 1.3rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 1.5rem;
     font-weight: 800;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     color: var(--text-primary);
-    text-shadow: 0 1px 3px rgba(255, 195, 0, 0.2);
+    text-shadow: 0 2px 4px rgba(255, 195, 0, 0.2);
     position: relative;
     z-index: 1;
+    letter-spacing: 0.5px;
   }
 
   .shop-slogan {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
-    margin-top: 6px;
-    line-height: 1.5;
+    margin-top: 4px;
+    line-height: 1.6;
     font-weight: 500;
     position: relative;
     z-index: 1;
@@ -257,7 +264,7 @@ onMounted(() => {
   background: var(--bg-card);
   padding: 16px;
   border-radius: 16px;
-  margin-bottom: 16px;
+  margin: 0 16px 16px 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border-accent);
   position: relative;
@@ -301,8 +308,8 @@ onMounted(() => {
   border-radius: 16px;
   padding: 16px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 14px;
   transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   cursor: pointer;
@@ -383,12 +390,14 @@ onMounted(() => {
   }
 
   .name {
-    font-weight: 600;
-    margin-bottom: 5px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: 0.3px;
   }
 
   .desc {
@@ -440,8 +449,10 @@ onMounted(() => {
   display: flex;
   border-top: 1px solid var(--border-color);
   background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
-  padding: 8px 0;
+  padding: 8px 12px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   position: relative;
 
@@ -484,18 +495,31 @@ onMounted(() => {
     }
 
     i {
-      font-size: 1.25rem;
-      margin-bottom: 4px;
+      font-size: 1.4rem;
+      margin-bottom: 2px;
       transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
   }
 }
 
 .empty-state {
-  text-align: center;
-  color: var(--text-placeholder);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 40px 20px;
-  line-height: 1.6;
+  color: var(--text-placeholder);
+
+  i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
 }
 
 @keyframes pulse {

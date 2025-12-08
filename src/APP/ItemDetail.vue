@@ -8,7 +8,7 @@
     </div>
 
     <div class="app-content" id="detail-content">
-      <div class="detail-info-card" style="margin-top: 0; border-radius: 0; box-shadow: none; padding-bottom: 18px">
+      <div class="detail-info-card">
         <div class="detail-name">{{ itemData?.name || '未命名套餐' }}</div>
         <div class="detail-tags">
           <span v-for="tag in itemData?.tags || []" :key="tag" class="tag">{{ tag }}</span>
@@ -45,7 +45,10 @@
           </div>
           <div class="tip-text">💡 点击上方特色玩法可直接下单，或点击底部"立即下单"自定义备注</div>
         </div>
-        <div v-else class="empty-state">暂无特色玩法介绍。</div>
+        <div v-else class="empty-state">
+          <i class="fas fa-list-ul"></i>
+          <p>暂无特色玩法介绍</p>
+        </div>
       </div>
 
       <div class="tab-content" :class="{ active: activeTab === 'reviews' }">
@@ -54,7 +57,10 @@
             <p>{{ review }}</p>
           </div>
         </div>
-        <div v-else class="empty-state">暂无顾客评价。</div>
+        <div v-else class="empty-state">
+          <i class="fas fa-comment-slash"></i>
+          <p>暂无顾客评价</p>
+        </div>
       </div>
 
       <div class="tab-content" :class="{ active: activeTab === 'images' }">
@@ -378,12 +384,14 @@ onMounted(() => {
 
 .app-header {
   background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
-  padding: 35px 16px 12px 16px;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   position: relative;
 
@@ -424,25 +432,26 @@ onMounted(() => {
 
 .detail-info-card {
   background: var(--bg-card);
-  padding: 20px;
-  border-radius: 20px 20px 0 0;
-  margin-top: 20px;
+  padding: 20px 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0;
   position: relative;
-  box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .detail-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 12px;
   color: var(--text-primary);
+  letter-spacing: 0.5px;
 }
 
 .detail-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 0;
 
   .tag {
     background-color: var(--bg-badge);
@@ -456,25 +465,28 @@ onMounted(() => {
 .detail-tabs {
   display: flex;
   background-color: var(--bg-card);
-  padding: 0 18px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
 
   .tab-link {
-    padding: 12px 16px;
+    flex: 1;
+    text-align: center;
+    padding: 14px 4px;
     cursor: pointer;
     border: none;
     background: transparent;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-secondary);
     position: relative;
-    transition: color 0.2s;
+    transition: all 0.3s ease;
 
     &.active {
       color: var(--text-primary);
+      font-size: 1.05rem;
 
       &::after {
         content: '';
@@ -644,15 +656,18 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 20px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   background: var(--bg-card);
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
 
   .price-info .price {
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-family: 'DIN Alternate', 'Roboto Condensed', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
     color: var(--status-danger);
+    letter-spacing: -0.5px;
   }
 
   .order-btn {
@@ -708,6 +723,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   z-index: 2000;
   display: none;
@@ -911,10 +927,23 @@ onMounted(() => {
 }
 
 .empty-state {
-  text-align: center;
-  color: var(--text-placeholder);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 40px 20px;
-  line-height: 1.6;
+  color: var(--text-placeholder);
+
+  i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
 }
 
 @keyframes fadeIn {

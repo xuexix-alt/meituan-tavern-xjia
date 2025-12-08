@@ -670,6 +670,7 @@ onMounted(async () => {
   align-items: center;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
   position: relative;
 
@@ -1575,6 +1576,7 @@ onMounted(async () => {
   background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
   padding: 8px 0;
   flex-shrink: 0;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   position: relative;
 

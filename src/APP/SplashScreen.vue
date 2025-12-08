@@ -37,7 +37,7 @@
         <div class="version-info">
           <span>v1.0.0</span>
         </div>
-        <div class="skip-button" @click="skipSplash" :class="{ 'fade-out': isFading }">
+        <div class="skip-button" :class="{ 'fade-out': isFading }" @click="skipSplash">
           <span>跳过</span>
           <i class="fas fa-chevron-right"></i>
         </div>
@@ -47,7 +47,7 @@
     <!-- 加载动画 -->
     <div class="loading-indicator">
       <div class="loading-dots">
-        <span class="dot" v-for="i in 3" :key="i" :style="{ animationDelay: `${(i - 1) * 0.2}s` }"></span>
+        <span v-for="i in 3" :key="i" class="dot" :style="{ animationDelay: `${(i - 1) * 0.2}s` }"></span>
       </div>
     </div>
   </div>
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { navigateToDefaultPage } from './界面';
+import { navigateToDefaultPage } from './utils';
 
 // 响应式数据
 const slogan = ref('为您送上一切心动的美人');
@@ -270,6 +270,7 @@ onMounted(async () => {
       padding: 8px 12px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.1);
+      -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
 
       &:hover {
