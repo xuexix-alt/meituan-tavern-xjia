@@ -7,16 +7,29 @@
       "request": "launch",
       "preLaunchTask": "开始任务",
       "postDebugTask": "结束任务",
+<<<<<<< HEAD
       "url": "http://localhost:6621",
+=======
+      "url": "http://localhost:6622",
+>>>>>>> c56db99446f42940babf011c55d96bc6dd2a17c1
       "disableNetworkCache": true,
       "internalConsoleOptions": "neverOpen",
       "cwd": "${workspaceFolder}",
       "timeout": 100000,
       "sourceMapPathOverrides": {
         "src://tavern_helper_template/*": "${workspaceFolder}/*",
+<<<<<<< HEAD
         "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
       },
       "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+=======
+        "webpack://tavern_helper_template/*": "${workspaceFolder}/*",
+      },
+      "skipFiles": [
+        "**/jquery*.min.js",
+        "**/node_modules/**"
+      ],
+>>>>>>> c56db99446f42940babf011c55d96bc6dd2a17c1
     },
     {
       "name": "编译代码并调试酒馆网页 (Edge)",
@@ -31,9 +44,18 @@
       "timeout": 100000,
       "sourceMapPathOverrides": {
         "src://tavern_helper_template/*": "${workspaceFolder}/*",
+<<<<<<< HEAD
         "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
       },
       "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+=======
+        "webpack://tavern_helper_template/*": "${workspaceFolder}/*",
+      },
+      "skipFiles": [
+        "**/jquery*.min.js",
+        "**/node_modules/**"
+      ],
+>>>>>>> c56db99446f42940babf011c55d96bc6dd2a17c1
     },
     {
       "name": "仅调试酒馆网页 (Chrome)",
@@ -46,9 +68,18 @@
       "timeout": 100000,
       "sourceMapPathOverrides": {
         "src://tavern_helper_template/*": "${workspaceFolder}/*",
+<<<<<<< HEAD
         "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
       },
       "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+=======
+        "webpack://tavern_helper_template/*": "${workspaceFolder}/*",
+      },
+      "skipFiles": [
+        "**/jquery*.min.js",
+        "**/node_modules/**"
+      ],
+>>>>>>> c56db99446f42940babf011c55d96bc6dd2a17c1
     },
     {
       "name": "仅调试酒馆网页 (Edge)",
@@ -61,9 +92,18 @@
       "timeout": 100000,
       "sourceMapPathOverrides": {
         "src://tavern_helper_template/*": "${workspaceFolder}/*",
+<<<<<<< HEAD
         "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
       },
       "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+=======
+        "webpack://tavern_helper_template/*": "${workspaceFolder}/*",
+      },
+      "skipFiles": [
+        "**/jquery*.min.js",
+        "**/node_modules/**"
+      ],
+>>>>>>> c56db99446f42940babf011c55d96bc6dd2a17c1
     }
   ]
 }

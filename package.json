@@ -80,6 +80,10 @@
     "@vueuse/core": "^13.9.0",
     "@vueuse/integrations": "^13.9.0",
     "@vueuse/shared": "^13.9.0",
+<<<<<<< HEAD
+=======
+    "compare-versions": "^6.1.1",
+>>>>>>> c56db99446f42940babf011c55d96bc6dd2a17c1
     "dedent": "^1.7.0",
     "gsap": "^3.14.1",
     "jquery": "^3.7.1",
