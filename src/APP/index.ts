@@ -94,9 +94,7 @@ const initMemoryMonitoring = () => {
 
         // 仅在高内存使用或增长时记录
         if (usedMB > 50 || percentage > 80) {
-          log(
-            `[内存监控] 内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentageText}%)`,
-          );
+          log(`[内存监控] 内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentageText}%)`);
         }
       }, 30000); // 每30秒检查一次
 
