@@ -93,7 +93,22 @@ export function extractDataFromMessage(): { shops: any[]; packages: any[] } {
     const storeApi = getShopStoreApi();
 
     // 尝试从当前楼层获取数据
-    const currentMessageId = String(getCurrentMessageId());
+    const currentIdRaw = getCurrentMessageId();
+    // 当还没有任何消息时，getCurrentMessageId 可能返回负数，直接跳过以避免无效 range 错误
+    if (typeof currentIdRaw === 'number' && currentIdRaw < 0) {
+      console.warn('[DataParser] 当前聊天暂无有效楼层，跳过消息解析');
+      // 仍然尝试使用持久化数据兜底
+      if (storeApi) {
+        const storedShops = sanitizeShops(storeApi.getShops() || []);
+        if (storedShops.length > 0) {
+          const pkgs = flattenPackagesFromShops(storedShops);
+          return { shops: storedShops, packages: pkgs };
+        }
+      }
+      return { shops: [], packages: [] };
+    }
+
+    const currentMessageId = String(currentIdRaw);
     const currentData = extractDataFromSpecificMessage(currentMessageId);
     if (currentData) {
       const currentShops = sanitizeShops(currentData.shops || []);

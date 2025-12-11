@@ -32,7 +32,9 @@ const initWebVitalsMonitoring = () => {
     const fidObserver = new PerformanceObserver(entryList => {
       for (const entry of entryList.getEntries()) {
         if (entry.entryType === 'first-input') {
-          log(`[Web Vitals] FID: ${entry.processingStart - entry.startTime}ms`, entry);
+          const firstInput = entry as PerformanceEventTiming;
+          const fid = firstInput.processingStart - firstInput.startTime;
+          log(`[Web Vitals] FID: ${fid.toFixed(2)}ms`, firstInput);
         }
       }
     });
@@ -40,13 +42,16 @@ const initWebVitalsMonitoring = () => {
 
     // 监控CLS (Cumulative Layout Shift)
     let clsValue = 0;
-    let clsEntries: any[] = [];
+    const clsEntries: LayoutShift[] = [];
     const clsObserver = new PerformanceObserver(entryList => {
       for (const entry of entryList.getEntries()) {
-        if (!entry.hadRecentInput) {
-          clsEntries.push(entry);
-          clsValue += entry.value;
-          log(`[Web Vitals] CLS累计: ${clsValue.toFixed(4)}`, entry);
+        if (entry.entryType === 'layout-shift') {
+          const layoutShift = entry as LayoutShift;
+          if (!layoutShift.hadRecentInput) {
+            clsEntries.push(layoutShift);
+            clsValue += layoutShift.value;
+            log(`[Web Vitals] CLS累计: ${clsValue.toFixed(4)}`, layoutShift);
+          }
         }
       }
     });
@@ -84,11 +89,14 @@ const initMemoryMonitoring = () => {
         const mem = (performance as any).memory;
         const usedMB = mem.usedJSHeapSize / 1024 / 1024;
         const totalMB = mem.totalJSHeapSize / 1024 / 1024;
-        const percentage = ((usedMB / totalMB) * 100).toFixed(1);
+        const percentage = (usedMB / totalMB) * 100;
+        const percentageText = percentage.toFixed(1);
 
         // 仅在高内存使用或增长时记录
         if (usedMB > 50 || percentage > 80) {
-          log(`[内存监控] 内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentage}%)`);
+          log(
+            `[内存监控] 内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentageText}%)`,
+          );
         }
       }, 30000); // 每30秒检查一次
 
@@ -191,8 +199,8 @@ const initApp = async () => {
     // 记录挂载耗时
     const mountTime = performance.now() - perfStartTime;
     log(`[性能] 总启动时间: ${mountTime.toFixed(2)}ms`);
-  } catch (error) {
-    error('[初始化] 应用启动失败:', error);
+  } catch (err) {
+    console.error('[初始化] 应用启动失败:', err);
     console.log('[错误] 界面加载失败，请刷新页面重试');
   }
 };
