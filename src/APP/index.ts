@@ -16,6 +16,8 @@ const error = (...args: any[]) => console.error(...args);
 
 // 性能监控标记
 const perfStartTime = performance.now();
+// 移动端友好开关：在手机 / WebView 中尽量关闭预加载与重型监控，避免被宿主拦截
+const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // Web Vitals性能监控
 const initWebVitalsMonitoring = () => {
@@ -167,20 +169,23 @@ const waitForMvu = async (timeout = 5000) => {
 // 初始化应用
 const initApp = async () => {
   try {
-    // 并行执行所有初始化任务
+    // 并行执行所有初始化任务（移动端减少预加载任务以防宿主拦截）
     const initTasks = Promise.all([
       waitForMvu(), // MVU初始化（带超时）
       preloadCriticalRoutes(), // 路由预加载
-      preloadCriticalResources(), // 资源预加载
+      IS_MOBILE ? Promise.resolve() : preloadCriticalResources(), // 资源预加载（PC端）
     ]);
 
     // 等待所有初始化任务完成
     const [mvuReady] = await initTasks;
 
     // 启动Web Vitals性能监控
-    initWebVitalsMonitoring();
-    // 启动内存使用监控
-    initMemoryMonitoring();
+    if (!IS_MOBILE) {
+      initWebVitalsMonitoring();
+      initMemoryMonitoring();
+    } else {
+      log('[性能] 检测到移动端，已跳过 Web Vitals 与内存监控');
+    }
 
     // 记录初始化耗时
     const initTime = performance.now() - perfStartTime;
