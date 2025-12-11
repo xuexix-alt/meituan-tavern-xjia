@@ -39,7 +39,7 @@
                     <i class="fas fa-heart"></i>
                   </div>
                 </div>
-                <div class="version-info">v2.7.0</div>
+                <div class="version-info">v3.0.0</div>
               </div>
             </div>
 
