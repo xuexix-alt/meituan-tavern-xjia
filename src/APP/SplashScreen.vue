@@ -35,7 +35,7 @@
       <!-- 底部信息 -->
       <div class="footer-section">
         <div class="version-info">
-          <span>v2.6.0</span>
+          <span>v2.7.0</span>
         </div>
         <div class="skip-button" :class="{ 'fade-out': isFading }" @click="skipSplash">
           <span>跳过</span>
@@ -94,11 +94,7 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .splash-screen {
   width: 100%;
-  // 使用固定高度，避免被父容器压缩
-  height: 780px;
-  max-width: 360px;
-  // 确保最小高度，不随父容器变化
-  min-height: 780px;
+  height: 100%;
   background: linear-gradient(135deg, #ffc300 0%, #ff9500 100%);
   display: flex;
   flex-direction: column;

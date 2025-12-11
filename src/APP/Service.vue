@@ -193,7 +193,7 @@
                           <i class="fas fa-circle"></i>
                         </div>
                         <div class="feature-content">
-                          <div class="feature-label">乳房形状</div>
+                          <div class="feature-label">乳形</div>
                           <div class="feature-value">{{ getNestedValue(currentGirl, '身体特征.乳房.形状', '-') }}</div>
                         </div>
                       </div>
@@ -202,14 +202,14 @@
                       <div class="desc-item">
                         <div class="desc-label">
                           <i class="fas fa-star"></i>
-                          胸部描述
+                          乳房
                         </div>
                         <div class="desc-text">{{ getNestedValue(currentGirl, '身体特征.胸部', '-') }}</div>
                       </div>
                       <div class="desc-item">
                         <div class="desc-label">
                           <i class="fas fa-leaf"></i>
-                          私处描述
+                          小穴
                         </div>
                         <div class="desc-text">{{ getNestedValue(currentGirl, '身体特征.私处', '-') }}</div>
                       </div>
@@ -239,7 +239,7 @@
                     <div class="stats-section">
                       <div class="section-title">
                         <i class="fas fa-heart"></i>
-                        性经验档案
+                        性档案
                       </div>
                       <div class="stats-grid">
                         <div class="stat-item">
@@ -247,7 +247,7 @@
                             <i class="fas fa-seedling"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">是否处女</div>
+                            <div class="stat-label">处女</div>
                             <div class="stat-value">{{ getNestedValue(currentGirl, '性经验.处女', '-') }}</div>
                           </div>
                         </div>
@@ -256,7 +256,7 @@
                             <i class="fas fa-users"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">性伴侣数量</div>
+                            <div class="stat-label">上过</div>
                             <div class="stat-value">{{ getNestedValue(currentGirl, '性经验.性伴侣数量', '-') }}</div>
                           </div>
                         </div>
@@ -265,7 +265,7 @@
                             <i class="fas fa-handshake"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">初次性行为对象</div>
+                            <div class="stat-label">开苞</div>
                             <div class="stat-value">
                               {{ getNestedValue(currentGirl, '性经验.初次性行为对象', '-') }}
                             </div>
@@ -276,7 +276,7 @@
                             <i class="fas fa-baby"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">怀孕几率</div>
+                            <div class="stat-label">孕率</div>
                             <div class="stat-value">{{ getNestedValue(currentGirl, '性经验.怀孕几率', '-') }}</div>
                           </div>
                         </div>
@@ -285,7 +285,7 @@
                             <i class="fas fa-shopping-cart"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">下单次数</div>
+                            <div class="stat-label">点过</div>
                             <div class="stat-value">{{ getNestedValue(currentGirl, '性经验.下单次数', 0) }}</div>
                           </div>
                         </div>
@@ -302,7 +302,7 @@
                             <i class="fas fa-heartbeat"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">本次服务性交次数</div>
+                            <div class="stat-label">日穴</div>
                             <div class="stat-value">
                               {{ getNestedValue(currentGirl, '服务统计.本次服务性交次数', '-') }}
                             </div>
@@ -313,7 +313,7 @@
                             <i class="fas fa-tint"></i>
                           </div>
                           <div class="stat-content">
-                            <div class="stat-label">内射次数</div>
+                            <div class="stat-label">内射</div>
                             <div class="stat-value">{{ getNestedValue(currentGirl, '服务统计.内射次数', '-') }}</div>
                           </div>
                         </div>
@@ -355,7 +355,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { getNestedValue } from './utils';
 
 // 响应式数据
@@ -370,6 +370,9 @@ const errorMessage = ref('');
 const showPsychology = ref(false);
 const showBody = ref(false);
 const showExperience = ref(false);
+
+// 脚本变量缓存键
+const SERVICE_CACHE_KEY = 'service_cache';
 
 // 监听女孩切换，重置折叠状态
 watch(currentGirlIndex, () => {
@@ -401,8 +404,19 @@ async function extractDataFromMVU(): Promise<{ girls: any[] }> {
     // 等待MVU初始化
     await waitGlobalInitialized('Mvu');
 
-    // 获取MVU数据
-    const mvuData = Mvu.getMvuData({ type: 'message', message_id: 'latest' }) as any;
+    // 优先获取当前楼层的MVU变量，若为空则向上追溯，最后兜底最新楼层
+    const mvuData = (() => {
+      try {
+        const currentId = getCurrentMessageId();
+        for (let id = currentId; id >= 0; id--) {
+          const data = Mvu.getMvuData({ type: 'message', message_id: id }) as any;
+          if (data && data.stat_data) return data;
+        }
+      } catch (e) {
+        // 可能不在消息楼层 iframe 内，忽略错误
+      }
+      return Mvu.getMvuData({ type: 'message', message_id: 'latest' }) as any;
+    })();
 
     if (!mvuData) {
       throw new Error('MVU数据为空');
@@ -494,8 +508,10 @@ async function refreshData() {
   errorMessage.value = '';
 
   try {
+    // 主路径：MVU 数据
     const data = await extractDataFromMVU();
     girlsData.value = data.girls;
+    cacheGirls(data.girls);
 
     if (data.girls.length === 0) {
       errorMessage.value = '未找到服务中的订单';
@@ -504,10 +520,19 @@ async function refreshData() {
       toastr.success(`加载了 ${data.girls.length} 位女孩的服务数据`, '服务状态');
     }
   } catch (error: any) {
-    errorMessage.value = error.message || '数据加载失败';
-    console.error('[Service] 刷新数据失败:', error);
-    console.log('[服务状态] 数据加载失败，请重试');
-    girlsData.value = [];
+    console.error('[Service] 刷新数据失败，尝试使用缓存:', error);
+
+    // 降级：脚本变量缓存
+    const cached = readCacheGirls();
+    if (cached.length > 0) {
+      girlsData.value = cached;
+      toastr.info(`使用缓存数据，条目数 ${cached.length}`, '服务状态');
+      errorMessage.value = '已使用上次缓存的数据';
+    } else {
+      errorMessage.value = error.message || '数据加载失败';
+      console.log('[服务状态] 数据加载失败，请重试');
+      girlsData.value = [];
+    }
   } finally {
     isRefreshing.value = false;
   }
@@ -533,11 +558,10 @@ const packageInfo = computed(() => ({
 // 订单状态（添加映射）
 const orderStatus = computed(() => {
   const status = getNestedValue(currentGirl.value, '服务统计.订单状态', '未知');
-  // 严格映射：只显示"服务中"或"服务结束"，过滤掉其他状态
   if (status.includes('服务中')) return '服务中';
   if (status.includes('服务结束')) return '服务结束';
-  // 如果不是这两个状态，显示为空（在服务页面不显示）
-  return '';
+  // 其他状态直接展示，并提示需要人工处理
+  return `${status}（订单状态变量更新错误，请你手动命令AI结束本次服务）`;
 });
 const orderStatusClass = computed(() => {
   const status = orderStatus.value;
@@ -580,15 +604,13 @@ const affectionDisplay = computed(() => {
 
 // 服务进度
 const serviceProgress = computed(() => {
-  const total = getNestedValue(currentGirl.value, '服务统计.总时长', '0');
-  const current = getNestedValue(currentGirl.value, '服务统计.已用时长', '0');
-  const totalNum = parseFloat(String(total));
-  const currentNum = parseFloat(String(current));
+  const count = getNestedValue(currentGirl.value, '服务统计.本次服务性交次数', 0);
+  const num = typeof count === 'number' ? count : parseFloat(String(count));
 
-  if (isNaN(totalNum) || isNaN(currentNum) || totalNum === 0) return '-';
-
-  const progress = Math.round((currentNum / totalNum) * 100);
-  return Math.min(100, Math.max(0, progress));
+  if (isNaN(num)) return '-';
+  if (num <= 0) return 0;
+  if (num === 1) return 50;
+  return 100; // num >= 2 视为即将完成
 });
 
 const serviceProgressBarWidth = computed(() => {
@@ -648,6 +670,27 @@ onMounted(async () => {
   await refreshData();
   isLoading.value = false;
 });
+
+// ================ 缓存工具 ================
+
+function cacheGirls(girls: any[]) {
+  try {
+    replaceVariables({ [SERVICE_CACHE_KEY]: girls }, { type: 'script', script_id: getScriptId() });
+  } catch (e) {
+    console.warn('[Service] 缓存写入失败，已忽略', e);
+  }
+}
+
+function readCacheGirls(): any[] {
+  try {
+    const vars = getVariables({ type: 'script', script_id: getScriptId() }) || {};
+    const cached = (vars as any)[SERVICE_CACHE_KEY];
+    return Array.isArray(cached) ? cached : [];
+  } catch (e) {
+    console.warn('[Service] 读取缓存失败', e);
+    return [];
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -706,10 +749,7 @@ onMounted(async () => {
     }
 
     span {
-      background: linear-gradient(135deg, var(--text-primary) 0%, #333333 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--text-primary);
     }
   }
 
@@ -857,7 +897,7 @@ onMounted(async () => {
         font-size: 28px;
         font-weight: 800;
         margin: 0 0 8px 0;
-        color: var(--text-primary);
+        color: #333;
       }
 
       .sub-info {
@@ -936,7 +976,7 @@ onMounted(async () => {
       .status-text {
         font-size: 14px;
         font-weight: 600;
-        color: var(--text-primary);
+        color: #333;
       }
     }
   }
@@ -1025,6 +1065,11 @@ onMounted(async () => {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 
+    /* 平板端：4列 */
+    @media (min-width: 481px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
     .metric-card {
       text-align: center;
       padding: 16px;
@@ -1047,7 +1092,7 @@ onMounted(async () => {
       .metric-value {
         font-size: 28px;
         font-weight: 900;
-        color: var(--text-primary);
+        color: #333;
         margin-bottom: 8px;
 
         .metric-unit {
@@ -1315,11 +1360,16 @@ onMounted(async () => {
 
       // 身体特征网格样式
       .body-feature-grid {
-        .feature-row {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-          margin-bottom: 16px;
+          .feature-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+
+            /* 平板端：4列 */
+            @media (min-width: 481px) {
+              grid-template-columns: repeat(4, 1fr);
+            }
 
           .feature-item {
             display: flex;
@@ -1442,6 +1492,16 @@ onMounted(async () => {
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
 
+            /* 平板端：3列 */
+            @media (min-width: 481px) {
+              grid-template-columns: repeat(3, 1fr);
+            }
+
+            /* 大屏端：5列 */
+            @media (min-width: 1024px) {
+              grid-template-columns: repeat(5, 1fr);
+            }
+
             .stat-item {
               display: flex;
               align-items: center;
@@ -1503,6 +1563,16 @@ onMounted(async () => {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
+
+      /* 平板端：3列 */
+      @media (min-width: 481px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      /* 大屏端：4列 */
+      @media (min-width: 1024px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
 
       .clothing-item {
         display: flex;

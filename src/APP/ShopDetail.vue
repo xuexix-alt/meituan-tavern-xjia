@@ -68,13 +68,31 @@ import { extractDataFromMessage } from './dataParser';
 const route = useRoute();
 const shopInfo = ref<any>(null);
 const shopPackages = ref<any[]>([]);
+const shopStoreApi = ref<any>(null);
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
+  try {
+    await waitGlobalInitialized('ShopStore');
+    shopStoreApi.value = (window as any).ShopStore;
+  } catch (e) {
+    console.warn('[ShopDetail] ShopStore 未就绪，使用解析数据', e);
+  }
+
   const data = extractDataFromMessage();
-  const shopId = route.params.id as string;
-  shopInfo.value = data.shops.find(s => s.id === shopId);
-  shopPackages.value = data.packages.filter(p => p.shop_id === shopId);
+  const shopIdParam = route.params.id as string;
+  const matcher = (s: any) => String(s.id) === String(shopIdParam);
+
+  // 先用当前解析，再用持久化，最后兜底同 shop_id 的套餐
+  shopInfo.value = data.shops.find(matcher) || shopStoreApi.value?.getShops()?.find(matcher) || null;
+
+  if (shopInfo.value) {
+    shopPackages.value = shopInfo.value.packages || [];
+  } else {
+    // 兜底：从所有套餐里按 shop_id 匹配
+    const allPkgs = data.packages || [];
+    shopPackages.value = allPkgs.filter((p: any) => String(p.shop_id) === String(shopIdParam));
+  }
 });
 </script>
 
@@ -221,7 +239,7 @@ onMounted(() => {
     font-size: 1.5rem;
     font-weight: 800;
     margin-bottom: 8px;
-    color: var(--text-primary);
+    color: #333;
     text-shadow: 0 2px 4px rgba(255, 195, 0, 0.2);
     position: relative;
     z-index: 1;
@@ -393,7 +411,7 @@ onMounted(() => {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 6px;
-    color: var(--text-primary);
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -411,7 +429,7 @@ onMounted(() => {
 
   .package-tag {
     background: var(--bg-badge);
-    color: var(--accent-dark);
+    color: var(--text-primary);
     font-size: 0.75rem;
     padding: 5px 12px;
     border-radius: 50px;

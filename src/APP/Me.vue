@@ -392,7 +392,7 @@ onMounted(async () => {
       font-size: 24px;
       font-weight: 700;
       margin-bottom: 6px;
-      color: var(--text-primary);
+      color: #333;
     }
 
     .user-level {
@@ -425,7 +425,7 @@ onMounted(async () => {
         .stat-value {
           font-size: 20px;
           font-weight: 700;
-          color: var(--text-primary);
+          color: #333;
           margin-bottom: 4px;
         }
 
@@ -490,6 +490,13 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  /* 平板端：网格布局 */
+  @media (min-width: 481px) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 }
 
 .settings-item {

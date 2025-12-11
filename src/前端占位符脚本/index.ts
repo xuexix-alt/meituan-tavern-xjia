@@ -15,6 +15,77 @@ const ScriptSettings = z.object({
 
 const settings = ScriptSettings.parse(getVariables({ type: 'script', script_id: getScriptId() }));
 
+// ================== 店铺持久化 ==================
+type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
+const SHOP_STORE_KEY = 'shop_store_cache';
+const MAX_SHOP_COUNT = 10;
+
+function readShopStore(): StoredShop[] {
+  try {
+    const vars = getVariables({ type: 'script', script_id: getScriptId() }) || {};
+    const list = (vars as any)[SHOP_STORE_KEY];
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    console.warn('[ShopStore] 读取失败', e);
+    return [];
+  }
+}
+
+function writeShopStore(shops: StoredShop[]) {
+  try {
+    replaceVariables({ [SHOP_STORE_KEY]: shops }, { type: 'script', script_id: getScriptId() });
+  } catch (e) {
+    console.warn('[ShopStore] 写入失败', e);
+  }
+}
+
+function normalizeShops(raw: any[]): StoredShop[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(s => s && s.id)
+    .map(s => ({
+      ...s,
+      id: String(s.id), // 统一为字符串，便于路由匹配
+      __savedAt: Date.now(),
+    }));
+}
+
+function mergeAndCap(shops: StoredShop[], incoming: StoredShop[]): StoredShop[] {
+  const map = new Map<string, StoredShop>();
+  // 先放新数据，后放旧数据；同 id 以新覆盖
+  [...incoming, ...shops].forEach(s => {
+    if (!map.has(s.id)) map.set(s.id, s);
+  });
+  const result = Array.from(map.values())
+    .sort((a, b) => (b.__savedAt || 0) - (a.__savedAt || 0))
+    .slice(0, MAX_SHOP_COUNT);
+  return result;
+}
+
+function saveShopsToStore(newShops: any[]) {
+  const existing = readShopStore();
+  const incoming = normalizeShops(newShops);
+  const merged = mergeAndCap(existing, incoming);
+  writeShopStore(merged);
+  return merged;
+}
+
+function deleteShopFromStore(shopId: string) {
+  const existing = readShopStore();
+  const filtered = existing.filter(s => s.id !== shopId);
+  writeShopStore(filtered);
+  return filtered;
+}
+
+function getStoreApi() {
+  return {
+    getShops: () => readShopStore(),
+    saveShops: (shops: any[]) => saveShopsToStore(shops),
+    deleteShop: (id: string) => deleteShopFromStore(id),
+    clear: () => writeShopStore([]),
+  };
+}
+
 /**
  * 检查消息中是否包含占位符
  */
@@ -56,7 +127,8 @@ function getCurrentFloorMessages(): Array<{ role: string; content: string; id: s
 /**
  * 检查当前楼层是否已有占位符
  */
-function checkAndInsertPlaceholder(): boolean {
+function checkAndInsertPlaceholder(options: { silent?: boolean } = {}): boolean {
+  const { silent = false } = options;
   try {
     const messages = getCurrentFloorMessages();
 
@@ -91,7 +163,7 @@ function checkAndInsertPlaceholder(): boolean {
       // 使用triggerSlash发送更新命令
       triggerSlash(`/chat u ${baseMessageId} ${fullContent}`);
 
-      if (settings.show_notification) {
+      if (settings.show_notification && !silent) {
         toastr.success('[前端占位符] 已自动插入占位符', '脚本提示');
       }
 
@@ -102,7 +174,9 @@ function checkAndInsertPlaceholder(): boolean {
     return false;
   } catch (error) {
     console.error('[前端占位符] 执行失败:', error);
-    toastr.error('前端占位符插入失败，请查看控制台', '脚本错误');
+    if (!silent) {
+      toastr.error('前端占位符插入失败，请查看控制台', '脚本错误');
+    }
     return false;
   }
 }
@@ -129,6 +203,14 @@ $(() => {
   if (settings.show_notification) {
     toastr.info('点击下方"检查占位符"按钮手动执行，或启用自动插入模式', '脚本提示');
   }
+
+  // 暴露店铺存储接口
+  try {
+    initializeGlobal('ShopStore', getStoreApi());
+    console.log('[ShopStore] 已共享全局接口');
+  } catch (e) {
+    console.warn('[ShopStore] 共享全局接口失败', e);
+  }
 });
 
 // =============================================================================
@@ -141,13 +223,38 @@ eventOn(getButtonEvent('检查占位符'), () => {
   manualCheck();
 });
 
+// 店铺存储快捷按钮
+eventOn(getButtonEvent('查看已存店铺'), () => {
+  const api = getStoreApi();
+  if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
+  const list = api.getShops();
+  console.log('[ShopStore] 当前店铺列表:', list);
+  toastr.info(`已存 ${list.length} 个店铺`, '店铺存储');
+});
+
+eventOn(getButtonEvent('清空店铺缓存'), () => {
+  const api = getStoreApi();
+  if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
+  api.clear();
+  toastr.success('店铺缓存已清空', '店铺存储');
+});
+
+eventOn(getButtonEvent('导出店铺JSON'), () => {
+  const api = getStoreApi();
+  if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
+  const list = api.getShops();
+  console.log('[ShopStore] 导出 JSON:', JSON.stringify(list, null, 2));
+  toastr.info('JSON 已输出到控制台', '店铺存储');
+});
+
 // 监听消息发送完成事件，在新消息产生后自动检查
 eventOn(tavern_events.MESSAGE_SENT, (messageId: string) => {
   if (settings.auto_insert && settings.enabled) {
     console.log('[前端占位符] 消息发送完成，自动检查');
     // 延迟执行，确保消息已保存
     setTimeout(() => {
-      checkAndInsertPlaceholder();
+      // 静默模式，避免订单类系统消息触发提示/报错
+      checkAndInsertPlaceholder({ silent: true });
     }, 100);
   }
 });

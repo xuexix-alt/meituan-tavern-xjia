@@ -109,9 +109,9 @@ onErrorCaptured((err: Error) => {
   --bg-item: #ffffff;
   --bg-item-hover: #fff9e6;
   --bg-badge: linear-gradient(135deg, #fff9e6, #fff);
-  --text-primary: #1a1a1a;
-  --text-secondary: #555555;
-  --text-placeholder: #888888;
+  --text-primary: #2c3e50; /* 更柔和的深色 */
+  --text-secondary: #606f7b; /* 更清晰的次级文本色 */
+  --text-placeholder: #95a5a6;
   --text-price: #ff6b6b;
   --border-color: #e0e0e0;
   --border-accent: rgba(255, 195, 0, 0.15);
@@ -140,9 +140,9 @@ onErrorCaptured((err: Error) => {
   --bg-item: #2d2d2d;
   --bg-item-hover: #353535;
   --bg-badge: linear-gradient(135deg, #3a3a3a, #2d2d2d);
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --text-placeholder: #707070;
+  --text-primary: #ecf0f1; /* 亮白色 */
+  --text-secondary: #bdc3c7; /* 浅灰色 */
+  --text-placeholder: #7f8c8d;
   --text-price: #ff8a65;
   --border-color: #3a3a3a;
   --border-accent: rgba(255, 195, 0, 0.3);
@@ -164,6 +164,8 @@ onErrorCaptured((err: Error) => {
 /* 全局字体优化 */
 body {
   font-family:
+    'PingFang SC',
+    'Microsoft YaHei',
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -171,8 +173,6 @@ body {
     Roboto,
     'Helvetica Neue',
     Arial,
-    'PingFang SC',
-    'Microsoft YaHei',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -181,6 +181,9 @@ body {
     'kern' 1,
     'liga' 1;
   font-variant-ligatures: common-ligatures;
+  font-size: 16px; /* 基础字号调整 */
+  line-height: 1.6; /* 增加行高 */
+  color: var(--text-primary);
 }
 
 /* 深色模式下字体渲染优化 */
@@ -259,11 +262,11 @@ body {
 
 <style lang="scss" scoped>
 .phone-frame {
-  width: 360px;
-  height: 780px; // 从680px调整到780px，更符合19.5:9手机比例
+  width: 100%;
+  height: 1024px; // 增大高度，模拟平板竖屏
   background: var(--bg-primary);
-  border: 8px solid #1a1a1a;
-  border-radius: 32px;
+  border: 12px solid #1a1a1a;
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -274,46 +277,9 @@ body {
     0 10px 20px rgba(255, 195, 0, 0.08);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 6px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 3px;
-    z-index: 10;
-  }
-
-  @media (max-width: 480px) {
-    width: 95vw;
-    max-width: 380px;
-    // 使用aspect-ratio替代vh单位，确保高度与宽度成比例
-    aspect-ratio: 360 / 780;
-    max-height: 800px;
-    // 设置最小高度，防止被压缩
-    min-height: 600px;
-    border-width: 6px;
-    border-radius: 28px;
-  }
-
-  @media (max-width: 360px) {
-    width: 100vw;
-    // 使用aspect-ratio而不是100vh，确保比例一致
-    aspect-ratio: 360 / 780;
-    // 在极小屏幕上允许高度自适应，但保持最小值
-    min-height: 100%;
-    border-radius: 0;
-    border: none;
-    max-width: none;
-    // 移除max-height限制，允许在非常小的屏幕上完全显示
-    max-height: none;
-
-    &::before {
-      display: none;
-    }
+  @media (max-width: 768px) {
+    border-width: 8px;
+    border-radius: 16px;
   }
 }
 

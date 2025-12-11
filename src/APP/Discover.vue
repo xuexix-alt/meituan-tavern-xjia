@@ -31,6 +31,9 @@
                 </span>
               </div>
             </div>
+            <button class="delete-btn" @click.stop="deleteShop(shop.id)">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -66,13 +69,28 @@ import { ref, onMounted } from 'vue';
 import { extractDataFromMessage } from './dataParser';
 
 const shops = ref<any[]>([]);
+const shopStoreApi = ref<any>(null);
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
+  try {
+    await waitGlobalInitialized('ShopStore');
+    shopStoreApi.value = (window as any).ShopStore;
+  } catch (e) {
+    console.warn('[Discover] ShopStore 未就绪，使用临时数据', e);
+  }
+
   const data = extractDataFromMessage();
   shops.value = data.shops;
+  shopStoreApi.value?.saveShops(shops.value);
   console.log('[Discover] 已加载', shops.value.length, '个店铺');
 });
+
+function deleteShop(id: string) {
+  shops.value = shops.value.filter(shop => shop.id !== id);
+  shopStoreApi.value?.deleteShop(id);
+  console.log('[Discover] 已删除店铺', id);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -119,10 +137,7 @@ onMounted(() => {
     text-shadow: 0 2px 4px rgba(255, 195, 0, 0.15);
 
     span {
-      background: linear-gradient(135deg, var(--text-primary) 0%, #333333 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--text-primary);
     }
   }
 }
@@ -147,6 +162,17 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
+
+  /* 平板端：2列 */
+  @media (min-width: 481px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* 大屏端：3列 */
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .shop-card {
@@ -164,6 +190,7 @@ onMounted(() => {
   border: 1px solid var(--border-accent);
   position: relative;
   overflow: hidden;
+  gap: 14px;
 
   &::before {
     content: '';
@@ -186,6 +213,28 @@ onMounted(() => {
     background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.03));
     opacity: 0;
     transition: opacity 0.3s ease;
+  }
+
+  .delete-btn {
+    margin-left: auto;
+    border: none;
+    background: var(--badge-danger-gradient);
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(239, 83, 80, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 1;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(239, 83, 80, 0.45);
+    }
+
+    i {
+      font-size: 14px;
+    }
   }
 
   &:hover {
@@ -256,7 +305,7 @@ onMounted(() => {
 
   .name {
     font-weight: 700;
-    color: var(--text-primary);
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -292,7 +341,7 @@ onMounted(() => {
       gap: 4px;
       padding: 4px 10px;
       background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
-      color: var(--text-primary);
+      color: rgba(255, 255, 255, 0.95);
       border-radius: 12px;
       font-size: 0.75rem;
       font-weight: 600;

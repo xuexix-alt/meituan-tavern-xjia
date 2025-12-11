@@ -472,7 +472,18 @@ async function initDisplay() {
 async function getChatMessages(messageId: string) {
   try {
     if (typeof (window as any).Mvu === 'undefined' || !(window as any).Mvu.getMvuData) return [];
-    const response = (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
+    const response = (() => {
+      try {
+        const currentId = getCurrentMessageId();
+        for (let id = currentId; id >= 0; id--) {
+          const data = (window as any).Mvu.getMvuData({ type: 'message', message_id: id });
+          if (data && data.stat_data) return data;
+        }
+      } catch (e) {
+        // 如果不在楼层 iframe 内或获取失败则忽略
+      }
+      return (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
+    })();
     return response && response.stat_data ? [{ data: response }] : [];
   } catch (error) {
     console.error('获取消息失败:', error);
@@ -633,7 +644,7 @@ onMounted(async () => {
       .history-title {
         font-size: 16px;
         font-weight: 700;
-        color: var(--text-primary);
+        color: #333;
         line-height: 1.4;
         margin: 0;
         word-break: break-word;
@@ -746,14 +757,16 @@ onMounted(async () => {
 
 .reorder-modal-content {
   background: var(--bg-card);
-  border-radius: 20px;
-  width: 100%;
-  max-width: 450px;
-  // 使用固定最大高度替代90vh，避免被父容器压缩
-  max-height: 600px;
+  border-radius: 24px;
+  width: 100%; /* 宽度撑满 */
+  height: 100%; /* 高度撑满 */
+  max-width: none; /* 移除最大宽度限制 */
+  max-height: none; /* 移除最大高度限制 */
   overflow-y: auto;
-  box-shadow: 0 12px 40px rgba(255, 195, 0, 0.25);
+  box-shadow: none; /* 全屏模式不需要阴影 */
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   &::before {
     content: '';
@@ -761,9 +774,9 @@ onMounted(async () => {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
-    border-radius: 20px 20px 0 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-dark));
+    z-index: 10;
   }
 
   .modal-header {
@@ -808,8 +821,29 @@ onMounted(async () => {
   }
 
   .modal-body {
-    padding: 20px 24px;
+    padding: 24px;
     overflow-y: auto;
+    flex: 1;
+
+    /* 平板端：双栏布局 */
+    @media (min-width: 768px) {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+
+      /* 左侧：订单信息、说明、心理状态 */
+      .order-info-grid,
+      .info-section:nth-child(2),
+      .info-section:nth-child(3) {
+        grid-column: 1 / 2;
+      }
+
+      /* 右侧：身体特征、性经验、服务统计 */
+      .info-section:nth-child(n + 4) {
+        grid-column: 2 / 3;
+      }
+    }
   }
 
   .modal-footer {
@@ -856,28 +890,47 @@ onMounted(async () => {
 .order-info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  /* 大屏端：4列 */
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+    grid-column: 1 / -1 !important; /* 跨越两栏 */
+  }
 
   .info-box {
     background: var(--bg-card-light);
-    padding: 16px;
+    padding: 20px;
     border-radius: 16px;
     border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border-color: var(--accent-primary);
+    }
 
     .info-label {
-      font-size: 12px;
-      color: var(--text-placeholder);
-      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-weight: 500;
     }
 
     .info-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
+      font-size: 20px;
+      font-weight: 800;
+      color: #333;
+      line-height: 1.2;
+      word-break: break-word;
 
       &.price {
-        font-size: 20px;
+        font-size: 28px;
         background: var(--badge-danger-gradient);
         -webkit-background-clip: text;
         background-clip: text;
@@ -889,48 +942,72 @@ onMounted(async () => {
 
 .info-section {
   background: var(--bg-card-light);
-  padding: 16px;
+  padding: 24px;
   border-radius: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   border: 1px solid var(--border-color);
+  height: fit-content;
 
   .section-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--text-primary);
+    gap: 12px;
+    color: #333;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 
     i {
       color: var(--accent-primary);
+      font-size: 20px;
     }
   }
 
   .section-content {
-    font-size: 14px;
+    font-size: 16px;
     color: var(--text-secondary);
-    line-height: 1.7;
+    line-height: 1.8;
+    background: rgba(255,255,255,0.5);
+    padding: 20px;
+    border-radius: 12px;
   }
 
   .section-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 20px;
+
+    /* 平板端：3列 */
+    @media (min-width: 600px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
   .section-item {
+    background: rgba(255,255,255,0.5);
+    padding: 16px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
     .section-item-label {
-      font-size: 12px;
-      color: var(--text-placeholder);
-      margin-bottom: 4px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 600;
     }
 
     .section-item-value {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 700;
-      color: var(--text-primary);
+      color: #333;
+      word-break: break-word;
     }
   }
 }

@@ -17,26 +17,67 @@
             <div class="decoration-circle circle-2"></div>
             <div class="decoration-circle circle-3"></div>
           </div>
-          <div class="slogan-content">
-            <h2 class="slogan-title">
-              <span class="title-line">
-                <span class="text-gradient">随心所欲</span>
-              </span>
-              <span class="title-line">
-                <span class="text-gradient">所见所得</span>
-              </span>
-            </h2>
-            <p class="slogan-subtitle">
-              <span class="subtitle-text">为您送上一切心动的美人</span>
-            </p>
-            <div class="slogan-signature">
-              <div class="signature-line"></div>
-              <div class="signature-text">
-                <i class="fas fa-heart"></i>
-                <span>美人团外卖</span>
-                <i class="fas fa-heart"></i>
+          <div class="slogan-content-wrapper">
+            <div class="slogan-content">
+              <h2 class="slogan-title">
+                <span class="title-line">
+                  <span class="text-gradient">随心所欲</span>
+                </span>
+                <span class="title-line">
+                  <span class="text-gradient">跨越时空</span>
+                </span>
+              </h2>
+              <p class="slogan-subtitle">
+                <span class="subtitle-text">为您送上一切心动的美人</span>
+              </p>
+
+              <div class="slogan-footer">
+                <div class="slogan-signature">
+                  <div class="signature-text">
+                    <i class="fas fa-heart"></i>
+                    <span>美人团外卖</span>
+                    <i class="fas fa-heart"></i>
+                  </div>
+                </div>
+                <div class="version-info">v2.7.0</div>
               </div>
-              <div class="signature-line"></div>
+            </div>
+
+            <!-- 新增公告栏和玩法说明 -->
+            <div class="announcement-panel">
+              <div class="panel-header">
+                <i class="fas fa-bullhorn"></i>
+                <span>最新公告</span>
+              </div>
+              <div class="panel-content">
+                <div class="notice-item">
+                  <span class="notice-tag">活动</span>
+                  <span class="notice-text">新增“国企往事”DLC，挂载世界书后点击即可。</span>
+                </div>
+                <div class="notice-item">
+                  <span class="notice-tag">更新</span>
+                  <span class="notice-text">PAD重构版APP重大更新。</span>
+                </div>
+                <div class="notice-item">
+                  <span class="notice-tag">更新</span>
+                  <span class="notice-text">当前生成前10个店铺会保留，此后出新删旧。</span>
+                </div>
+                <div class="notice-item">
+                  <span class="notice-tag">更新</span>
+                  <span class="notice-text">搜索时最好注明店铺与套餐数量，指定明星。</span>
+                </div>
+              </div>
+              <div class="panel-header mt-3">
+                <i class="fas fa-gamepad"></i>
+                <span>玩法说明</span>
+              </div>
+              <div class="panel-content">
+                <p class="instruction-text">
+                  1. 点击下方分类图标浏览不同主题的美人店铺。<br />
+                  2. 在搜索栏输入关键词可精准查找心仪类型。<br />
+                  3. 下单后可在“服务”页面查看订单状态和互动详情。
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -44,35 +85,35 @@
 
       <!-- 分类网格 -->
       <div class="category-grid">
-        <div class="category-item" @click="search('各类路人')">
+        <div class="category-item" @click="search('各类路人商品-3个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
           <span>路人</span>
         </div>
-        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题')">
+        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-mask"></i></div>
           <span>偶遇</span>
         </div>
-        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题')">
+        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-video"></i></div>
           <span>AV</span>
         </div>
-        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题')">
+        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
           <span>街拍</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类主题')">
+        <div class="category-item" @click="search('各类熟人商品-3个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
           <span>熟人</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类乱伦主题')">
+        <div class="category-item" @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-heart-broken"></i></div>
           <span>乱伦</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类职场主题')">
+        <div class="category-item" @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-briefcase"></i></div>
           <span>职场</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类朋友妻主题')">
+        <div class="category-item" @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-users"></i></div>
           <span>友妻</span>
         </div>
@@ -93,7 +134,7 @@
         <div class="feature-button-grid">
           <!-- DLC按钮 -->
           <div class="feature-button-item">
-            <button class="dlc-button" @click="generateDLCContent" title="点击生成国企往事DLC内容">
+            <button class="dlc-button" title="点击生成国企往事DLC内容" @click="generateDLCContent">
               <div class="dlc-icon">
                 <i class="fas fa-history"></i>
               </div>
@@ -139,7 +180,7 @@ const searchKeyword = ref('');
 
 // 搜索功能
 function search(keyword: string) {
-  sendToAI(`/send 搜索：${keyword}`);
+  sendToAI(`/send 搜索：${keyword} 1个店铺每个含3个套餐，如果搜索内容是姓名的，套餐内容是同一人的不同形态`);
 }
 
 function doSearch() {
@@ -247,16 +288,21 @@ function generateDLCContent() {
   display: grid;
   gap: 16px;
   margin-bottom: 16px;
-  grid-template-columns: repeat(4, 1fr); /* 桌面端默认值 */
+  grid-template-columns: repeat(4, 1fr); /* 默认值 */
 
-  /* 手机端：2列 */
+  /* 手机端：3列 (Pad模式下手机也显示宽一点) */
   @media (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
-  /* 平板端：3列 */
+  /* 平板端：4列 */
   @media (min-width: 481px) and (max-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* 大屏端：6列 */
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
@@ -462,7 +508,7 @@ function generateDLCContent() {
     rgba(255, 195, 0, 0.05) 100%
   );
   border-radius: 24px;
-  padding: 28px 24px;
+  padding: 24px;
   box-shadow:
     0 8px 32px rgba(255, 195, 0, 0.2),
     0 4px 16px rgba(0, 0, 0, 0.08),
@@ -517,10 +563,37 @@ function generateDLCContent() {
     }
   }
 
-  .slogan-content {
+  .slogan-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     position: relative;
     z-index: 1;
+
+    /* 平板端：左右布局 */
+    @media (min-width: 600px) {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+    }
+  }
+
+  .slogan-content {
+    flex: 1;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 默认居中 */
+    justify-content: center;
+
+    /* 平板端：左侧居中 */
+    @media (min-width: 600px) {
+      text-align: center; /* 文本居中 */
+      align-items: center; /* 元素居中 */
+      padding-right: 20px;
+      border-right: 1px solid rgba(255, 195, 0, 0.2);
+    }
 
     .slogan-title {
       margin: 0 0 16px 0;
@@ -575,17 +648,17 @@ function generateDLCContent() {
       font-style: italic;
       text-shadow: 0 1px 2px rgba(255, 195, 0, 0.1);
 
+      /* 平板端：左对齐 */
+      @media (min-width: 600px) {
+        justify-content: flex-start;
+      }
+
       .subtitle-text {
         opacity: 0.95;
         background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-dark) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-      }
-
-      .subtitle-decoration {
-        color: var(--accent-primary);
-        font-weight: bold;
       }
     }
 
@@ -595,6 +668,11 @@ function generateDLCContent() {
       justify-content: center;
       gap: 12px;
       animation: fadeInUp 1s ease-out 0.8s both;
+
+      /* 平板端：左对齐 */
+      @media (min-width: 600px) {
+        justify-content: flex-start;
+      }
 
       .signature-line {
         width: 40px;
@@ -622,6 +700,69 @@ function generateDLCContent() {
             animation-delay: 1s;
           }
         }
+      }
+    }
+  }
+
+  .announcement-panel {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid rgba(255, 195, 0, 0.15);
+    animation: fadeIn 1s ease-out 0.3s both;
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-dark);
+      margin-bottom: 10px;
+
+      &.mt-3 {
+        margin-top: 12px;
+      }
+
+      i {
+        color: var(--accent-primary);
+      }
+    }
+
+    .panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .notice-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 0.85rem;
+
+        .notice-tag {
+          background: var(--accent-primary);
+          color: white;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          flex-shrink: 0;
+          margin-top: 2px; /* 微调对齐 */
+        }
+
+        .notice-text {
+          color: var(--text-primary);
+          line-height: 1.4;
+        }
+      }
+
+      .instruction-text {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0;
       }
     }
   }
@@ -799,7 +940,7 @@ function generateDLCContent() {
   border: none;
   border-radius: 12px;
   padding: 16px 20px;
-  min-width: 280px;
+  width: 100%; /* 宽度撑满 */
   text-align: left;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);

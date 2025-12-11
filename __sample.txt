@@ -1,0 +1,31 @@
+[手机界面开始
+][推荐标签]
+- 昔日同窗
+- 办公室恋情
+- 邻家情愫
+
+{
+  "shops": [
+    {
+      "name": "同窗旧梦集",
+      "shoptags": ["校园", "青春", "回忆杀"],
+      "packages": [
+        {
+          "name": "高冷班花的酒后真言",
+          "price": "￥688",
+          "stars": 4.9,
+          "icon": "fas fa-user-graduate",
+          "tags": ["班花", "研究生", "高冷"],
+          "image1": "1",
+          "image2": "2",
+          "image3": "3",
+          "description": "d",
+          "content": ["c"],
+          "reviews": ["r"]
+        }
+      ]
+    }
+  ]
+}
+
+[手机界面结束]
