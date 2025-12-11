@@ -23,8 +23,7 @@ function mergeWithStore(shops: any[], storeApi: any) {
   if (!stored.length) return shops;
 
   // 如果当前没有店铺或店铺里套餐为空，直接用存储的兜底
-  const hasValidCurrent =
-    shops.length > 0 && shops.some(s => (s.packages && s.packages.length > 0) || s.name);
+  const hasValidCurrent = shops.length > 0 && shops.some(s => (s.packages && s.packages.length > 0) || s.name);
 
   if (!hasValidCurrent) {
     return stored;
@@ -46,7 +45,8 @@ function flattenPackagesFromShops(shops: any[]) {
     .map((pkg: any, idx: number) => ({
       ...pkg,
       id: pkg.id || `pkg_${idx}`,
-      shop_id: pkg.shop_id || (pkg.shopId ?? (pkg.shop || {}).id) || (shops.find(s => (s.packages || []).includes(pkg))?.id),
+      shop_id:
+        pkg.shop_id || (pkg.shopId ?? (pkg.shop || {}).id) || shops.find(s => (s.packages || []).includes(pkg))?.id,
     }));
 }
 
@@ -56,10 +56,7 @@ function sanitizeShops(shops: any[]) {
     if (!s) return false;
     const id = String(s.id || '');
     const hasPackages = Array.isArray(s.packages) && s.packages.length > 0;
-    const hasName =
-      typeof s.name === 'string' &&
-      s.name.trim() &&
-      !['未命名店铺', '默认店铺'].includes(s.name.trim());
+    const hasName = typeof s.name === 'string' && s.name.trim() && !['未命名店铺', '默认店铺'].includes(s.name.trim());
 
     if (!hasPackages && !hasName) return false;
 
@@ -101,9 +98,10 @@ export function extractDataFromMessage(): { shops: any[]; packages: any[] } {
     if (currentData) {
       const currentShops = sanitizeShops(currentData.shops || []);
       const mergedShops = mergeKeepOrder(currentShops, storeApi?.getShops?.() || []);
-      const mergedPkgs = (currentData.packages && currentData.packages.length > 0)
-        ? currentData.packages
-        : flattenPackagesFromShops(mergedShops);
+      const mergedPkgs =
+        currentData.packages && currentData.packages.length > 0
+          ? currentData.packages
+          : flattenPackagesFromShops(mergedShops);
       const result = { shops: mergedShops, packages: mergedPkgs };
       rememberData(result, currentMessageId);
       storeApi?.saveShops(mergedShops);
@@ -165,7 +163,7 @@ export function extractDataFromSpecificMessage(messageId: string): { shops: any[
 
     const parsed = parseShopData(dataText);
     // 若解析结果为空，最后再用整段消息内容兜底一次（防止截取不完整导致空）
-    if ((parsed.shops.length === 0 && parsed.packages.length === 0) && dataText !== messageContent) {
+    if (parsed.shops.length === 0 && parsed.packages.length === 0 && dataText !== messageContent) {
       const fallbackParsed = parseShopData(messageContent.trim());
       if (fallbackParsed.shops.length > 0 || fallbackParsed.packages.length > 0) {
         rememberData(fallbackParsed, messageId);
@@ -239,9 +237,7 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
       .filter(Boolean);
 
   // 以 [店铺] 作为起点，[/店铺] 或下一个 [店铺] / 文本末尾 作为终点
-  const rawShopSections = text.includes('[店铺]')
-    ? text.split('[店铺]').slice(1)
-    : ['[店铺]\n[套餐]\n' + text]; // 无店铺标签时，把整段当作一个店铺片段处理，并假定内容为套餐块
+  const rawShopSections = text.includes('[店铺]') ? text.split('[店铺]').slice(1) : ['[店铺]\n[套餐]\n' + text]; // 无店铺标签时，把整段当作一个店铺片段处理，并假定内容为套餐块
 
   rawShopSections.forEach((rawSection, shopIndex) => {
     // 截到 [/店铺]，否则取整个片段（兼容截断）
@@ -351,9 +347,7 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
           } else if (['tags', 'content', 'reviews'].includes(fieldName)) {
             currentArrayField = fieldName;
             if (value) {
-              const items = value.startsWith('-')
-                ? [value.replace(/^-/, '').trim()]
-                : splitArrayValues(value);
+              const items = value.startsWith('-') ? [value.replace(/^-/, '').trim()] : splitArrayValues(value);
               items.forEach(v => {
                 const cleaned = v.replace(/^["']|["']$/g, '').trim();
                 if (cleaned) pkg[fieldName].push(cleaned);
@@ -428,11 +422,11 @@ function tryParseJsTemplate(text: string): { shops: any[]; packages: any[] } | n
     const objectLiteral = extractTemplateObject(text);
     if (!objectLiteral) return null;
 
-  const cleaned = objectLiteral
-    // 去掉块注释和行注释
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/[^\n\r]*/g, '')
-    // 去掉对象/数组末尾多余逗号
+    const cleaned = objectLiteral
+      // 去掉块注释和行注释
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n\r]*/g, '')
+      // 去掉对象/数组末尾多余逗号
       .replace(/,\s*([}\]])/g, '$1')
       .trim();
 
@@ -542,7 +536,8 @@ function tryParseLargestJsonChunk(text: string): { shops: any[]; packages: any[]
   const src = text.trim();
   const firstBrace = src.indexOf('{');
   const firstBracket = src.indexOf('[');
-  const start = (firstBrace === -1) ? firstBracket : (firstBracket === -1 ? firstBrace : Math.min(firstBrace, firstBracket));
+  const start =
+    firstBrace === -1 ? firstBracket : firstBracket === -1 ? firstBrace : Math.min(firstBrace, firstBracket);
   if (start === -1) return null;
 
   // 从文本尾部向前寻找可解析的末尾
@@ -611,14 +606,19 @@ function parseLoosePackage(text: string, shop: any, pkgIndex: number): any | nul
       } else if (['tags', 'content', 'reviews'].includes(key)) {
         currentArrayField = key;
         if (value) {
-          const items = value.startsWith('-') ? [value.replace(/^-/, '').trim()] : value.split(/[,，/、|]/).map(s => s.trim());
+          const items = value.startsWith('-')
+            ? [value.replace(/^-/, '').trim()]
+            : value.split(/[,，/、|]/).map(s => s.trim());
           items.filter(Boolean).forEach(v => pkg[key].push(v.replace(/^["']|["']$/g, '')));
         }
       }
     } else if (['tags', 'content', 'reviews'].includes(line.toLowerCase())) {
       currentArrayField = line.toLowerCase();
     } else if (currentArrayField) {
-      const val = line.replace(/^[-*•·－]\s*/, '').trim().replace(/^["']|["']$/g, '');
+      const val = line
+        .replace(/^[-*•·－]\s*/, '')
+        .trim()
+        .replace(/^["']|["']$/g, '');
       if (val) pkg[currentArrayField].push(val);
     }
   });

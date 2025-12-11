@@ -224,7 +224,9 @@ function deleteShop(id: string) {
     padding: 8px 10px;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(239, 83, 80, 0.35);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
     z-index: 1;
 
     &:hover {
