@@ -1360,16 +1360,16 @@ function readCacheGirls(): any[] {
 
       // 身体特征网格样式
       .body-feature-grid {
-          .feature-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
+        .feature-row {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-bottom: 16px;
 
-            /* 平板端：4列 */
-            @media (min-width: 481px) {
-              grid-template-columns: repeat(4, 1fr);
-            }
+          /* 平板端：4列 */
+          @media (min-width: 481px) {
+            grid-template-columns: repeat(4, 1fr);
+          }
 
           .feature-item {
             display: flex;

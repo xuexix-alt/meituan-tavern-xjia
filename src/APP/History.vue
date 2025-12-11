@@ -911,7 +911,7 @@ onMounted(async () => {
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-color: var(--accent-primary);
     }
 
@@ -957,7 +957,7 @@ onMounted(async () => {
     gap: 12px;
     color: #333;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 
     i {
       color: var(--accent-primary);
@@ -969,7 +969,7 @@ onMounted(async () => {
     font-size: 16px;
     color: var(--text-secondary);
     line-height: 1.8;
-    background: rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.5);
     padding: 20px;
     border-radius: 12px;
   }
@@ -986,14 +986,14 @@ onMounted(async () => {
   }
 
   .section-item {
-    background: rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.5);
     padding: 16px;
     border-radius: 12px;
     transition: all 0.3s ease;
 
     &:hover {
-      background: rgba(255,255,255,0.8);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
 
     .section-item-label {
