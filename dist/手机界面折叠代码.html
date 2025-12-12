@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手机界面内容折叠</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      padding: 12px;
+      line-height: 1.6;
+      width: 100%;
+      margin: 0;
+    }
+
+    .phone-interface-fold {
+      background: #2d2d2d;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      margin: 16px 0;
+      border: 12px solid #1a1a1a;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .phone-interface-fold[open] {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .phone-interface-fold summary {
+      padding: 16px 20px;
+      color: #ffffff;
+      cursor: pointer;
+      list-style: none;
+      font-weight: 600;
+      font-size: 1.1em;
+      position: relative;
+      background: linear-gradient(135deg, #ffc300 0%, #e6b000 100%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+
+    .phone-interface-fold summary::before {
+      content: '📱';
+      font-size: 1.2em;
+    }
+
+    .phone-interface-fold summary::after {
+      content: '▼';
+      margin-left: auto;
+      font-size: 0.9em;
+      transition: transform 0.3s ease;
+      opacity: 0.8;
+    }
+
+    .phone-interface-fold[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .phone-interface-fold summary:hover {
+      background: linear-gradient(135deg, #ffd700 0%, #ffc300 100%);
+    }
+
+    .phone-interface-fold summary .fold-indicator {
+      position: absolute;
+      right: 16px;
+      font-size: 0.9em;
+      opacity: 0.6;
+    }
+
+    .phone-interface-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: #252525;
+      position: relative;
+    }
+
+    .phone-interface-fold[open] .phone-interface-content {
+      max-height: 1000px; /* 可根据需要调整 */
+    }
+
+    .phone-interface-content-inner {
+      padding: 20px;
+      color: #b0b0b0;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      background: #252525;
+    }
+
+    /* 滚动条美化 */
+    .phone-interface-content::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .phone-interface-content::-webkit-scrollbar-track {
+      background: #2d2d2d;
+      border-radius: 4px;
+    }
+
+    .phone-interface-content::-webkit-scrollbar-thumb {
+      background: #505050;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    .phone-interface-content::-webkit-scrollbar-thumb:hover {
+      background: #606060;
+    }
+
+    /* 折叠动画效果 */
+    .phone-interface-fold .shimmer-effect {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.04),
+        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.04),
+        transparent
+      );
+      animation: shimmer 3s linear infinite;
+      pointer-events: none;
+    }
+
+    .phone-interface-fold[open] .shimmer-effect {
+      animation: none;
+      opacity: 0;
+    }
+
+    @keyframes shimmer {
+      0% {
+        left: -100%;
+      }
+      100% {
+        left: 100%;
+      }
+    }
+
+    /* 代码块样式 */
+    .code-block {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+      border-left: 4px solid #ffc300;
+      font-family: 'Courier New', monospace;
+      color: #d4d4d4;
+      overflow-x: auto;
+    }
+
+    .code-block .keyword {
+      color: #569cd6;
+    }
+
+    .code-block .string {
+      color: #ce9178;
+    }
+
+    .code-block .comment {
+      color: #6a9955;
+      font-style: italic;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .phone-interface-fold summary {
+        padding: 14px 16px;
+        font-size: 1em;
+      }
+
+      .phone-interface-content-inner {
+        padding: 16px;
+        font-size: 0.9em;
+      }
+    }
+
+    /* 打印样式 */
+    @media print {
+      .phone-interface-fold {
+        border: 1px solid #000;
+        box-shadow: none;
+        background: #fff;
+      }
+
+      .phone-interface-fold summary {
+        background: #f0f0f0;
+        color: #000;
+      }
+
+      .phone-interface-content-inner {
+        background: #fff;
+        color: #000;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 示例使用 -->
+  <div class="phone-interface-fold">
+    <summary>
+      📱 手机界面内容
+      <span class="fold-indicator">点击展开/折叠</span>
+      <span class="shimmer-effect"></span>
+    </summary>
+    <div class="phone-interface-content">
+      <div class="phone-interface-content-inner">
+        <!-- 这里是你的手机界面内容 -->
+        [手机界面开始]
+        <div class="phone-frame">
+          <div class="app-header">
+            <h1>美人团 APP</h1>
+          </div>
+          <div class="app-content">
+            <div class="shop-list">
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+              <div class="shop-item">
+                <h3>店铺名称</h3>
+                <p>店铺描述</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        [手机界面结束]
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 折叠功能增强
+    document.addEventListener('DOMContentLoaded', function() {
+      const foldElements = document.querySelectorAll('.phone-interface-fold');
+
+      foldElements.forEach(element => {
+        const summary = element.querySelector('summary');
+        const content = element.querySelector('.phone-interface-content');
+        const indicator = summary.querySelector('.fold-indicator');
+
+        // 点击事件
+        summary.addEventListener('click', function(e) {
+          e.preventDefault();
+
+          if (element.hasAttribute('open')) {
+            // 折叠
+            element.removeAttribute('open');
+            if (indicator) {
+              indicator.textContent = '点击展开';
+            }
+          } else {
+            // 展开
+            element.setAttribute('open', '');
+            if (indicator) {
+              indicator.textContent = '点击折叠';
+            }
+          }
+        });
+
+        // 键盘支持
+        summary.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            summary.click();
+          }
+        });
+      });
+
+      // 自动检测并折叠包含手机界面标记的内容
+      function autoFoldPhoneContent() {
+        const bodyContent = document.body.innerHTML;
+        const startMarker = '[手机界面开始]';
+        const endMarker = '[手机界面结束]';
+
+        if (bodyContent.includes(startMarker) && bodyContent.includes(endMarker)) {
+          // 这里可以添加自动处理逻辑
+          console.log('检测到手机界面内容，可以进行折叠处理');
+        }
+      }
+
+      autoFoldPhoneContent();
+
+      // 复制功能
+      function addCopyButton(content) {
+        const copyButton = document.createElement('button');
+        copyButton.textContent = '📋 复制';
+        copyButton.style.cssText = `
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          background: #ffc300;
+          color: #000;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 0.85em;
+          font-weight: 600;
+          transition: all 0.2s ease;
+        `;
+
+        copyButton.addEventListener('mouseenter', () => {
+          copyButton.style.background = '#ffd700';
+          copyButton.style.transform = 'scale(1.05)';
+        });
+
+        copyButton.addEventListener('mouseleave', () => {
+          copyButton.style.background = '#ffc300';
+          copyButton.style.transform = 'scale(1)';
+        });
+
+        copyButton.addEventListener('click', () => {
+          navigator.clipboard.writeText(content).then(() => {
+            copyButton.textContent = '✅ 已复制';
+            setTimeout(() => {
+              copyButton.textContent = '📋 复制';
+            }, 2000);
+          });
+        });
+
+        return copyButton;
+      }
+    });
+
+    // 使用示例
+    console.log(`
+      使用方法：
+      1. 将上面的HTML结构复制到你的页面中
+      2. 将需要折叠的内容放在 .phone-interface-content-inner 中
+      3. 可以通过JavaScript动态添加更多折叠块
+      4. 支持键盘导航和复制功能
+    `);
+  </script>
+</body>
+</html>

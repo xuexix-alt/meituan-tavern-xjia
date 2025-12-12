@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>酒馆折叠包裹</title>
+  <style>
+    /* 基础重置和全局样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: transparent;
+      color: #e0e0e0;
+      line-height: 1.6;
+      width: 100%;
+      margin: 0;
+    }
+
+    /* 折叠容器 */
+    .tavern-fold {
+      background: transparent;
+      border-radius: 12px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 8px 0;
+      overflow: hidden; /* 将overflow移到这里确保圆角生效 */
+    }
+
+    /* 摘要/标题部分 */
+    .tavern-fold-summary {
+      padding: 12px 16px;
+      color: #000000;
+      cursor: pointer;
+      list-style: none;
+      font-weight: 600;
+      font-size: 1.1em;
+      position: relative;
+      background: linear-gradient(135deg, #ffc300 0%, #ffb400 100%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      user-select: none;
+      border-radius: 12px;
+    }
+
+    /* 当折叠组件展开时，标题的下圆角消失 */
+    .tavern-fold.is-open .tavern-fold-summary {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .tavern-fold-summary::before {
+      content: '📱';
+      font-size: 1.2em;
+    }
+
+    /* 折叠指示箭头 */
+    .tavern-fold-summary .arrow {
+      margin-left: auto;
+      font-size: 0.9em;
+      transition: transform 0.3s ease;
+      opacity: 0.9;
+    }
+
+    .tavern-fold.is-open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .tavern-fold-summary:hover {
+      background: linear-gradient(135deg, #ffd700 0%, #ffc300 100%);
+    }
+
+    /* 内容区域 */
+    .tavern-fold-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(20, 20, 20, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    .tavern-fold.is-open .tavern-fold-content {
+      max-height: 400px; /* 展开后的固定高度 */
+      overflow-y: auto; /* 超出部分显示滚动条 */
+    }
+
+    .tavern-fold-content-inner {
+      padding: 16px;
+      color: #e0e0e0;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* 滚动条美化 */
+    .tavern-fold-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .tavern-fold-content::-webkit-scrollbar-track {
+      background: rgba(45, 45, 45, 0.5);
+      border-radius: 3px;
+    }
+
+    .tavern-fold-content::-webkit-scrollbar-thumb {
+      background: #ffc300;
+      border-radius: 3px;
+      transition: background 0.2s ease;
+    }
+
+    .tavern-fold-content::-webkit-scrollbar-thumb:hover {
+      background: #ffd700;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .tavern-fold-summary {
+        padding: 10px 14px;
+        font-size: 1em;
+      }
+
+      .tavern-fold-content-inner {
+        padding: 12px;
+        font-size: 0.95em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="tavern-fold">
+    <div class="tavern-fold-summary" role="button" tabindex="0" aria-expanded="false">
+      这是一个折叠包裹
+      <span class="arrow">▼</span>
+    </div>
+    <div class="tavern-fold-content">
+      <div class="tavern-fold-content-inner">
+$1
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const foldElements = document.querySelectorAll('.tavern-fold');
+
+      foldElements.forEach(element => {
+        const summary = element.querySelector('.tavern-fold-summary');
+
+        const toggleFold = () => {
+          element.classList.toggle('is-open');
+          const isExpanded = element.classList.contains('is-open');
+          summary.setAttribute('aria-expanded', isExpanded);
+        };
+
+        summary.addEventListener('click', toggleFold);
+
+        // 增加键盘可访问性 (Enter 和 Space 键)
+        summary.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleFold();
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
