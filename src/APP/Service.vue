@@ -355,11 +355,11 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, ref, watch } from 'vue';
-  import { getNestedValue } from './utils';
-  import { filterActiveOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
-  import toastr from 'toastr';
-  import 'toastr/build/toastr.min.css';
+import { computed, onMounted, ref, watch } from 'vue';
+import { getNestedValue } from './utils';
+import { filterActiveOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css';
 // 响应式数据
 const girlsData = ref<any[]>([]);
 const currentGirlIndex = ref(0);
@@ -563,7 +563,6 @@ onMounted(async () => {
   await refreshData();
   isLoading.value = false;
 });
-
 </script>
 
 <style lang="scss" scoped>

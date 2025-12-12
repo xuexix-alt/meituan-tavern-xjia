@@ -780,4 +780,3 @@ function normalizeJsonData(data: any): { shops: any[]; packages: any[] } {
 
   return { shops, packages };
 }
-

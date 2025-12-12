@@ -4,9 +4,7 @@
       <i class="fas fa-exclamation-triangle"></i>
       <h3>页面出现错误</h3>
       <p>{{ errorMessage }}</p>
-      <button class="retry-btn" @click="retry">
-        <i class="fas fa-redo"></i> 重新加载
-      </button>
+      <button class="retry-btn" @click="retry"><i class="fas fa-redo"></i> 重新加载</button>
     </div>
   </div>
   <slot v-else></slot>

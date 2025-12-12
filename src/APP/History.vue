@@ -73,7 +73,9 @@
               <div class="summary-package">{{ selectedOrder.package_name || '未命名套餐' }}</div>
               <div class="summary-tags" v-if="currentOrderFeatures.length">
                 <span v-for="tag in currentOrderFeatures.slice(0, 4)" :key="tag" class="summary-tag">{{ tag }}</span>
-                <span v-if="currentOrderFeatures.length > 4" class="summary-tag more">+{{ currentOrderFeatures.length - 4 }}</span>
+                <span v-if="currentOrderFeatures.length > 4" class="summary-tag more"
+                  >+{{ currentOrderFeatures.length - 4 }}</span
+                >
               </div>
             </div>
             <div class="summary-price">
@@ -85,7 +87,9 @@
           <div class="key-metrics">
             <div class="metric-card">
               <span class="metric-label">好感度</span>
-              <span class="metric-value">{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}</span>
+              <span class="metric-value">{{
+                getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-')
+              }}</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">怀孕几率</span>
@@ -95,7 +99,9 @@
             </div>
             <div class="metric-card">
               <span class="metric-label">被下单次数</span>
-              <span class="metric-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-') }}</span>
+              <span class="metric-value">{{
+                getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-')
+              }}</span>
             </div>
           </div>
 
@@ -124,8 +130,9 @@
               您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{ selectedOrder.price || '-' }}。
               当前好感度：{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}， 被下单次数：{{
                 getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-')
-              }}， 怀孕几率：{{ formatPregnancyChance(getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-')) }}。
-              确认后将立即生效，请确保您已了解服务内容。
+              }}， 怀孕几率：{{
+                formatPregnancyChance(getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-'))
+              }}。 确认后将立即生效，请确保您已了解服务内容。
             </div>
           </div>
 
