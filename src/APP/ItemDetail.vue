@@ -39,7 +39,7 @@
             v-for="content in itemData.content"
             :key="content"
             class="service-item clickable"
-            @click="quickOrder(content)"
+            @click="handleFeatureClick(content)"
           >
             <p>{{ content }}</p>
           </div>
@@ -65,19 +65,19 @@
 
       <div class="tab-content" :class="{ active: activeTab === 'images' }">
         <div class="image-item">
-          <h5>性感露脸</h5>
+          <h5>露脸图</h5>
           <div class="image-placeholder" :style="{ borderStyle: itemData?.image1 ? 'solid' : 'dashed' }">
             {{ itemData?.image1 || '暂未提供' }}
           </div>
         </div>
         <div class="image-item">
-          <h5>胸部特写</h5>
+          <h5>时装秀</h5>
           <div class="image-placeholder" :style="{ borderStyle: itemData?.image2 ? 'solid' : 'dashed' }">
             {{ itemData?.image2 || '暂未提供' }}
           </div>
         </div>
         <div class="image-item">
-          <h5>私处特写</h5>
+          <h5>私密拍</h5>
           <div class="image-placeholder" :style="{ borderStyle: itemData?.image3 ? 'solid' : 'dashed' }">
             {{ itemData?.image3 || '暂未提供' }}
           </div>
@@ -114,7 +114,7 @@
         <textarea
           id="remark-textarea"
           v-model="remarkText"
-          placeholder="可输入特殊要求，如服装、场景、认知等..."
+          placeholder="可尝试时空替换、NTR、NTL、露出、换装秀、反差婊等多样玩法..."
         ></textarea>
 
         <div class="modal-buttons">
@@ -157,18 +157,18 @@ function addToRemark(content: string) {
   }
 }
 
-// 快速下单（直接以特色玩法为备注下单）
-function quickOrder(content: string) {
-  const itemName = itemData.value?.name || '';
-  sendToAI(`/send 我要下单：${itemName}。备注：${content}`);
-  console.log(`[快速下单] 已选择：${content}`);
+// 点击特色玩法
+function handleFeatureClick(content: string) {
+  remarkText.value = content;
+  showRemarkModal();
 }
 
 // 确认下单
 function confirmOrder() {
   const itemName = itemData.value?.name || '';
+  const itemDescription = itemData.value?.description || '无详情';
   const remark = remarkText.value || '无';
-  sendToAI(`/send 我要下单：${itemName}。备注：${remark}`);
+  sendToAI(`/send 我要下单：${itemName}，详情介绍：${itemDescription}。备注：${remark}`);
   closeRemarkModal();
 }
 

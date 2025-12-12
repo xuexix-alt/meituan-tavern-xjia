@@ -9,7 +9,7 @@
  * @param fallback 默认值
  * @returns 找到的值或默认值
  */
-export function getNestedValue(obj: any, path: string, fallback: any = '--'): any {
+export function getNestedValue<T = any>(obj: any, path: string, fallback: T = '--' as any): T {
   if (!obj) return fallback;
   const keys = path
     .replace(/\[(\d+)\]/g, '.$1')
@@ -100,7 +100,7 @@ export async function navigateToDefaultPage() {
     const mvuData = Mvu.getMvuData({ type: 'message', message_id: 'latest' }) as any;
 
     if (!mvuData) {
-      console.log('[智能导航] MVU数据为空，跳转到首页');
+      // 使用 console.debug 避免生产环境噪音，或引入 logger
       return '/home';
     }
 
@@ -108,7 +108,6 @@ export async function navigateToDefaultPage() {
     const orders = mvuData.stat_data?.['服务中的订单'] || mvuData['服务中的订单'];
 
     if (!orders || !Array.isArray(orders) || orders.length === 0) {
-      console.log('[智能导航] 未找到服务中的订单，跳转到首页');
       return '/home';
     }
 
@@ -119,11 +118,9 @@ export async function navigateToDefaultPage() {
     });
 
     if (activeOrders.length === 0) {
-      console.log('[智能导航] 所有订单都已结束，跳转到首页');
       return '/home';
     }
 
-    console.log(`[智能导航] 找到 ${activeOrders.length} 个服务中的订单，跳转到服务页面`);
     return '/service';
   } catch (error) {
     console.error('[智能导航] 检查服务状态失败:', error);

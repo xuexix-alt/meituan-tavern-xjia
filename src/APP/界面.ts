@@ -1,8 +1,10 @@
 import { createMemoryHistory, createRouter } from 'vue-router';
 
 // 路由懒加载 - 使用动态导入减少初始包大小
-const SplashScreen = () => import('./SplashScreen.vue');
-const Home = () => import('./Home.vue');
+// 首屏组件静态导入，优化首屏加载
+import SplashScreen from './SplashScreen.vue';
+import Home from './Home.vue';
+
 const Discover = () => import('./Discover.vue');
 const Service = () => import('./Service.vue');
 const History = () => import('./History.vue');

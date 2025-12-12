@@ -1,18 +1,19 @@
 import { createApp } from 'vue';
+import $ from 'jquery';
 import router from './界面';
 import app from './app.vue';
+// import '@fortawesome/fontawesome-free/css/all.min.css';
+// import 'toastr/build/toastr.min.css';
+
+// 确保全局可用 jQuery（部分代码/依赖使用全局 $）
+(window as any).$ = $;
+(window as any).jQuery = $;
 
 // Vue Router必须在全局作用域创建，不能放在$(() => {})中
 const vueApp = createApp(app);
 vueApp.use(router);
 
-// 全局日志开关：关闭以避免 hover 动画触发布局偏移时产生大量控制台输出
-const ENABLE_PERF_VERBOSE = false;
-const log = (...args: any[]) => {
-  if (ENABLE_PERF_VERBOSE) console.log(...args);
-};
-const warn = (...args: any[]) => console.warn(...args);
-const error = (...args: any[]) => console.error(...args);
+import { logger, perfLogger, mvuLogger, sysLogger } from './logger';
 
 // 性能监控标记
 const perfStartTime = performance.now();
@@ -24,7 +25,7 @@ const initWebVitalsMonitoring = () => {
     const lcpObserver = new PerformanceObserver(entryList => {
       const entries = entryList.getEntries();
       const lastEntry = entries[entries.length - 1];
-      log(`[Web Vitals] LCP: ${lastEntry.startTime.toFixed(2)}ms`, lastEntry);
+      perfLogger.perf(`LCP: ${lastEntry.startTime.toFixed(2)}ms`, lastEntry);
     });
     lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
 
@@ -34,7 +35,7 @@ const initWebVitalsMonitoring = () => {
         if (entry.entryType === 'first-input') {
           const firstInput = entry as PerformanceEventTiming;
           const fid = firstInput.processingStart - firstInput.startTime;
-          log(`[Web Vitals] FID: ${fid.toFixed(2)}ms`, firstInput);
+          perfLogger.perf(`FID: ${fid.toFixed(2)}ms`, firstInput);
         }
       }
     });
@@ -50,7 +51,7 @@ const initWebVitalsMonitoring = () => {
           if (!layoutShift.hadRecentInput) {
             clsEntries.push(layoutShift);
             clsValue += layoutShift.value;
-            log(`[Web Vitals] CLS累计: ${clsValue.toFixed(4)}`, layoutShift);
+            perfLogger.perf(`CLS累计: ${clsValue.toFixed(4)}`, layoutShift);
           }
         }
       }
@@ -62,15 +63,15 @@ const initWebVitalsMonitoring = () => {
       for (const entry of entryList.getEntries()) {
         if (entry.duration > 50) {
           // 超过50ms的任务
-          log(`[性能] 长任务检测: ${entry.duration.toFixed(2)}ms`, entry);
+          perfLogger.perf(`长任务检测: ${entry.duration.toFixed(2)}ms`, entry);
         }
       }
     });
     longTaskObserver.observe({ type: 'longtask', buffered: true });
 
-    log('[性能监控] Web Vitals监控已启动');
+    perfLogger.log('Web Vitals监控已启动');
   } catch (error) {
-    warn('[性能监控] Web Vitals监控初始化失败:', error);
+    perfLogger.warn('Web Vitals监控初始化失败:', error);
   }
 };
 
@@ -80,8 +81,8 @@ const initMemoryMonitoring = () => {
     // 检查performance.memory API是否可用
     if ('memory' in performance) {
       const memory = (performance as any).memory;
-      log(
-        `[内存监控] 初始化内存状态: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB / ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)}MB`,
+      perfLogger.perf(
+        `初始化内存状态: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB / ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)}MB`,
       );
 
       // 定期监控内存使用
@@ -94,16 +95,16 @@ const initMemoryMonitoring = () => {
 
         // 仅在高内存使用或增长时记录
         if (usedMB > 50 || percentage > 80) {
-          log(`[内存监控] 内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentageText}%)`);
+          perfLogger.warn(`内存使用较高: ${usedMB.toFixed(2)}MB/${totalMB.toFixed(2)}MB (${percentageText}%)`);
         }
       }, 30000); // 每30秒检查一次
 
-      log('[内存监控] 内存监控已启动');
+      perfLogger.log('内存监控已启动');
     } else {
-      log('[内存监控] performance.memory API不可用');
+      perfLogger.log('performance.memory API不可用');
     }
   } catch (error) {
-    warn('[内存监控] 内存监控初始化失败:', error);
+    perfLogger.warn('内存监控初始化失败:', error);
   }
 };
 
@@ -119,9 +120,9 @@ const preloadCriticalRoutes = async () => {
         return route;
       }),
     );
-    log('[性能] 关键路由预加载完成');
+    perfLogger.log('关键路由预加载完成');
   } catch (error) {
-    warn('[性能] 路由预加载失败:', error);
+    perfLogger.warn('路由预加载失败:', error);
   }
 };
 
@@ -132,6 +133,8 @@ const preloadCriticalResources = async () => {
     const resources: string[] = [
       // 可以添加图片、字体等关键资源
     ];
+
+    if (resources.length === 0) return;
 
     await Promise.all(
       resources.map(url => {
@@ -145,19 +148,25 @@ const preloadCriticalResources = async () => {
         });
       }),
     );
-    log('[性能] 关键资源预加载完成');
+    perfLogger.log('关键资源预加载完成');
   } catch (error) {
-    warn('[性能] 资源预加载失败:', error);
+    perfLogger.warn('资源预加载失败:', error);
   }
 };
 
 // 等待MVU框架初始化（带超时和错误处理）
 const waitForMvu = async (timeout = 5000) => {
+  // 非酒馆环境可能没有 waitGlobalInitialized，全局缺失则直接降级
+  if (typeof (window as any).waitGlobalInitialized !== 'function') {
+    mvuLogger.info('检测到非酒馆环境，跳过 MVU 初始化');
+    return null;
+  }
+
   return Promise.race([
     waitGlobalInitialized('Mvu'),
     new Promise((_, reject) => setTimeout(() => reject(new Error('MVU初始化超时')), timeout)),
   ]).catch(err => {
-    warn('[MVU] 初始化失败，使用降级方案:', err);
+    mvuLogger.warn('初始化失败，使用降级方案:', err);
     return null; // 返回null表示降级
   });
 };
@@ -182,13 +191,13 @@ const initApp = async () => {
 
     // 记录初始化耗时
     const initTime = performance.now() - perfStartTime;
-    log(`[性能] 应用初始化完成，耗时: ${initTime.toFixed(2)}ms`);
+    perfLogger.log(`应用初始化完成，耗时: ${initTime.toFixed(2)}ms`);
 
     // 根据MVU状态显示不同消息
     if (mvuReady) {
-      log(`[欢迎使用] 界面加载成功！(${initTime.toFixed(0)}ms)`);
+      sysLogger.log(`界面加载成功！(${initTime.toFixed(0)}ms)`);
     } else {
-      log('[降级模式] 部分功能可能不可用');
+      sysLogger.warn('部分功能可能不可用 (MVU未就绪)');
     }
 
     // 挂载Vue应用
@@ -196,10 +205,10 @@ const initApp = async () => {
 
     // 记录挂载耗时
     const mountTime = performance.now() - perfStartTime;
-    log(`[性能] 总启动时间: ${mountTime.toFixed(2)}ms`);
+    perfLogger.log(`总启动时间: ${mountTime.toFixed(2)}ms`);
   } catch (err) {
-    console.error('[初始化] 应用启动失败:', err);
-    console.log('[错误] 界面加载失败，请刷新页面重试');
+    sysLogger.error('应用启动失败:', err);
+    // 生产环境可能需要更友好的提示，但这里主要记录日志
   }
 };
 
@@ -212,17 +221,16 @@ $(() => {
 // 正确使用 jQuery 进行卸载时清理
 $(window).on('pagehide', () => {
   const unloadTime = performance.now() - perfStartTime;
-  log(`[性能] 应用运行时间: ${unloadTime.toFixed(2)}ms`);
-  log('[再见] 界面已卸载');
+  perfLogger.log(`应用运行时间: ${unloadTime.toFixed(2)}ms`);
+  sysLogger.log('界面已卸载');
 });
 
 // 全局错误处理 - 捕获未处理的Promise错误
 window.addEventListener('unhandledrejection', event => {
-  error('[全局错误] 未处理的Promise错误:', event.reason);
-  console.log('[系统提示] 发生了未知错误');
+  sysLogger.error('未处理的Promise错误:', event.reason);
 });
 
 // 全局错误处理 - 捕获JavaScript运行时错误
 window.addEventListener('error', event => {
-  error('[全局错误] JavaScript运行时错误:', event.error);
+  sysLogger.error('JavaScript运行时错误:', event.error);
 });

@@ -61,6 +61,44 @@
         </div>
 
         <div class="modal-body">
+          <div class="order-summary">
+            <div class="summary-avatar">
+              <i class="fas fa-heart"></i>
+            </div>
+            <div class="summary-main">
+              <div class="summary-title">
+                <span class="summary-name">{{ selectedOrder.girl_name || '-' }}</span>
+                <span class="summary-identity">{{ selectedOrder.identity || '-' }}</span>
+              </div>
+              <div class="summary-package">{{ selectedOrder.package_name || '未命名套餐' }}</div>
+              <div class="summary-tags" v-if="currentOrderFeatures.length">
+                <span v-for="tag in currentOrderFeatures.slice(0, 4)" :key="tag" class="summary-tag">{{ tag }}</span>
+                <span v-if="currentOrderFeatures.length > 4" class="summary-tag more">+{{ currentOrderFeatures.length - 4 }}</span>
+              </div>
+            </div>
+            <div class="summary-price">
+              <span class="price-number">￥{{ selectedOrder.price || '-' }}</span>
+              <span class="price-tip">下单后立即生效</span>
+            </div>
+          </div>
+
+          <div class="key-metrics">
+            <div class="metric-card">
+              <span class="metric-label">好感度</span>
+              <span class="metric-value">{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">怀孕几率</span>
+              <span class="metric-value">
+                {{ formatPregnancyChance(getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-')) }}
+              </span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">被下单次数</span>
+              <span class="metric-value">{{ getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-') }}</span>
+            </div>
+          </div>
+
           <div class="order-info-grid">
             <div class="info-box">
               <div class="info-label">美人姓名</div>
@@ -86,7 +124,7 @@
               您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{ selectedOrder.price || '-' }}。
               当前好感度：{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}， 被下单次数：{{
                 getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-')
-              }}， 怀孕几率：{{ getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-') }}。
+              }}， 怀孕几率：{{ formatPregnancyChance(getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-')) }}。
               确认后将立即生效，请确保您已了解服务内容。
             </div>
           </div>
@@ -169,7 +207,7 @@
               <div class="section-item">
                 <div class="section-item-label">怀孕几率</div>
                 <div class="section-item-value">
-                  {{ getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-') }}
+                  {{ formatPregnancyChance(getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-')) }}
                 </div>
               </div>
               <div class="section-item">
@@ -269,6 +307,21 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { getNestedValue } from './utils';
+import { filterCompletedOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
+
+// 格式化怀孕几率
+function formatPregnancyChance(value: any): string {
+  if (value === null || value === undefined) return '-';
+
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '-';
+
+  // MVU 已保证为 0-100 的整数百分比，这里兜底 clamp 并统一两位小数
+  const clamped = Math.min(100, Math.max(0, num));
+  return `${Math.round(clamped * 100) / 100}%`;
+
+  return '-';
+}
 
 // 响应式数据
 const historyItems = ref<any[]>([]);
@@ -416,124 +469,41 @@ function sendToAI(message: string) {
   }
 }
 
-// 初始化数据
-async function initDisplay() {
+async function refreshHistory() {
   try {
-    // 等待MVU初始化
-    await waitGlobalInitialized('Mvu');
-
-    const messages = await getChatMessages('latest');
-    if (!messages || messages.length === 0 || !messages[0].data) {
-      const loaded = await loadFullExampleData();
-      if (loaded) return true;
-      return false;
-    }
-
-    const statData = messages[0].data.stat_data;
-    if (!statData) {
-      const loaded = await loadFullExampleData();
-      if (loaded) return true;
-      return false;
-    }
-
-    // 从服务中的订单筛选出服务结束的订单作为历史订单
-    const orders = statData['服务中的订单'] || statData.服务中的订单;
-    if (orders && Array.isArray(orders)) {
-      // 筛选服务结束的订单
-      const completedOrders = orders.filter((order: any) => {
-        const status = order.订单状态 || '';
-        return status.includes('服务结束');
-      });
-
-      historyItems.value = completedOrders.map((order: any) => {
-        return {
-          girl_name: order.基础信息?.姓名 || order.姓名 || '未知',
-          identity: order.基础信息?.身份 || order.身份 || '未知',
-          package_name: order.套餐?.套餐名称 || order.套餐名称 || '未知套餐',
-          order_time: '历史订单',
-          order_status: order.订单状态 || '服务结束',
-          service_location: '未知',
-          price: order.套餐?.折后价格 || order.套餐?.套餐价格 || order.套餐价格 || 0,
-          features: extractOrderFeatures(order),
-          originalData: order,
-        };
-      });
-    } else {
-      historyItems.value = [];
-    }
-
-    return true;
-  } catch (error) {
-    console.error('加载失败:', error);
-    return false;
-  }
-}
-
-async function getChatMessages(messageId: string) {
-  try {
-    if (typeof (window as any).Mvu === 'undefined' || !(window as any).Mvu.getMvuData) return [];
-    const response = (() => {
-      try {
-        const currentId = getCurrentMessageId();
-        for (let id = currentId; id >= 0; id--) {
-          const data = (window as any).Mvu.getMvuData({ type: 'message', message_id: id });
-          if (data && data.stat_data) return data;
-        }
-      } catch (e) {
-        // 如果不在楼层 iframe 内或获取失败则忽略
-      }
-      return (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
-    })();
-    return response && response.stat_data ? [{ data: response }] : [];
-  } catch (error) {
-    console.error('获取消息失败:', error);
-    return [];
-  }
-}
-
-async function loadFullExampleData() {
-  try {
-    const res = await fetch('./变量示例.json');
-    if (!res.ok) return false;
-    const data = await res.json();
-    const statData = data?.stat_data;
-    if (!statData) return false;
-
-    // 从服务中的订单筛选出服务结束的订单作为历史订单
-    const orders = statData['服务中的订单'] || statData.服务中的订单;
-    if (orders && Array.isArray(orders)) {
-      // 筛选服务结束的订单
-      const completedOrders = orders.filter((order: any) => {
-        const status = order.订单状态 || '';
-        return status.includes('服务结束');
-      });
-
-      historyItems.value = completedOrders.map((order: any) => {
-        return {
-          girl_name: order.基础信息?.姓名 || order.姓名 || '未知',
-          identity: order.基础信息?.身份 || order.身份 || '未知',
-          package_name: order.套餐?.套餐名称 || order.套餐名称 || '未知套餐',
-          order_time: '历史订单',
-          order_status: order.订单状态 || '服务结束',
-          service_location: '未知',
-          price: order.套餐?.折后价格 || order.套餐?.套餐价格 || order.套餐价格 || 0,
-          features: extractOrderFeatures(order),
-          originalData: order,
-        };
-      });
-    } else {
-      historyItems.value = [];
-    }
-
-    return true;
-  } catch (error) {
-    console.error('加载本地数据失败:', error);
-    return false;
+    const orders = await loadOrdersFromMVU();
+    const completed = filterCompletedOrders(orders);
+    historyItems.value = completed.map(order => ({
+      girl_name: order.基础信息?.姓名 || '未知',
+      identity: order.基础信息?.身份 || '未知',
+      package_name: order.套餐?.套餐名称 || '未知套餐',
+      order_time: '历史订单',
+      order_status: order.status || '服务结束',
+      service_location: '未知',
+      price: order.套餐?.折后价格 || order.套餐?.套餐价格 || 0,
+      features: extractOrderFeatures(order.originalData),
+      originalData: order.originalData,
+    }));
+  } catch (e) {
+    console.error('[History] 获取订单失败，尝试缓存:', e);
+    const cached = readCachedOrders();
+    const completed = filterCompletedOrders(cached);
+    historyItems.value = completed.map(order => ({
+      girl_name: order.基础信息?.姓名 || '未知',
+      identity: order.基础信息?.身份 || '未知',
+      package_name: order.套餐?.套餐名称 || '未知套餐',
+      order_time: '历史订单',
+      order_status: order.status || '服务结束',
+      service_location: '未知',
+      price: order.套餐?.折后价格 || order.套餐?.套餐价格 || 0,
+      features: extractOrderFeatures(order.originalData),
+      originalData: order.originalData,
+    }));
   }
 }
 
 onMounted(async () => {
-  await initDisplay();
+  await refreshHistory();
 });
 </script>
 
@@ -825,6 +795,159 @@ onMounted(async () => {
     overflow-y: auto;
     flex: 1;
 
+    .order-summary {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 18px;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255, 247, 230, 0.85), rgba(255, 255, 255, 0.92));
+      margin-bottom: 16px;
+
+      .summary-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: var(--bg-badge);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-primary);
+        font-size: 1.4rem;
+        box-shadow:
+          0 4px 12px rgba(255, 195, 0, 0.25),
+          0 0 0 2px var(--border-accent) inset;
+      }
+
+      .summary-main {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+
+        .summary-title {
+          display: flex;
+          gap: 10px;
+          align-items: baseline;
+          flex-wrap: wrap;
+        }
+
+        .summary-name {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: var(--text-primary);
+        }
+
+        .summary-identity {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: var(--bg-card-light);
+          border: 1px solid var(--border-color);
+        }
+
+        .summary-package {
+          font-size: 0.95rem;
+          color: var(--text-secondary);
+          font-weight: 600;
+          line-height: 1.4;
+          word-break: break-word;
+        }
+
+        .summary-tags {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+
+          .summary-tag {
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            &.more {
+              background: var(--bg-badge);
+              color: var(--accent-primary);
+            }
+          }
+        }
+      }
+
+      .summary-price {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-end;
+
+        .price-number {
+          font-size: 1.5rem;
+          font-weight: 900;
+          background: var(--badge-danger-gradient);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          white-space: nowrap;
+        }
+
+        .price-tip {
+          font-size: 0.78rem;
+          color: var(--text-secondary);
+        }
+      }
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+        text-align: left;
+
+        .summary-price {
+          align-items: flex-start;
+        }
+      }
+    }
+
+    .key-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+
+      @media (max-width: 640px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-card {
+        padding: 14px 16px;
+        background: var(--bg-card-light);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+
+        .metric-label {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          letter-spacing: 0.3px;
+        }
+
+        .metric-value {
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: var(--text-primary);
+        }
+      }
+    }
+
     /* 平板端：双栏布局 */
     @media (min-width: 768px) {
       display: grid;
@@ -832,15 +955,20 @@ onMounted(async () => {
       gap: 24px;
       align-items: start;
 
-      /* 左侧：订单信息、说明、心理状态 */
+      .order-summary,
+      .key-metrics {
+        grid-column: 1 / -1;
+      }
+
+      /* 左侧：基础信息、订单说明、心理状态 */
       .order-info-grid,
-      .info-section:nth-child(2),
-      .info-section:nth-child(3) {
+      .info-section:nth-of-type(1),
+      .info-section:nth-of-type(2) {
         grid-column: 1 / 2;
       }
 
       /* 右侧：身体特征、性经验、服务统计 */
-      .info-section:nth-child(n + 4) {
+      .info-section:nth-of-type(n + 3) {
         grid-column: 2 / 3;
       }
     }

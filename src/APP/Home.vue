@@ -39,7 +39,7 @@
                     <i class="fas fa-heart"></i>
                   </div>
                 </div>
-                <div class="version-info">v3.0.0</div>
+                <div class="version-info">v3.0.0.beta1</div>
               </div>
             </div>
 
@@ -56,7 +56,7 @@
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">PAD重构版APP重大更新。</span>
+                  <span class="notice-text">PAD重构版APP重大更新，目前是预览版后续会持续优化。</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
@@ -64,7 +64,11 @@
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">搜索时最好注明店铺与套餐数量，指定明星。</span>
+                  <span class="notice-text">搜索时最好注明店铺与套餐数量。搜索色情视频流出的女主角名字有惊喜</span>
+                </div>
+                <div class="notice-item">
+                  <span class="notice-tag">更新</span>
+                  <span class="notice-text">可以搜索色情视频的女主角名字，通常有惊喜，比如某警花</span>
                 </div>
               </div>
               <div class="panel-header mt-3">
@@ -73,9 +77,10 @@
               </div>
               <div class="panel-content">
                 <p class="instruction-text">
-                  1. 点击下方分类图标浏览不同主题的美人店铺。<br />
-                  2. 在搜索栏输入关键词可精准查找心仪类型。<br />
-                  3. 下单后可在“服务”页面查看订单状态和互动详情。
+                  1. 首页生成店铺后进发现页面查看店铺，在那里下单<br />
+                  2. 搜某类别时最好加上“X店铺每个x套餐”（现在店铺可以存储）<br />
+                  3. 搜索模版：明星：xxx，《XXX》经典角色<br />
+                  4. 世界书有二选一模式，如果常截断可以试试不同框架
                 </p>
               </div>
             </div>
@@ -122,7 +127,7 @@
       <!-- 搜索栏 -->
       <div class="search-bar-container">
         <i class="fas fa-search"></i>
-        <input v-model="searchKeyword" placeholder="搜索心仪的美人或服务..." @keyup.enter="doSearch" />
+        <input v-model="searchKeyword" placeholder="搜明星模板：“女星 xxx” 默认1个店铺3套餐" @keyup.enter="doSearch" />
         <button class="search-btn" @click="doSearch">搜索</button>
       </div>
 
@@ -134,7 +139,7 @@
         <div class="feature-button-grid">
           <!-- DLC按钮 -->
           <div class="feature-button-item">
-            <button class="dlc-button" title="点击生成国企往事DLC内容" @click="generateDLCContent">
+            <button class="dlc-button" title="DLC需先挂载世界书" @click="generateDLCContent">
               <div class="dlc-icon">
                 <i class="fas fa-history"></i>
               </div>
@@ -180,7 +185,7 @@ const searchKeyword = ref('');
 
 // 搜索功能
 function search(keyword: string) {
-  sendToAI(`/send 搜索：${keyword} 1个店铺每个含3个套餐，如果搜索内容是姓名的，套餐内容是同一人的不同形态`);
+  sendToAI(`/send 搜索：${keyword} 如果搜索内容是姓名的，套餐内容是同一人的不同形态`);
 }
 
 function doSearch() {

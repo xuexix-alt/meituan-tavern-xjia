@@ -22,8 +22,9 @@ const MAX_SHOP_COUNT = 10;
 
 function readShopStore(): StoredShop[] {
   try {
-    const vars = getVariables({ type: 'script', script_id: getScriptId() }) || {};
+    const vars = getVariables({ type: 'global' }) || {};
     const list = (vars as any)[SHOP_STORE_KEY];
+    console.log('[ShopStore] 读取全局缓存:', list);
     return Array.isArray(list) ? list : [];
   } catch (e) {
     console.warn('[ShopStore] 读取失败', e);
@@ -33,7 +34,8 @@ function readShopStore(): StoredShop[] {
 
 function writeShopStore(shops: StoredShop[]) {
   try {
-    replaceVariables({ [SHOP_STORE_KEY]: shops }, { type: 'script', script_id: getScriptId() });
+    console.log('[ShopStore] 写入全局缓存:', shops);
+    replaceVariables({ [SHOP_STORE_KEY]: shops }, { type: 'global' });
   } catch (e) {
     console.warn('[ShopStore] 写入失败', e);
   }

@@ -17,6 +17,11 @@
         <div class="shop-slogan">{{ shopInfo?.slogan || '优质服务' }}</div>
       </div>
 
+      <div class="restore-tip">
+        <i class="fas fa-undo-alt"></i>
+        <span>误删店铺可回到原页面点击卡片重新找回</span>
+      </div>
+
       <div class="list-section">
         <div class="section-header">
           <h3>精选套餐</h3>
@@ -68,29 +73,84 @@ import { extractDataFromMessage } from './dataParser';
 const route = useRoute();
 const shopInfo = ref<any>(null);
 const shopPackages = ref<any[]>([]);
-const shopStoreApi = ref<any>(null);
+
+// 店铺持久化逻辑 (与脚本端保持一致)
+const SHOP_STORE_KEY = 'shop_store_cache';
+const MAX_SHOP_COUNT = 10;
+
+type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
+
+function readShopStore(): StoredShop[] {
+  try {
+    const vars = getVariables({ type: 'global' }) || {};
+    const list = (vars as any)[SHOP_STORE_KEY];
+    console.log('[ShopDetail] 读取全局缓存:', list);
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    console.warn('[ShopDetail] 读取缓存失败', e);
+    return [];
+  }
+}
+
+function writeShopStore(shops: StoredShop[]) {
+  try {
+    console.log('[ShopDetail] 写入全局缓存:', shops);
+    replaceVariables({ [SHOP_STORE_KEY]: shops }, { type: 'global' });
+  } catch (e) {
+    console.warn('[ShopDetail] 写入缓存失败', e);
+  }
+}
+
+function normalizeShops(raw: any[]): StoredShop[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(s => s && s.id)
+    .map(s => ({
+      ...s,
+      id: String(s.id),
+      __savedAt: Date.now(),
+    }));
+}
+
+function mergeAndCap(shops: StoredShop[], incoming: StoredShop[]): StoredShop[] {
+  const map = new Map<string, StoredShop>();
+  // 先放新数据，后放旧数据；同 id 以新覆盖
+  [...incoming, ...shops].forEach(s => {
+    if (!map.has(s.id)) map.set(s.id, s);
+  });
+  const result = Array.from(map.values())
+    .sort((a, b) => (b.__savedAt || 0) - (a.__savedAt || 0))
+    .slice(0, MAX_SHOP_COUNT);
+  return result;
+}
 
 // 初始化
 onMounted(async () => {
-  try {
-    await waitGlobalInitialized('ShopStore');
-    shopStoreApi.value = (window as any).ShopStore;
-  } catch (e) {
-    console.warn('[ShopDetail] ShopStore 未就绪，使用解析数据', e);
-  }
-
   const data = extractDataFromMessage();
   const shopIdParam = route.params.id as string;
   const matcher = (s: any) => String(s.id) === String(shopIdParam);
 
-  // 先用当前解析，再用持久化，最后兜底同 shop_id 的套餐
-  shopInfo.value = data.shops.find(matcher) || shopStoreApi.value?.getShops()?.find(matcher) || null;
+  // 1. 读取现有缓存
+  const existingShops = readShopStore();
+
+  // 2. 规范化当前解析到的店铺数据
+  const incomingShops = normalizeShops(data.shops || []);
+
+  // 3. 合并并保存
+  const mergedShops = mergeAndCap(existingShops, incomingShops);
+  if (incomingShops.length > 0) {
+    writeShopStore(mergedShops);
+  }
+
+  // 4. 查找目标店铺 (优先从合并后的列表中找，这样能找到缓存的店铺)
+  shopInfo.value = mergedShops.find(matcher) || null;
 
   if (shopInfo.value) {
     shopPackages.value = shopInfo.value.packages || [];
   } else {
-    // 兜底：从所有套餐里按 shop_id 匹配
-    const allPkgs = data.packages || [];
+    // 兜底：从合并后的套餐列表里按 shop_id 匹配
+    const allPkgs =
+      (data.packages && data.packages.length ? data.packages : mergedShops.flatMap(s => s.packages || [])) || [];
     shopPackages.value = allPkgs.filter((p: any) => String(p.shop_id) === String(shopIdParam));
   }
 });
@@ -275,6 +335,26 @@ onMounted(async () => {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+.restore-tip {
+  margin: 0 16px 12px 16px;
+  padding: 10px 12px;
+  border: 1px dashed var(--accent-primary);
+  border-radius: 12px;
+  background: rgba(255, 247, 230, 0.9);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  i {
+    color: var(--accent-primary);
+    font-size: 1rem;
   }
 }
 

@@ -220,22 +220,26 @@ function deleteShop(id: string) {
     border: none;
     background: var(--badge-danger-gradient);
     color: #fff;
-    border-radius: 10px;
-    padding: 8px 10px;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(239, 83, 80, 0.35);
+    box-shadow: 0 3px 10px rgba(239, 83, 80, 0.28);
     transition:
       transform 0.2s ease,
       box-shadow 0.2s ease;
     z-index: 1;
 
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(239, 83, 80, 0.45);
+      transform: translateY(-1px) scale(0.97);
+      box-shadow: 0 5px 12px rgba(239, 83, 80, 0.35);
     }
 
     i {
-      font-size: 14px;
+      font-size: 12px;
     }
   }
 

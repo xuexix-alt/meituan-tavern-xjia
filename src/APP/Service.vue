@@ -355,9 +355,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { getNestedValue } from './utils';
-
+  import { computed, onMounted, ref, watch } from 'vue';
+  import { getNestedValue } from './utils';
+  import { filterActiveOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
+  import toastr from 'toastr';
+  import 'toastr/build/toastr.min.css';
 // 响应式数据
 const girlsData = ref<any[]>([]);
 const currentGirlIndex = ref(0);
@@ -370,9 +372,6 @@ const errorMessage = ref('');
 const showPsychology = ref(false);
 const showBody = ref(false);
 const showExperience = ref(false);
-
-// 脚本变量缓存键
-const SERVICE_CACHE_KEY = 'service_cache';
 
 // 监听女孩切换，重置折叠状态
 watch(currentGirlIndex, () => {
@@ -394,112 +393,6 @@ function getGirlName(girl: any) {
   return getNestedValue(girl, '基础信息.姓名') || `女孩 ${girlsData.value.indexOf(girl) + 1}`;
 }
 
-// ================ 数据获取（MVU框架） ================
-
-/**
- * 从MVU变量提取数据
- */
-async function extractDataFromMVU(): Promise<{ girls: any[] }> {
-  try {
-    // 等待MVU初始化
-    await waitGlobalInitialized('Mvu');
-
-    // 优先获取当前楼层的MVU变量，若为空则向上追溯，最后兜底最新楼层
-    const mvuData = (() => {
-      try {
-        const currentId = getCurrentMessageId();
-        for (let id = currentId; id >= 0; id--) {
-          const data = Mvu.getMvuData({ type: 'message', message_id: id }) as any;
-          if (data && data.stat_data) return data;
-        }
-      } catch (e) {
-        // 可能不在消息楼层 iframe 内，忽略错误
-      }
-      return Mvu.getMvuData({ type: 'message', message_id: 'latest' }) as any;
-    })();
-
-    if (!mvuData) {
-      throw new Error('MVU数据为空');
-    }
-
-    // 检查订单数据
-    const orders = mvuData.stat_data?.['服务中的订单'] || mvuData['服务中的订单'];
-
-    if (!orders || !Array.isArray(orders) || orders.length === 0) {
-      throw new Error('未找到服务中的订单数据');
-    }
-
-    // 转换订单数据为界面格式
-    const girls = orders
-      .filter((order: any) => {
-        // 过滤掉服务结束的订单，它们应在历史页面显示
-        const orderStatus = order.订单状态 || '';
-        return !orderStatus.includes('服务结束');
-      })
-      .map((order: any) => ({
-        id: order.id || 'unknown',
-        基础信息: {
-          姓名: order.基础信息?.姓名 || '未知',
-          身份: order.基础信息?.身份 || '未知',
-          年龄: order.基础信息?.年龄 || 0,
-          描述: order.基础信息?.描述 || '',
-        },
-        服装: {
-          上衣: order.服装?.上衣 || '',
-          下装: order.服装?.下装 || '',
-          内衣: order.服装?.内衣 || '',
-          内裤: order.服装?.内裤 || '',
-          丝袜: order.服装?.丝袜 || '',
-          鞋子: order.服装?.鞋子 || '',
-          配饰: order.服装?.配饰 || '',
-        },
-        性经验: {
-          处女: order.性经验?.处女 || '-',
-          性伴侣数量: order.性经验?.性伴侣数量 || '-',
-          初次性行为对象: order.性经验?.初次性行为对象 || '-',
-          怀孕几率: order.性经验?.怀孕几率 || '-',
-          下单次数: order.性经验?.下单次数 || 0,
-        },
-        服务统计: {
-          本次服务性交次数: order.服务统计?.本次服务性交次数 || '-',
-          内射次数: order.服务统计?.内射次数 || '-',
-          订单状态: order.订单状态 || '未知',
-          心跳: order.心跳 || '-',
-        },
-        套餐: {
-          套餐名称: order.套餐?.套餐名称 || '未命名套餐',
-          套餐价格: order.套餐?.套餐价格 || 0,
-          商品类型: order.套餐?.商品类型 || '未知',
-          折后价格: order.套餐?.折后价格 || 0,
-          玩法特色: order.套餐?.玩法特色 || [],
-        },
-        心理状态: {
-          好感度: order.心理状态?.好感度 || 0,
-          当前所想: order.心理状态?.当前所想 || '',
-          兴奋度: order.心理状态?.兴奋度 || 0,
-          性格类型: order.心理状态?.性格类型 || '',
-        },
-        身体特征: {
-          三围: {
-            描述: order.身体特征?.三围?.描述 || '',
-            罩杯: order.身体特征?.三围?.罩杯 || '',
-          },
-          乳房: {
-            形状: order.身体特征?.乳房?.形状 || '',
-          },
-          姿势: order.身体特征?.姿势 || '',
-          胸部: order.身体特征?.胸部 || '',
-          私处: order.身体特征?.私处 || '',
-        },
-      }));
-
-    return { girls };
-  } catch (error) {
-    console.error('[Service] MVU数据获取失败:', error);
-    throw error;
-  }
-}
-
 /**
  * 刷新数据
  */
@@ -508,26 +401,26 @@ async function refreshData() {
   errorMessage.value = '';
 
   try {
-    // 主路径：MVU 数据
-    const data = await extractDataFromMVU();
-    girlsData.value = data.girls;
-    cacheGirls(data.girls);
+    const orders = await loadOrdersFromMVU();
+    const active = filterActiveOrders(orders);
+    girlsData.value = active;
 
-    if (data.girls.length === 0) {
+    if (active.length === 0) {
       errorMessage.value = '未找到服务中的订单';
       console.log('[服务状态] 暂无服务数据');
     } else {
-      toastr.success(`加载了 ${data.girls.length} 位女孩的服务数据`, '服务状态');
+      toastr.success(`加载了 ${active.length} 位女孩的服务数据`, '服务状态');
     }
   } catch (error: any) {
     console.error('[Service] 刷新数据失败，尝试使用缓存:', error);
 
     // 降级：脚本变量缓存
-    const cached = readCacheGirls();
+    const cached = readCachedOrders();
+    const active = filterActiveOrders(cached);
     if (cached.length > 0) {
-      girlsData.value = cached;
-      toastr.info(`使用缓存数据，条目数 ${cached.length}`, '服务状态');
-      errorMessage.value = '已使用上次缓存的数据';
+      girlsData.value = active;
+      toastr.info(`使用缓存数据，条目数 ${active.length}`, '服务状态');
+      errorMessage.value = '已回退到上次缓存的数据，请重新生成或刷新。';
     } else {
       errorMessage.value = error.message || '数据加载失败';
       console.log('[服务状态] 数据加载失败，请重试');
@@ -671,26 +564,6 @@ onMounted(async () => {
   isLoading.value = false;
 });
 
-// ================ 缓存工具 ================
-
-function cacheGirls(girls: any[]) {
-  try {
-    replaceVariables({ [SERVICE_CACHE_KEY]: girls }, { type: 'script', script_id: getScriptId() });
-  } catch (e) {
-    console.warn('[Service] 缓存写入失败，已忽略', e);
-  }
-}
-
-function readCacheGirls(): any[] {
-  try {
-    const vars = getVariables({ type: 'script', script_id: getScriptId() }) || {};
-    const cached = (vars as any)[SERVICE_CACHE_KEY];
-    return Array.isArray(cached) ? cached : [];
-  } catch (e) {
-    console.warn('[Service] 读取缓存失败', e);
-    return [];
-  }
-}
 </script>
 
 <style lang="scss" scoped>

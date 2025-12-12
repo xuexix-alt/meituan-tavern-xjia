@@ -132,7 +132,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     experiments: {
       outputModule: true,
     },
-    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+    devtool: false, // argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },
@@ -160,9 +160,9 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       asyncChunks: true,
       clean: true,
       publicPath: '',
-      library: {
-        type: 'module',
-      },
+      // library: {
+      //   type: 'module',
+      // },
     },
     module: {
       rules: [
@@ -228,6 +228,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
               resourceQuery: /url/,
               type: 'asset/inline',
               exclude: /node_modules/,
+            },
+            {
+              test: /\.css$/,
+              use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'],
             },
             {
               test: /\.css$/,
@@ -336,6 +340,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 ] as any[]),
           ),
         },
+        // 字体资源全部内联，避免被宿主页面的相对路径解析成 404（兼容 jQuery .load 场景）
+        {
+          test: /\.(woff2?|ttf|eot|otf)$/i,
+          type: 'asset/inline',
+        },
       ],
     },
     resolve: {
@@ -354,7 +363,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
             filename: path.parse(entry.html).base,
-            scriptLoading: 'module',
+            scriptLoading: 'blocking',
             cache: false,
           }),
           new HtmlInlineScriptWebpackPlugin(),
@@ -452,11 +461,17 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+      // 不外部化样式资源，统一打包进产物，避免运行时再拉 CDN
+      if (request.match(/\.(css|scss|sass|less)$/i)) {
+        return callback();
+      }
+
       if (
         request.startsWith('-') ||
         request.startsWith('.') ||
         request.startsWith('/') ||
         request.startsWith('!') ||
+        request.startsWith('data:') ||
         request.startsWith('http') ||
         request.startsWith('@/') ||
         path.isAbsolute(request) ||
@@ -476,13 +491,14 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (['react'].some(key => request.includes(key))) {
         return callback();
       }
+      // 这些库在 Tavern 环境提供全局，但为保证本地预览/单独打开可用，这里选择直接打包，不再 external
+      const bundleThese = ['vue', 'vue-router', 'jquery', 'lodash', 'toastr'];
+      if (bundleThese.includes(request) || request.startsWith('@vue/')) {
+        return callback(); // 打包进产物
+      }
+
       const global = {
-        jquery: '$',
-        lodash: '_',
         showdown: 'showdown',
-        toastr: 'toastr',
-        vue: 'Vue',
-        'vue-router': 'VueRouter',
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
