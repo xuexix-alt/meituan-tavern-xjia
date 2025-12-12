@@ -267,7 +267,7 @@ onMounted(() => {
   font-size: 1.6rem;
   font-weight: 800;
   margin-bottom: 12px;
-  color: #333;
+  color: var(--text-primary);
   letter-spacing: 0.5px;
 }
 
@@ -425,7 +425,7 @@ onMounted(() => {
 .review-item p,
 .service-item p {
   margin: 0;
-  color: #333;
+  color: var(--text-primary);
   line-height: 1.5;
   font-size: 0.9rem;
 }
@@ -442,13 +442,13 @@ onMounted(() => {
 
   .title {
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 5px;
   }
 
   .text {
     line-height: 1.6;
-    color: #333;
+    color: var(--text-primary);
   }
 }
 

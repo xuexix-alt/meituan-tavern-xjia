@@ -92,11 +92,11 @@ onErrorCaptured((err: Error) => {
   --bg-item: #2d2d2d;
   --bg-item-hover: #353535;
   --bg-badge: linear-gradient(135deg, #3a3a3a, #2d2d2d);
-  --text-primary: #ecf0f1; /* 亮白色 */
-  --text-secondary: #bdc3c7; /* 浅灰色 */
-  --text-placeholder: #7f8c8d;
-  --text-price: #ff8a65;
-  --border-color: #3a3a3a;
+  --text-primary: #ffffff; /* 纯白色，提高对比度 */
+  --text-secondary: #e0e0e0; /* 亮灰色，增强可读性 */
+  --text-placeholder: #9e9e9e; /* 更亮的占位符颜色 */
+  --text-price: #ffab91; /* 更柔和的价格颜色 */
+  --border-color: #404040; /* 更明显的边框色 */
   --border-accent: rgba(255, 195, 0, 0.3);
   --accent-primary: #ffc300;
   --accent-light: #ffd54f;

@@ -39,7 +39,7 @@
                     <i class="fas fa-heart"></i>
                   </div>
                 </div>
-                <div class="version-info">v3.0.0.beta1</div>
+                <div class="version-info">v3.0.0.beta2</div>
               </div>
             </div>
 
@@ -52,23 +52,23 @@
               <div class="panel-content">
                 <div class="notice-item">
                   <span class="notice-tag">活动</span>
-                  <span class="notice-text">新增“国企往事”DLC，挂载世界书后点击即可。</span>
+                  <span class="notice-text">新增“国企往事”DLC 挂载世界书后点击即可</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">PAD重构版APP重大更新，目前是预览版后续会持续优化。</span>
+                  <span class="notice-text">PAD重构版APP重大更新 目前是预览版后续会持续优化 </span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">当前生成前10个店铺会保留，此后出新删旧。</span>
+                  <span class="notice-text">当前生成前的前10店铺可以跨楼层保留。</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">搜索时最好注明店铺与套餐数量。搜索色情视频流出的女主角名字有惊喜</span>
+                  <span class="notice-text">搜索时最好注明店铺与套餐数量 部分截断也可以解析到</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">可以搜索色情视频的女主角名字，通常有惊喜，比如某警花</span>
+                  <span class="notice-text">经常被截断可以在世界书切换yaml和json两种生成尝试</span>
                 </div>
               </div>
               <div class="panel-header mt-3">
@@ -77,9 +77,9 @@
               </div>
               <div class="panel-content">
                 <p class="instruction-text">
-                  1. 首页生成店铺后进发现页面查看店铺，在那里下单<br />
-                  2. 搜某类别时最好加上“X店铺每个x套餐”（现在店铺可以存储）<br />
-                  3. 搜索模版：明星：xxx，《XXX》经典角色<br />
+                  1. 首页生成店铺后需要进发现页面才能查看店铺，并在那里下单<br />
+                  2. 搜某种类别时最好加上“X店铺每个x套餐”<br />
+                  3. 搜索模版：85后女明星集锦：2个店铺每个3个套餐<br />
                   4. 世界书有二选一模式，如果常截断可以试试不同框架
                 </p>
               </div>
@@ -90,7 +90,7 @@
 
       <!-- 分类网格 -->
       <div class="category-grid">
-        <div class="category-item" @click="search('各类路人商品-3个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('各类路人商品-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
           <span>路人</span>
         </div>
@@ -106,7 +106,7 @@
           <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
           <span>街拍</span>
         </div>
-        <div class="category-item" @click="search('各类熟人商品-3个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('各类熟人商品-2个店铺每个含3个套餐')">
           <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
           <span>熟人</span>
         </div>
@@ -185,7 +185,7 @@ const searchKeyword = ref('');
 
 // 搜索功能
 function search(keyword: string) {
-  sendToAI(`/send 搜索：${keyword} 如果搜索内容是姓名的，套餐内容是同一人的不同形态`);
+  sendToAI(`/send 搜索：${keyword} `);
 }
 
 function doSearch() {
@@ -211,7 +211,7 @@ function sendToAI(message: string) {
 // DLC内容生成功能
 function generateDLCContent() {
   const dlcMessage =
-    '生成-首页-店铺列表：1个名为"组织部派来一个年轻人"。其中包含6个套餐，女孩名字分别是：1苏晴；2白慧；3丁小芹；4王春燕；5林婉仪；6秦舒澜。套餐内容严格按照设定。';
+    '生成-首页-店铺列表：1个名为"组织部派来一个年轻人"。其中包含7个套餐，女孩名字分别是：1苏晴；2白慧；3丁小芹；4王春燕；5林婉仪；6秦舒澜；7藤原千惠。套餐内容严格按照设定。';
   search(dlcMessage);
 }
 </script>
@@ -714,7 +714,7 @@ function generateDLCContent() {
     background: rgba(255, 255, 255, 0.5);
     border-radius: 16px;
     padding: 16px;
-    border: 1px solid rgba(255, 195, 0, 0.15);
+    border: 1px solid var(--border-accent);
     animation: fadeIn 1s ease-out 0.3s both;
 
     .panel-header {

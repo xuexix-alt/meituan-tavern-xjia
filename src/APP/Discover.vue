@@ -311,7 +311,7 @@ function deleteShop(id: string) {
 
   .name {
     font-weight: 700;
-    color: #333;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

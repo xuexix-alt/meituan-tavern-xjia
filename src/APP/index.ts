@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import $ from 'jquery';
+import _ from 'lodash';
 import router from './界面';
 import app from './app.vue';
 // import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -8,6 +9,9 @@ import app from './app.vue';
 // 确保全局可用 jQuery（部分代码/依赖使用全局 $）
 (window as any).$ = $;
 (window as any).jQuery = $;
+
+// 确保全局可用 lodash（酒馆环境和部分代码/依赖使用全局 _）
+(window as any)._ = _;
 
 // Vue Router必须在全局作用域创建，不能放在$(() => {})中
 const vueApp = createApp(app);

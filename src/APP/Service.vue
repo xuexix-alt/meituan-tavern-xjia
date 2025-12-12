@@ -769,7 +769,7 @@ onMounted(async () => {
         font-size: 28px;
         font-weight: 800;
         margin: 0 0 8px 0;
-        color: #333;
+        color: var(--text-primary);
       }
 
       .sub-info {
@@ -848,7 +848,7 @@ onMounted(async () => {
       .status-text {
         font-size: 14px;
         font-weight: 600;
-        color: #333;
+        color: var(--text-primary);
       }
     }
   }
@@ -964,7 +964,7 @@ onMounted(async () => {
       .metric-value {
         font-size: 28px;
         font-weight: 900;
-        color: #333;
+        color: var(--text-primary);
         margin-bottom: 8px;
 
         .metric-unit {

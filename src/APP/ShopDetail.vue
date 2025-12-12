@@ -299,7 +299,7 @@ onMounted(async () => {
     font-size: 1.5rem;
     font-weight: 800;
     margin-bottom: 8px;
-    color: #333;
+    color: var(--text-primary);
     text-shadow: 0 2px 4px rgba(255, 195, 0, 0.2);
     position: relative;
     z-index: 1;
@@ -343,7 +343,7 @@ onMounted(async () => {
   padding: 10px 12px;
   border: 1px dashed var(--accent-primary);
   border-radius: 12px;
-  background: rgba(255, 247, 230, 0.9);
+  background: var(--bg-badge);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -491,7 +491,7 @@ onMounted(async () => {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 6px;
-    color: #333;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

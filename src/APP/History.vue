@@ -621,7 +621,7 @@ onMounted(async () => {
       .history-title {
         font-size: 16px;
         font-weight: 700;
-        color: #333;
+        color: var(--text-primary);
         line-height: 1.4;
         margin: 0;
         word-break: break-word;
@@ -1060,7 +1060,7 @@ onMounted(async () => {
     .info-value {
       font-size: 20px;
       font-weight: 800;
-      color: #333;
+      color: var(--text-primary);
       line-height: 1.2;
       word-break: break-word;
 
@@ -1090,7 +1090,7 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #333;
+    color: var(--text-primary);
     padding-bottom: 16px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 
@@ -1141,7 +1141,7 @@ onMounted(async () => {
     .section-item-value {
       font-size: 16px;
       font-weight: 700;
-      color: #333;
+      color: var(--text-primary);
       word-break: break-word;
     }
   }

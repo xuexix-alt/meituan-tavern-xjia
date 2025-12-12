@@ -8,6 +8,7 @@
       "type-fest",
       "yaml",
       "zod",
+      "vue",
     ],
     "target": "ESNext",
     "module": "ESNext",

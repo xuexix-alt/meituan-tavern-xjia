@@ -116,7 +116,20 @@ import { ref, computed, onMounted } from 'vue';
 declare global {
   interface Window {
     replaceMacros: (macro: string) => Promise<string>;
+    _?: typeof import('lodash');
   }
+}
+
+// 安全获取嵌套对象属性的工具函数，替代 _.get
+function safeGet<T = any>(obj: any, path: string, defaultValue: T = undefined as any): T {
+  if (!obj || typeof obj !== 'object') return defaultValue;
+  const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+  let result: any = obj;
+  for (const key of keys) {
+    if (result === null || result === undefined) return defaultValue;
+    result = result[key];
+  }
+  return result === undefined ? defaultValue : result;
 }
 
 // 响应式数据
@@ -246,22 +259,35 @@ onMounted(async () => {
   }
 
   // 尝试从 SillyTavern 获取用户名
-  if (SillyTavern?.name1) {
-    username.value = SillyTavern.name1;
-    console.log('从 SillyTavern 获取用户名:', username.value);
-  } else {
-    // 尝试从全局变量获取
-    try {
-      const globalVars = getVariables({ type: 'global' });
-      if (globalVars?.user_name) {
-        username.value = globalVars.user_name;
-        console.log('从全局变量获取用户名:', username.value);
-      } else {
-        console.log('未找到用户名，使用默认:', username.value);
+  try {
+    // 使用 window 访问全局对象，避免类型声明冲突
+    const sillyTavern = (window as any).SillyTavern;
+    if (sillyTavern?.name1) {
+      username.value = sillyTavern.name1;
+      console.log('从 SillyTavern 获取用户名:', username.value);
+    } else {
+      // 尝试从全局变量获取
+      try {
+        // 确保 getVariables 函数存在且 lodash 已加载
+        const getVariablesFn = (window as any).getVariables;
+        const lodash = window._;
+        if (typeof getVariablesFn === 'function' && lodash && typeof lodash.get === 'function') {
+          const globalVars = getVariablesFn({ type: 'global' });
+          if (globalVars?.user_name) {
+            username.value = globalVars.user_name;
+            console.log('从全局变量获取用户名:', username.value);
+          } else {
+            console.log('未找到用户名，使用默认:', username.value);
+          }
+        } else {
+          console.log('酒馆环境未就绪，使用默认用户名');
+        }
+      } catch (e) {
+        console.log('获取全局变量失败:', e);
       }
-    } catch (e) {
-      console.log('获取全局变量失败:', e);
     }
+  } catch (e) {
+    console.log('获取SillyTavern信息失败:', e);
   }
 
   // 初始化头像（使用默认图标）
@@ -392,7 +418,7 @@ onMounted(async () => {
       font-size: 24px;
       font-weight: 700;
       margin-bottom: 6px;
-      color: #333;
+      color: var(--text-primary);
     }
 
     .user-level {
@@ -425,7 +451,7 @@ onMounted(async () => {
         .stat-value {
           font-size: 20px;
           font-weight: 700;
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 4px;
         }
 
