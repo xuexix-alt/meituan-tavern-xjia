@@ -132,7 +132,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     experiments: {
       outputModule: true,
     },
+<<<<<<< HEAD
     devtool: false, // argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+=======
+    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },
@@ -160,9 +164,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       asyncChunks: true,
       clean: true,
       publicPath: '',
+<<<<<<< HEAD
       // library: {
       //   type: 'module',
       // },
+=======
+      library: {
+        type: 'module',
+      },
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
     },
     module: {
       rules: [
@@ -231,10 +241,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             },
             {
               test: /\.css$/,
+<<<<<<< HEAD
               use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'],
             },
             {
               test: /\.css$/,
+=======
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
               use: ['postcss-loader'],
               resourceQuery: /url/,
               type: 'asset/inline',
@@ -340,11 +353,14 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 ] as any[]),
           ),
         },
+<<<<<<< HEAD
         // 字体资源全部内联，避免被宿主页面的相对路径解析成 404（兼容 jQuery .load 场景）
         {
           test: /\.(woff2?|ttf|eot|otf)$/i,
           type: 'asset/inline',
         },
+=======
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
       ],
     },
     resolve: {
@@ -363,7 +379,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
             filename: path.parse(entry.html).base,
+<<<<<<< HEAD
             scriptLoading: 'blocking',
+=======
+            scriptLoading: 'module',
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
             cache: false,
           }),
           new HtmlInlineScriptWebpackPlugin(),
@@ -461,17 +481,23 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+<<<<<<< HEAD
       // 不外部化样式资源，统一打包进产物，避免运行时再拉 CDN
       if (request.match(/\.(css|scss|sass|less)$/i)) {
         return callback();
       }
 
+=======
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
       if (
         request.startsWith('-') ||
         request.startsWith('.') ||
         request.startsWith('/') ||
         request.startsWith('!') ||
+<<<<<<< HEAD
         request.startsWith('data:') ||
+=======
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
         request.startsWith('http') ||
         request.startsWith('@/') ||
         path.isAbsolute(request) ||
@@ -491,6 +517,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (['react'].some(key => request.includes(key))) {
         return callback();
       }
+<<<<<<< HEAD
       // 这些库在 Tavern 环境提供全局，但为保证本地预览/单独打开可用，这里选择直接打包，不再 external
       const bundleThese = ['vue', 'vue-router', 'jquery', 'lodash', 'toastr'];
       if (bundleThese.includes(request) || request.startsWith('@vue/')) {
@@ -499,6 +526,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
 
       const global = {
         showdown: 'showdown',
+=======
+      const global = {
+        jquery: '$',
+        lodash: '_',
+        showdown: 'showdown',
+        toastr: 'toastr',
+        vue: 'Vue',
+        'vue-router': 'VueRouter',
+>>>>>>> 94ae77e7e1b4119e281bebd10f4e97735db35c63
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
