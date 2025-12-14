@@ -56,7 +56,7 @@
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">PAD重构版APP重大更新 目前是预览版后续会持续优化 </span>
+                  <span class="notice-text">要养成告诉AI“结束xx订单”的好习惯 </span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
@@ -127,7 +127,7 @@
       <!-- 搜索栏 -->
       <div class="search-bar-container">
         <i class="fas fa-search"></i>
-        <input v-model="searchKeyword" placeholder="搜明星模板：“女星 xxx” 默认1个店铺3套餐" @keyup.enter="doSearch" />
+        <input v-model="searchKeyword" placeholder="要养成告诉AI“结束XX订单”的好习惯" @keyup.enter="doSearch" />
         <button class="search-btn" @click="doSearch">搜索</button>
       </div>
 
