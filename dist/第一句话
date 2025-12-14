@@ -1,0 +1,345 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>美人团 APP - Meituan Style Large</title>
+<style>
+/* === 基础设置 === */
+:root {
+    --mt-yellow: #FFC300;       /* 美团黄 */
+    --mt-bg-pale: #FFFBF0;      /* 极浅黄背景 */
+    --mt-text-main: #222222;    /* 主要文字 */
+    --mt-text-sub: #666666;     /* 次要文字 */
+    --mt-radius: 16px;          /* 圆角 */
+    --mt-shadow: 0 4px 16px rgba(184, 169, 137, 0.15); /* 暖色投影 */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+    background-color: transparent; /* 融入酒馆背景 */
+    color: var(--mt-text-main);
+    line-height: 1.6;
+    width: 100%;
+    /* 【修改点】基础字体从 14px 放大到 16px，所有 em 单位会自动等比放大 */
+    font-size: 16px; 
+}
+
+/* === 主容器 (白底大卡片) === */
+.mt-container {
+    background: #FFFFFF;
+    border-radius: var(--mt-radius);
+    padding: 24px; /* 稍微增加内边距 */
+    width: 100%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f0f0f0;
+}
+
+/* === 顶部 Hero 区域 (左右布局) === */
+.hero-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* 左侧：品牌展示 (渐变黄背景) */
+.hero-brand {
+    flex: 1 1 320px;
+    background: linear-gradient(135deg, #FFF8D6 0%, #FFFBF0 100%);
+    border-radius: var(--mt-radius);
+    padding: 35px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #FFEdb3;
+}
+
+.slogan-main {
+    color: #DAA520;
+    /* 【修改点】加大字号 */
+    font-size: 1.8em; 
+    font-weight: 900;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+.slogan-sub {
+    color: var(--mt-yellow);
+    /* 【修改点】加大字号 */
+    font-size: 2.2em; 
+    font-weight: 900;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 0 #fff;
+    line-height: 1.2;
+}
+.brand-pill {
+    background: #FFF;
+    color: #F59E0B;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 0.95em;
+    box-shadow: 0 2px 8px rgba(255, 195, 0, 0.2);
+    display: inline-block;
+}
+
+/* 右侧：公告栏 */
+.hero-notice {
+    flex: 1 1 380px;
+    background: #FFF;
+    border: 1px solid #F5F5F5;
+    border-radius: var(--mt-radius);
+    padding: 25px;
+    box-shadow: inset 0 0 20px #FAFAFA;
+}
+
+.section-head {
+    color: #F59E0B;
+    font-weight: 800;
+    font-size: 1.2em; /* 加大 */
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+.section-head::before {
+    content: '📢';
+    margin-right: 8px;
+}
+
+/* 标签样式 */
+.tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-right: 8px;
+    color: #fff;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+.tag-upd { background: var(--mt-yellow); }
+.tag-fix { background: #FF9F43; }
+.tag-new { background: #FF6B6B; }
+
+.notice-list {
+    list-style: none;
+    font-size: 0.95em; /* 稍微加大列表文字 */
+}
+.notice-list li {
+    display: flex;
+    align-items: start;
+    margin-bottom: 10px;
+    color: var(--mt-text-sub);
+    line-height: 1.5;
+}
+
+/* === 中部：功能入口 (模仿图标区) === */
+.grid-menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* 稍微加宽最小列宽 */
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.menu-item {
+    text-align: center;
+    background: #FFFFFF;
+    padding: 20px 10px;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+.menu-item:hover {
+    background: #FFFBF0;
+    transform: translateY(-3px);
+}
+
+.menu-icon {
+    width: 56px; /* 加大图标背景 */
+    height: 56px;
+    background: #FFFBF0;
+    border-radius: 50%;
+    line-height: 56px;
+    font-size: 26px; /* 加大图标 */
+    margin: 0 auto 12px auto;
+    color: var(--mt-yellow);
+    border: 1px solid #FFE082;
+}
+.menu-title {
+    font-weight: 700;
+    color: var(--mt-text-main);
+    font-size: 1.05em; /* 加大 */
+    margin-bottom: 5px;
+}
+.menu-desc {
+    font-size: 0.85em; /* 加大 */
+    color: #999;
+    line-height: 1.3;
+}
+
+/* === 避坑指南列表 (文字内容) === */
+.guide-box {
+    background: #FCFCFC;
+    border: 1px solid #EEE;
+    border-radius: var(--mt-radius);
+    padding: 25px;
+    margin-bottom: 30px;
+}
+.guide-title {
+    border-left: 5px solid var(--mt-yellow);
+    padding-left: 12px;
+    font-weight: 800;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    color: var(--mt-text-main);
+}
+.guide-list li {
+    margin-bottom: 10px;
+    color: var(--mt-text-sub);
+    padding-left: 20px;
+    position: relative;
+    font-size: 1em;
+}
+.guide-list li::before {
+    content: '•';
+    color: var(--mt-yellow);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    font-size: 1.2em;
+}
+strong { color: #222; background: rgba(255, 195, 0, 0.15); padding: 0 4px; border-radius: 4px; }
+
+/* === 底部：伪装成搜索栏的复制链接 === */
+.search-bar-container {
+    background: #FFFFFF;
+    border: 2px solid var(--mt-yellow);
+    border-radius: 40px; /* 胶囊形状 */
+    padding: 8px 8px 8px 25px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.1);
+    margin-top: 15px;
+}
+
+.search-icon {
+    font-size: 1.4em;
+    margin-right: 12px;
+    filter: grayscale(100%);
+}
+
+.link-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex-grow: 1;
+    color: #555;
+    font-family: monospace;
+    font-size: 1.05em; /* 加大链接文字 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.copy-btn {
+    background: var(--mt-yellow);
+    color: #222;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 30px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.copy-btn:hover {
+    background: #FFCA28;
+}
+
+</style>
+</head>
+<body>
+
+<div class="mt-container">
+    
+    <!-- 顶部 Hero 区域 -->
+    <div class="hero-section">
+        <!-- 左侧品牌 -->
+        <div class="hero-brand">
+            <div class="slogan-main">随心所欲</div>
+            <div class="slogan-sub">跨越时空</div>
+            <div style="font-size: 1em; color:#888; margin-bottom:20px;">为您送上一切心动的美人</div>
+            <span class="brand-pill">💛 美人团外卖 V3.0.0</span>
+        </div>
+
+        <!-- 右侧更新日志 -->
+        <div class="hero-notice">
+            <div class="section-head">最新公告 / Updates</div>
+            <ul class="notice-list">
+                <li><span class="tag tag-upd">更新</span><span><strong>PAD重构版：</strong>大屏自适应，视觉体验升级。</span></li>
+                <li><span class="tag tag-upd">更新</span><span><strong>店铺缓存：</strong>前10个店铺生成后自动跨楼层缓存。</span></li>
+                <li><span class="tag tag-new">新增</span><span><strong>双模式：</strong>截断时可切换YAML(稳)与JSON(露)。</span></li>
+                <li><span class="tag tag-fix">修复</span><span><strong>自动回滚：</strong>变量解析失败自动恢复，防止白屏。</span></li>
+                <li><span class="tag tag-new">联动</span><span>怀孕/折扣/认知系统三位一体(需变量)。</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 中部功能入口 (排查指南) -->
+    <div class="grid-menu">
+        <div class="menu-item">
+            <div class="menu-icon">🌊</div>
+            <div class="menu-title">流式输出</div>
+            <div class="menu-desc">务必开启Stream</div>
+        </div>
+        <div class="menu-item">
+            <div class="menu-icon">📝</div>
+            <div class="menu-title">预设正文字数限制</div>
+            <div class="menu-desc">不低于2000字</div>
+        </div>
+        <div class="menu-item">
+            <div class="menu-icon">🤖</div>
+            <div class="menu-title">模型推荐</div>
+            <div class="menu-desc">DeepSeek（生成）/Gemini（游玩）</div>
+        </div>
+        <div class="menu-item">
+            <div class="menu-icon">🔍</div>
+            <div class="menu-title">精准搜索</div>
+            <div class="menu-desc">"搜索：路人商品X个店铺X个套餐"</div>
+        </div>
+    </div>
+
+    <!-- 详细避坑指南 -->
+    <div class="guide-box">
+        <div class="guide-title">💡 玩法说明 & 避坑指南</div>
+        <ul class="guide-list">
+            <li><strong>备注系统 (最高权重)：</strong> 下单时的备注优先级最高，特殊玩法（色色/剧情）请直接写在备注里。</li>
+            <li><strong>加载失败排查：</strong> 
+                1.是否安装酒馆助手(必装) 
+                2.是否含<code>&lt;StatusPlaceHolderImpl/&gt;</code> 
+                3.脚本/正则是否开启。</li>
+            <li><strong>防截断技巧：</strong> 若输出截断，点击“继续”，手动删除多余内容保留结构即可。推荐使用 <strong>YAML模式</strong> 生成。</li>
+            <li><strong>性能优化：</strong> 前端仅300K。若微卡，请在正则设置中限制渲染楼层（如3层）。</li>
+        </ul>
+    </div>
+
+    <!-- 底部插件链接 (伪装成搜索栏) -->
+    <div style="font-weight:bold; margin-left:10px; margin-bottom:8px; color:#F59E0B; font-size:1.1em;">🔗 核心前置插件 (必装)</div>
+    <div class="search-bar-container">
+        <span class="search-icon">🧩</span>
+        <!-- 这里的 input 可以方便全选复制 -->
+        <input type="text" class="link-input" value="https://gitlab.com/novi028/JS-Slash-Runner.git" readonly onclick="this.select();">
+        <!-- 视觉上的按钮 -->
+        <div class="copy-btn">点击复制链接</div>
+    </div>
+
+</div>
+
+</body>
+</html>
+```
