@@ -8,6 +8,13 @@
 let lastParsedData: { shops: any[]; packages: any[] } | null = null;
 let lastParsedMessageId: string | null = null;
 
+// 基于时间戳的唯一 ID 生成器，防止店名哈希导致的碰撞/错乱
+function createIdFactory(prefix: string) {
+  const base = Date.now().toString().slice(-8); // 取时间戳末 8 位，够用且易区分
+  let counter = 0;
+  return () => `${prefix}_${base}_${counter++}`;
+}
+
 function getShopStoreApi() {
   const api = (window as any).ShopStore;
   return api && typeof api.getShops === 'function' ? api : null;
@@ -16,28 +23,6 @@ function getShopStoreApi() {
 function rememberData(data: { shops: any[]; packages: any[] }, messageId: string) {
   lastParsedData = data;
   lastParsedMessageId = messageId;
-}
-
-function mergeWithStore(shops: any[], storeApi: any) {
-  if (!storeApi) return shops;
-  const stored = storeApi.getShops?.() || [];
-  if (!stored.length) return shops;
-
-  // 如果当前没有店铺或店铺里套餐为空，直接用存储的兜底
-  const hasValidCurrent = shops.length > 0 && shops.some(s => (s.packages && s.packages.length > 0) || s.name);
-
-  if (!hasValidCurrent) {
-    return stored;
-  }
-
-  // 合并：以当前为主，同 id 覆盖，追加存储里其他店铺
-  const map = new Map<string, any>();
-  shops.forEach(s => map.set(String(s.id), s));
-  stored.forEach(s => {
-    const id = String(s.id);
-    if (!map.has(id)) map.set(id, s);
-  });
-  return Array.from(map.values());
 }
 
 function flattenPackagesFromShops(shops: any[]) {
@@ -52,37 +37,21 @@ function flattenPackagesFromShops(shops: any[]) {
 }
 
 function sanitizeShops(shops: any[]) {
-  const seen = new Set<string>();
-  return shops.filter(s => {
-    if (!s) return false;
-    const id = String(s.id || '');
+  const map = new Map<string, any>();
+  (shops || []).forEach(s => {
+    if (!s) return;
     const hasPackages = Array.isArray(s.packages) && s.packages.length > 0;
-    const hasName = typeof s.name === 'string' && s.name.trim() && !['未命名店铺', '默认店铺'].includes(s.name.trim());
+    const name = typeof s.name === 'string' ? s.name.trim() : '';
+    const hasMeaningfulName = name && !['未命名店铺', '默认店铺'].includes(name);
+    if (!hasPackages && !hasMeaningfulName) return; // 过滤无名且无套餐的垃圾店铺
 
-    if (!hasPackages && !hasName) return false;
-
-    const key = id || s.name;
-    if (key && seen.has(key)) return false;
-    if (key) seen.add(key);
-    return true;
+    const id = s.id ? String(s.id) : hasMeaningfulName ? `shop_${name}` : '';
+    if (!id) return;
+    if (!map.has(id)) {
+      map.set(id, { ...s, id, name: hasMeaningfulName ? name : s.name });
+    }
   });
-}
-
-// 保持当前楼层在前、持久化在后，去重
-function mergeKeepOrder(current: any[], stored: any[]) {
-  const merged: any[] = [];
-  const seen = new Set<string>();
-  const pushUnique = (list: any[]) => {
-    list.forEach(s => {
-      const key = String(s.id || s.name || '');
-      if (!key || seen.has(key)) return;
-      seen.add(key);
-      merged.push(s);
-    });
-  };
-  pushUnique(current);
-  pushUnique(stored);
-  return merged;
+  return Array.from(map.values());
 }
 
 /**
@@ -112,14 +81,20 @@ export function extractDataFromMessage(): { shops: any[]; packages: any[] } {
     const currentData = extractDataFromSpecificMessage(currentMessageId);
     if (currentData) {
       const currentShops = sanitizeShops(currentData.shops || []);
-      const mergedShops = mergeKeepOrder(currentShops, storeApi?.getShops?.() || []);
-      const mergedPkgs =
+      // 先把当前解析到的店铺追加进全局存储（不与历史合并）
+      if (storeApi && currentShops.length > 0) {
+        storeApi.saveShops(currentShops);
+      }
+
+      const storedShops = sanitizeShops(storeApi?.getShops?.() || []);
+      const shopsToUse = storedShops.length > 0 ? storedShops : currentShops;
+      const pkgsToUse =
         currentData.packages && currentData.packages.length > 0
           ? currentData.packages
-          : flattenPackagesFromShops(mergedShops);
-      const result = { shops: mergedShops, packages: mergedPkgs };
+          : flattenPackagesFromShops(shopsToUse);
+
+      const result = { shops: shopsToUse, packages: pkgsToUse };
       rememberData(result, currentMessageId);
-      storeApi?.saveShops(mergedShops);
       return result;
     }
 
@@ -191,19 +166,6 @@ export function extractDataFromSpecificMessage(messageId: string): { shops: any[
 }
 
 /**
- * 简单的字符串哈希函数
- */
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(16);
-}
-
-/**
  * 解析店铺数据
  * 设计目标：
  * - 仅依赖 [店铺] ... [/店铺]（或文本结尾）作为店铺边界
@@ -211,6 +173,10 @@ function simpleHash(str: string): string {
  * - 套餐同样支持缺少 [/套餐] 的容错
  */
 export function parseShopData(text: string): { shops: any[]; packages: any[] } {
+  const makeShopId = createIdFactory('shop');
+  const makePkgId = createIdFactory('pkg');
+  let pkgNameCounter = 1;
+
   // 0. 优先尝试 JS 模板格式（json_template.js 的写法）
   const jsParsed = tryParseJsTemplate(text);
   if (jsParsed) return jsParsed;
@@ -246,7 +212,6 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
   // 2. 原有的文本解析逻辑（并允许直接是套餐块，此时构造一个虚拟店铺承载）
   const shops: any[] = [];
   const packages: any[] = [];
-  let packageCounter = 0;
 
   const splitArrayValues = (val: string): string[] =>
     val
@@ -318,7 +283,7 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
     }
 
     // 生成唯一 ID
-    shop.id = `shop_${simpleHash(shop.name)}`;
+    shop.id = makeShopId();
 
     if (shop.shoptags.length > 0) {
       shop.slogan = shop.shoptags.join(' / ');
@@ -335,7 +300,7 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
       if (pkgLines.length === 0) return;
 
       const pkg: any = {
-        id: `pkg_${packageCounter++}`,
+        id: makePkgId(),
         shop_id: shop.id,
         shop_name: shop.name,
         name: '',
@@ -390,7 +355,7 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
 
       // 如果缺少 name 但已包含内容，给出默认名称，避免丢弃
       if (!pkg.name && (pkg.content.length > 0 || pkg.reviews.length > 0 || pkg.tags.length > 0)) {
-        pkg.name = `套餐${packageCounter}`;
+        pkg.name = `套餐${pkgNameCounter++}`;
       }
 
       if (pkg.name) {
@@ -405,7 +370,7 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
   // 兜底：如果未解析出任何套餐，尝试把整段文本当作单个套餐块再解析一次
   if (packages.length === 0) {
     const fallbackShop = shops[0] || {
-      id: 'shop_default',
+      id: makeShopId(),
       name: '默认店铺',
       shoptags: [],
       slogan: '优质服务',
@@ -414,17 +379,15 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
     };
     if (shops.length === 0) shops.push(fallbackShop);
 
-    const singlePkg = parseLoosePackage(text, fallbackShop, packageCounter);
+    const singlePkg = parseLoosePackage(text, fallbackShop, makePkgId);
     if (singlePkg) {
       fallbackShop.packages.push(singlePkg);
       packages.push(singlePkg);
-      packageCounter += 1;
     } else {
-      const bulletPkg = parseContentBulletsOnly(text, fallbackShop, packageCounter);
+      const bulletPkg = parseContentBulletsOnly(text, fallbackShop, makePkgId);
       if (bulletPkg) {
         fallbackShop.packages.push(bulletPkg);
         packages.push(bulletPkg);
-        packageCounter += 1;
       }
     }
   }
@@ -587,7 +550,7 @@ function tryParseLargestJsonChunk(text: string): { shops: any[]; packages: any[]
 /**
  * 极简兜底：不依赖 [店铺]/[套餐] 标签，直接从全文提取一个套餐
  */
-function parseLoosePackage(text: string, shop: any, pkgIndex: number): any | null {
+function parseLoosePackage(text: string, shop: any, makePkgId: () => string): any | null {
   const lines = text
     .split('\n')
     .map(l => l.trim())
@@ -596,7 +559,7 @@ function parseLoosePackage(text: string, shop: any, pkgIndex: number): any | nul
   if (lines.length === 0) return null;
 
   const pkg: any = {
-    id: `pkg_${pkgIndex}`,
+    id: makePkgId(),
     shop_id: shop.id,
     shop_name: shop.name,
     name: '',
@@ -643,7 +606,7 @@ function parseLoosePackage(text: string, shop: any, pkgIndex: number): any | nul
   });
 
   if (!pkg.name && (pkg.content.length || pkg.reviews.length || pkg.tags.length)) {
-    pkg.name = `套餐${pkgIndex}`;
+    pkg.name = `套餐`;
   }
 
   return pkg.name ? pkg : null;
@@ -652,7 +615,7 @@ function parseLoosePackage(text: string, shop: any, pkgIndex: number): any | nul
 /**
  * 兜底再兜底：只提取 content: 后面的子弹行，生成一个套餐
  */
-function parseContentBulletsOnly(text: string, shop: any, pkgIndex: number): any | null {
+function parseContentBulletsOnly(text: string, shop: any, makePkgId: () => string): any | null {
   const lines = text.split('\n').map(l => l.trim());
   let collectingContent = false;
   let collectingReviews = false;
@@ -690,10 +653,10 @@ function parseContentBulletsOnly(text: string, shop: any, pkgIndex: number): any
   if (content.length === 0 && reviews.length === 0) return null;
 
   return {
-    id: `pkg_${pkgIndex}`,
+    id: makePkgId(),
     shop_id: shop.id,
     shop_name: shop.name,
-    name: `套餐${pkgIndex}`,
+    name: `套餐`,
     price: 'N/A',
     stars: 0,
     tags: [],
@@ -713,8 +676,6 @@ function parseContentBulletsOnly(text: string, shop: any, pkgIndex: number): any
 function normalizeJsonData(data: any): { shops: any[]; packages: any[] } {
   const shops: any[] = [];
   const packages: any[] = [];
-  let packageCounter = 0;
-
   // 统一转为数组
   let rawShops: any[] = [];
   if (Array.isArray(data)) {
@@ -733,7 +694,7 @@ function normalizeJsonData(data: any): { shops: any[]; packages: any[] } {
 
     const shopName = rawShop.name || '未命名店铺';
     const shop: any = {
-      id: rawShop.id || `shop_${simpleHash(shopName)}`,
+      id: rawShop.id ? String(rawShop.id) : makeShopId(),
       name: shopName,
       shoptags: Array.isArray(rawShop.shoptags) ? rawShop.shoptags : [],
       slogan: rawShop.slogan || '优质服务',
@@ -753,7 +714,7 @@ function normalizeJsonData(data: any): { shops: any[]; packages: any[] } {
       if (!rawPkg || typeof rawPkg !== 'object') return;
 
       const pkg: any = {
-        id: rawPkg.id || `pkg_${packageCounter++}`,
+        id: rawPkg.id ? String(rawPkg.id) : makePkgId(),
         shop_id: shop.id,
         shop_name: shop.name,
         name: rawPkg.name || '',

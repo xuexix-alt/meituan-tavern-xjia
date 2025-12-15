@@ -2,7 +2,8 @@
   <div class="app-view active">
     <div class="app-header">
       <div class="title">
-        <span>🗺️ 发现</span>
+        <span>🧭 发现</span>
+        <button class="import-btn" @click="triggerImport">导入JSON</button>
       </div>
     </div>
 
@@ -62,6 +63,13 @@
       </div>
     </div>
   </div>
+  <input
+    ref="fileInput"
+    class="hidden-input"
+    type="file"
+    accept=".json,application/json"
+    @change="handleFileChange"
+  />
 </template>
 
 <script setup lang="ts">
@@ -70,6 +78,7 @@ import { extractDataFromMessage } from './dataParser';
 
 const shops = ref<any[]>([]);
 const shopStoreApi = ref<any>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 // 初始化
 onMounted(async () => {
@@ -90,6 +99,45 @@ function deleteShop(id: string) {
   shops.value = shops.value.filter(shop => shop.id !== id);
   shopStoreApi.value?.deleteShop(id);
   console.log('[Discover] 已删除店铺', id);
+}
+
+function triggerImport() {
+  fileInput.value?.click();
+}
+
+function handleFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = String(reader.result || '');
+      const parsed = JSON.parse(text);
+      const rawShops = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray((parsed as any)?.shops)
+          ? (parsed as any).shops
+          : [parsed];
+      const cleaned = (rawShops || [])
+        .map((s: any) => (s && (s.id || s.name) ? { ...s, id: s.id ? String(s.id) : String(s.name) } : null))
+        .filter(Boolean);
+      if (!cleaned.length) {
+        toastr.error('你的json格式错误', '导入失败');
+      } else {
+        shops.value = cleaned as any[];
+        shopStoreApi.value?.saveShops(shops.value);
+        toastr.success(`从文件导入 ${cleaned.length} 个店铺`, '导入成功');
+      }
+    } catch (e) {
+      console.warn('[Discover] 导入失败', e);
+      toastr.error('你的json格式错误', '导入失败');
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
 }
 </script>
 
@@ -135,9 +183,29 @@ function deleteShop(id: string) {
     color: var(--text-primary);
     letter-spacing: 1px;
     text-shadow: 0 2px 4px rgba(255, 195, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 
     span {
       color: var(--text-primary);
+    }
+
+    .import-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+
+      &:hover {
+        background: var(--accent-light);
+        transform: translateY(-1px);
+      }
     }
   }
 }
@@ -480,5 +548,9 @@ function deleteShop(id: string) {
     font-size: 0.95rem;
     opacity: 0.8;
   }
+}
+
+.hidden-input {
+  display: none;
 }
 </style>

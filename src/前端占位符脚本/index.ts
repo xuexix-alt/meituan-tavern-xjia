@@ -11,6 +11,7 @@ const ScriptSettings = z.object({
   placeholder_text: z.string().default('【前端占位符】'),
   auto_insert: z.boolean().default(true),
   show_notification: z.boolean().default(true),
+  keep_cross_chat: z.boolean().default(true), // 是否跨聊天共享店铺缓存
 });
 
 const settings = ScriptSettings.parse(getVariables({ type: 'script', script_id: getScriptId() }));
@@ -18,11 +19,17 @@ const settings = ScriptSettings.parse(getVariables({ type: 'script', script_id: 
 // ================== 店铺持久化 ==================
 type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
 const SHOP_STORE_KEY = 'shop_store_cache';
-const MAX_SHOP_COUNT = 10;
+
+function getStoreScope() {
+  // 根据开关决定是全局还是当前聊天作用域
+  if (settings.keep_cross_chat) return { type: 'global' as const };
+  const chatId = SillyTavern.getCurrentChatId?.();
+  return chatId ? ({ type: 'chat' as const, chat_id: chatId } satisfies any) : ({ type: 'global' as const });
+}
 
 function readShopStore(): StoredShop[] {
   try {
-    const vars = getVariables({ type: 'global' }) || {};
+    const vars = getVariables(getStoreScope()) || {};
     const list = (vars as any)[SHOP_STORE_KEY];
     console.log('[ShopStore] 读取全局缓存:', list);
     return Array.isArray(list) ? list : [];
@@ -35,7 +42,7 @@ function readShopStore(): StoredShop[] {
 function writeShopStore(shops: StoredShop[]) {
   try {
     console.log('[ShopStore] 写入全局缓存:', shops);
-    replaceVariables({ [SHOP_STORE_KEY]: shops }, { type: 'global' });
+    replaceVariables({ [SHOP_STORE_KEY]: shops }, getStoreScope());
   } catch (e) {
     console.warn('[ShopStore] 写入失败', e);
   }
@@ -52,24 +59,17 @@ function normalizeShops(raw: any[]): StoredShop[] {
     }));
 }
 
-function mergeAndCap(shops: StoredShop[], incoming: StoredShop[]): StoredShop[] {
-  const map = new Map<string, StoredShop>();
-  // 先放新数据，后放旧数据；同 id 以新覆盖
-  [...incoming, ...shops].forEach(s => {
-    if (!map.has(s.id)) map.set(s.id, s);
-  });
-  const result = Array.from(map.values())
-    .sort((a, b) => (b.__savedAt || 0) - (a.__savedAt || 0))
-    .slice(0, MAX_SHOP_COUNT);
-  return result;
-}
-
 function saveShopsToStore(newShops: any[]) {
   const existing = readShopStore();
   const incoming = normalizeShops(newShops);
-  const merged = mergeAndCap(existing, incoming);
-  writeShopStore(merged);
-  return merged;
+  if (incoming.length === 0) return existing;
+
+  // 只追加“未出现过的 id”，避免同一楼层反复解析导致数量无限增长
+  const existingIds = new Set(existing.map(s => s.id));
+  const toAppend = incoming.filter(s => !existingIds.has(s.id));
+  const appended = toAppend.length > 0 ? [...existing, ...toAppend] : existing;
+  writeShopStore(appended);
+  return appended;
 }
 
 function deleteShopFromStore(shopId: string) {
@@ -245,8 +245,48 @@ eventOn(getButtonEvent('导出店铺JSON'), () => {
   const api = getStoreApi();
   if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
   const list = api.getShops();
-  console.log('[ShopStore] 导出 JSON:', JSON.stringify(list, null, 2));
-  toastr.info('JSON 已输出到控制台', '店铺存储');
+  const json = JSON.stringify(list, null, 2);
+  console.log('[ShopStore] 导出 JSON:', json);
+
+  // 生成下载文件（浏览器端）
+  try {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const topDoc = (window.top || window).document;
+    const a = topDoc.createElement('a');
+    const ts = new Date();
+    const pad = (n: number) => `${n}`.padStart(2, '0');
+    const stamp = `${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(
+      ts.getMinutes(),
+    )}${pad(ts.getSeconds())}`;
+    a.href = url;
+    a.download = `shops_${stamp}.json`;
+    topDoc.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    toastr.success(`已保存 ${list.length} 家店铺为文件 shops_${stamp}.json`, '店铺存储');
+  } catch (e) {
+    try {
+      // 部分 iframe 环境禁止 download，退回 data URL 方式
+      const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(json)}`;
+      window.open(dataUrl, '_blank');
+      toastr.info(`已在新标签页打开 JSON（共 ${list.length} 家）`, '店铺存储');
+    } catch (err) {
+      console.warn('[ShopStore] 文件导出失败，已退回控制台输出', err);
+      toastr.warning('文件导出失败，已在控制台输出 JSON', '店铺存储');
+    }
+  }
+});
+
+// 切换跨聊天共享开关
+eventOn(getButtonEvent('切换店铺跨聊天保留'), () => {
+  const newSetting = { ...settings, keep_cross_chat: !settings.keep_cross_chat };
+  replaceVariables(newSetting, { type: 'script', script_id: getScriptId() });
+  settings.keep_cross_chat = newSetting.keep_cross_chat;
+  // 清理当前存储，防止作用域切换时旧数据混入
+  writeShopStore([]);
+  toastr.success(`跨聊天保留店铺：${newSetting.keep_cross_chat ? '开启' : '关闭'}`, '店铺存储');
 });
 
 // 监听消息发送完成事件，在新消息产生后自动检查

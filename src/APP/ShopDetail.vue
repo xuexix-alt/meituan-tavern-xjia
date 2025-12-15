@@ -76,7 +76,6 @@ const shopPackages = ref<any[]>([]);
 
 // 店铺持久化逻辑 (与脚本端保持一致)
 const SHOP_STORE_KEY = 'shop_store_cache';
-const MAX_SHOP_COUNT = 10;
 
 type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
 
@@ -108,20 +107,7 @@ function normalizeShops(raw: any[]): StoredShop[] {
     .map(s => ({
       ...s,
       id: String(s.id),
-      __savedAt: Date.now(),
     }));
-}
-
-function mergeAndCap(shops: StoredShop[], incoming: StoredShop[]): StoredShop[] {
-  const map = new Map<string, StoredShop>();
-  // 先放新数据，后放旧数据；同 id 以新覆盖
-  [...incoming, ...shops].forEach(s => {
-    if (!map.has(s.id)) map.set(s.id, s);
-  });
-  const result = Array.from(map.values())
-    .sort((a, b) => (b.__savedAt || 0) - (a.__savedAt || 0))
-    .slice(0, MAX_SHOP_COUNT);
-  return result;
 }
 
 // 初始化
@@ -133,24 +119,19 @@ onMounted(async () => {
   // 1. 读取现有缓存
   const existingShops = readShopStore();
 
-  // 2. 规范化当前解析到的店铺数据
-  const incomingShops = normalizeShops(data.shops || []);
+  // 2. 使用解析结果（已由脚本追加到全局），若为空则兜底用缓存
+  const parsedShops = normalizeShops(data.shops || []);
+  const shopsToUse = parsedShops.length > 0 ? parsedShops : existingShops;
 
-  // 3. 合并并保存
-  const mergedShops = mergeAndCap(existingShops, incomingShops);
-  if (incomingShops.length > 0) {
-    writeShopStore(mergedShops);
-  }
-
-  // 4. 查找目标店铺 (优先从合并后的列表中找，这样能找到缓存的店铺)
-  shopInfo.value = mergedShops.find(matcher) || null;
+  // 3. 查找目标店铺
+  shopInfo.value = shopsToUse.find(matcher) || null;
 
   if (shopInfo.value) {
     shopPackages.value = shopInfo.value.packages || [];
   } else {
     // 兜底：从合并后的套餐列表里按 shop_id 匹配
     const allPkgs =
-      (data.packages && data.packages.length ? data.packages : mergedShops.flatMap(s => s.packages || [])) || [];
+      (data.packages && data.packages.length ? data.packages : shopsToUse.flatMap(s => s.packages || [])) || [];
     shopPackages.value = allPkgs.filter((p: any) => String(p.shop_id) === String(shopIdParam));
   }
 });
