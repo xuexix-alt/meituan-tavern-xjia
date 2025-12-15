@@ -63,13 +63,7 @@
       </div>
     </div>
   </div>
-  <input
-    ref="fileInput"
-    class="hidden-input"
-    type="file"
-    accept=".json,application/json"
-    @change="handleFileChange"
-  />
+  <input ref="fileInput" class="hidden-input" type="file" accept=".json,application/json" @change="handleFileChange" />
 </template>
 
 <script setup lang="ts">
