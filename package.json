@@ -6,7 +6,12 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}\"",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
+<<<<<<< HEAD
     "dump": "node dump_schema.ts"
+=======
+    "dump": "node dump_schema.ts",
+    "sync": "node tavern_sync.mjs"
+>>>>>>> 0e948b9223792b104f49d1f93f2cc513d8f9ca8d
   },
   "browserslist": [
     "defaults and partially supports es6-module"
@@ -70,18 +75,28 @@
     "vue-eslint-parser": "^10.2.0",
     "vue-loader": "^17.4.2",
     "vue-style-loader": "^4.1.3",
+<<<<<<< HEAD
     "vue-tsc": "^3.1.8",
+=======
+>>>>>>> 0e948b9223792b104f49d1f93f2cc513d8f9ca8d
     "webpack": "^5.103.0",
     "webpack-cli": "^6.0.1",
     "webpack-obfuscator": "^3.6.0"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@fortawesome/fontawesome-free": "^6.7.2",
+=======
+>>>>>>> 0e948b9223792b104f49d1f93f2cc513d8f9ca8d
     "@pixi/react": "8.0.0-beta.25",
     "@vueuse/components": "^14.1.0",
     "@vueuse/core": "^13.9.0",
     "@vueuse/integrations": "^13.9.0",
     "@vueuse/shared": "^13.9.0",
+<<<<<<< HEAD
+=======
+    "compare-versions": "^6.1.1",
+>>>>>>> 0e948b9223792b104f49d1f93f2cc513d8f9ca8d
     "dedent": "^1.7.0",
     "gsap": "^3.14.2",
     "jquery": "^3.7.1",
