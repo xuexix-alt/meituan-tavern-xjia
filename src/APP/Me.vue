@@ -331,21 +331,21 @@ onMounted(async () => {
       }
     }
 
-  // 备用：从最新一条用户消息读取 name
-  if (username.value === '玩家') {
-    try {
-      const msgs = await getChatMessages('latest');
-      const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
-      const nameFromMsg = userMsg?.name || userMsg?.extra?.name;
-      if (nameFromMsg) {
-        username.value = String(nameFromMsg);
-        console.log('从消息获取用户名:', username.value);
+    // 备用：从最新一条用户消息读取 name
+    if (username.value === '玩家') {
+      try {
+        const msgs = await getChatMessages('latest');
+        const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
+        const nameFromMsg = userMsg?.name || userMsg?.extra?.name;
+        if (nameFromMsg) {
+          username.value = String(nameFromMsg);
+          console.log('从消息获取用户名:', username.value);
+        }
+      } catch (e) {
+        console.log('从消息获取用户名失败', e);
       }
-    } catch (e) {
-      console.log('从消息获取用户名失败', e);
     }
-  }
-} catch (e) {
+  } catch (e) {
     console.log('获取SillyTavern信息失败:', e);
   }
 

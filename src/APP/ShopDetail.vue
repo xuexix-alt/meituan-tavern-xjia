@@ -26,18 +26,18 @@
         <div class="section-header">
           <h3>精选套餐</h3>
         </div>
-<div class="package-list">
-  <div v-if="shopPackages.length === 0" class="empty-state">
-    <i class="fas fa-box-open"></i>
-    <p>该店铺暂无套餐</p>
-  </div>
-  <div
-    v-for="pkg in shopPackages"
-    :key="pkg.id"
-    class="package-card"
-    :data-id="pkg.id"
-    @click="goItemDetail(pkg)"
-  >
+        <div class="package-list">
+          <div v-if="shopPackages.length === 0" class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <p>该店铺暂无套餐</p>
+          </div>
+          <div
+            v-for="pkg in shopPackages"
+            :key="pkg.id"
+            class="package-card"
+            :data-id="pkg.id"
+            @click="goItemDetail(pkg)"
+          >
             <div class="avatar-text">
               <i v-if="pkg.icon" :class="pkg.icon"></i>
               <span v-else>套餐</span>

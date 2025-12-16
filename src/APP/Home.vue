@@ -68,7 +68,9 @@
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">经常被截断推荐默认的非js生成模式，破限不完全的预设搜不出明星，只能搜出高仿货🤣</span>
+                  <span class="notice-text"
+                    >经常被截断推荐默认的非js生成模式，破限不完全的预设搜不出明星，只能搜出高仿货🤣</span
+                  >
                 </div>
               </div>
               <div class="panel-header mt-3">
