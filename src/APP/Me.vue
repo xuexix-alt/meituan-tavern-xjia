@@ -13,7 +13,8 @@
       <div class="user-profile-card">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <i class="fas fa-user"></i>
+            <img v-if="userAvatar" :src="userAvatar" alt="avatar" />
+            <i v-else class="fas fa-user"></i>
           </div>
           <div class="avatar-badge">
             <i class="fas fa-crown"></i>
@@ -112,14 +113,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 
-// 酒馆宏替换函数声明
-declare global {
-  interface Window {
-    replaceMacros: (macro: string) => Promise<string>;
-    _?: typeof import('lodash');
-  }
-}
-
 // 安全获取嵌套对象属性的工具函数，替代 _.get
 function safeGet<T = any>(obj: any, path: string, defaultValue: T = undefined as any): T {
   if (!obj || typeof obj !== 'object') return defaultValue;
@@ -136,6 +129,7 @@ function safeGet<T = any>(obj: any, path: string, defaultValue: T = undefined as
 const isDarkMode = ref(false);
 const fullStatData = ref<any>(null);
 const username = ref<string>('玩家'); // 默认用户名
+const userAvatar = ref<string>(''); // 用户头像 URL
 
 // 统计数据
 const accountBalance = computed(() => {
@@ -196,10 +190,33 @@ function regenerateShops() {
   sendToAI('/send 生成-首页-熟人店铺2个-路人店铺2个');
 }
 
-// 获取用户头像 - 简化版本，使用默认图标
-function getUserAvatar(): boolean {
-  // 暂时不实现复杂头像获取，使用默认用户图标
-  console.log('使用默认用户头像图标');
+// 获取用户头像
+async function getUserAvatar(): Promise<boolean> {
+  // 优先：从最新一条用户消息中尝试读取头像
+  try {
+    const msgs = await getChatMessages('latest');
+    const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
+    const avatarFromMsg = userMsg?.extra?.avatar || userMsg?.avatar || userMsg?.extra?.avatar_url;
+    if (avatarFromMsg) {
+      userAvatar.value = avatarFromMsg;
+      return true;
+    }
+  } catch (e) {
+    console.log('从消息获取头像失败', e);
+  }
+
+  // 备用：SillyTavern 全局头像（部分分支提供）
+  try {
+    const st = (window.top as any)?.SillyTavern || (window as any).SillyTavern;
+    const avatar = st?.userAvatar || st?.userAvatarUrl || st?.avatar;
+    if (avatar) {
+      userAvatar.value = avatar;
+      return true;
+    }
+  } catch (e) {
+    console.log('从 SillyTavern 获取头像失败', e);
+  }
+
   return false;
 }
 
@@ -230,10 +247,32 @@ async function initDisplay() {
 }
 
 async function getChatMessages(messageId: string) {
+  // 先用酒馆原生 API（含 name/avatar），再退回 MVU 数据
+  try {
+    const nativeGet = (window.top as any)?.getChatMessages || (window as any).getChatMessages;
+    if (typeof nativeGet === 'function') {
+      const msgs = nativeGet(messageId || 'latest');
+      if (Array.isArray(msgs) && msgs.length) return msgs;
+    }
+  } catch (e) {
+    console.log('native getChatMessages 失败，尝试 MVU', e);
+  }
+
   try {
     if (typeof (window as any).Mvu === 'undefined' || !(window as any).Mvu.getMvuData) return [];
     const response = (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
-    return response && response.stat_data ? [{ data: response }] : [];
+    // 保留原结构，同时附上 name/avatar 方便兜底读取
+    if (response) {
+      const extraMsg = {
+        name: response?.name,
+        avatar: response?.avatar,
+        extra: response?.extra || {},
+        is_user: response?.role === 'user' || response?.is_user,
+        data: response,
+      };
+      return [extraMsg];
+    }
+    return [];
   } catch (error) {
     console.error('获取消息失败:', error);
     return [];
@@ -258,40 +297,60 @@ onMounted(async () => {
     );
   }
 
-  // 尝试从 SillyTavern 获取用户名
+  // 尝试从 SillyTavern 获取用户名（不再调用 replaceMacros，避免 _.get 缺失报错）
   try {
-    // 使用 window 访问全局对象，避免类型声明冲突
-    const sillyTavern = (window as any).SillyTavern;
+    // SillyTavern 全局
+    const sillyTavern = (window.top as any)?.SillyTavern || (window as any).SillyTavern;
     if (sillyTavern?.name1) {
       username.value = sillyTavern.name1;
       console.log('从 SillyTavern 获取用户名:', username.value);
-    } else {
-      // 尝试从全局变量获取
-      try {
-        // 确保 getVariables 函数存在且 lodash 已加载
-        const getVariablesFn = (window as any).getVariables;
-        const lodash = window._;
-        if (typeof getVariablesFn === 'function' && lodash && typeof lodash.get === 'function') {
-          const globalVars = getVariablesFn({ type: 'global' });
-          if (globalVars?.user_name) {
-            username.value = globalVars.user_name;
-            console.log('从全局变量获取用户名:', username.value);
-          } else {
-            console.log('未找到用户名，使用默认:', username.value);
-          }
+    }
+
+    // 备用：全局变量
+    if (username.value === '玩家') {
+      const getVariablesFn = (window as any).getVariables;
+      if (typeof getVariablesFn === 'function') {
+        const globalVars = getVariablesFn({ type: 'global' });
+        if (globalVars?.user_name) {
+          username.value = globalVars.user_name;
+          console.log('从全局变量获取用户名:', username.value);
         } else {
-          console.log('酒馆环境未就绪，使用默认用户名');
+          console.log('未找到用户名，使用默认:', username.value);
         }
-      } catch (e) {
-        console.log('获取全局变量失败:', e);
+      } else {
+        console.log('酒馆环境未就绪，使用默认用户名');
       }
     }
-  } catch (e) {
+
+    // 备用：localStorage 猜测键
+    if (username.value === '玩家') {
+      const lsUser = localStorage.getItem('username') || localStorage.getItem('user_name');
+      if (lsUser && lsUser.trim()) {
+        username.value = lsUser.trim();
+        console.log('从 localStorage 获取用户名:', username.value);
+      }
+    }
+
+  // 备用：从最新一条用户消息读取 name
+  if (username.value === '玩家') {
+    try {
+      const msgs = await getChatMessages('latest');
+      const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
+      const nameFromMsg = userMsg?.name || userMsg?.extra?.name;
+      if (nameFromMsg) {
+        username.value = String(nameFromMsg);
+        console.log('从消息获取用户名:', username.value);
+      }
+    } catch (e) {
+      console.log('从消息获取用户名失败', e);
+    }
+  }
+} catch (e) {
     console.log('获取SillyTavern信息失败:', e);
   }
 
-  // 初始化头像（使用默认图标）
-  getUserAvatar();
+  // 初始化头像（优先真实头像）
+  await getUserAvatar();
 
   await initDisplay();
 });
@@ -383,6 +442,7 @@ onMounted(async () => {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        display: block;
       }
 
       i {

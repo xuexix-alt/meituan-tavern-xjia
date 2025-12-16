@@ -19,6 +19,36 @@ const settings = ScriptSettings.parse(getVariables({ type: 'script', script_id: 
 // ================== 店铺持久化 ==================
 type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
 const SHOP_STORE_KEY = 'shop_store_cache';
+const MAX_IMPORT_ITEMS = 200;
+
+function emitShopEvent(event: 'shop:cache:updated', payload: any) {
+  try {
+    window.dispatchEvent(new CustomEvent(event, { detail: payload }));
+  } catch (e) {
+    console.warn('[ShopStore] 事件派发失败', e);
+  }
+}
+
+function hashKey(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return hash.toString(16);
+}
+
+function checksumPayload(str: string) {
+  let sum = 0;
+  for (let i = 0; i < str.length; i++) {
+    sum = (sum + str.charCodeAt(i)) % 65536;
+  }
+  return sum.toString(16);
+}
+
+function buildShopId(s: any) {
+  if (s?.id) return String(s.id);
+  if (s?.shop_id) return String(s.shop_id);
+  const basis = [s?.name, s?.address, s?.city].filter(Boolean).join('|');
+  return `shop_${hashKey(basis || JSON.stringify(s || {}))}`;
+}
 
 function getStoreScope() {
   // 根据开关决定是全局还是当前聊天作用域
@@ -43,6 +73,7 @@ function writeShopStore(shops: StoredShop[]) {
   try {
     console.log('[ShopStore] 写入全局缓存:', shops);
     replaceVariables({ [SHOP_STORE_KEY]: shops }, getStoreScope());
+    emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: shops.length, op: 'write' });
   } catch (e) {
     console.warn('[ShopStore] 写入失败', e);
   }
@@ -51,12 +82,16 @@ function writeShopStore(shops: StoredShop[]) {
 function normalizeShops(raw: any[]): StoredShop[] {
   if (!Array.isArray(raw)) return [];
   return raw
-    .filter(s => s && s.id)
-    .map(s => ({
-      ...s,
-      id: String(s.id), // 统一为字符串，便于路由匹配
-      __savedAt: Date.now(),
-    }));
+    .filter(s => !!s)
+    .slice(0, MAX_IMPORT_ITEMS)
+    .map(s => {
+      const id = buildShopId(s);
+      return {
+        ...s,
+        id,
+        __savedAt: Date.now(),
+      };
+    });
 }
 
 function saveShopsToStore(newShops: any[]) {
@@ -64,18 +99,21 @@ function saveShopsToStore(newShops: any[]) {
   const incoming = normalizeShops(newShops);
   if (incoming.length === 0) return existing;
 
-  // 只追加“未出现过的 id”，避免同一楼层反复解析导致数量无限增长
-  const existingIds = new Set(existing.map(s => s.id));
-  const toAppend = incoming.filter(s => !existingIds.has(s.id));
-  const appended = toAppend.length > 0 ? [...existing, ...toAppend] : existing;
-  writeShopStore(appended);
-  return appended;
+  // 使用 Map 进行合并，支持更新现有 ID 的数据
+  const shopMap = new Map<string, StoredShop>();
+  existing.forEach(s => shopMap.set(s.id, s));
+  incoming.forEach(s => shopMap.set(s.id, s));
+
+  const merged = Array.from(shopMap.values());
+  writeShopStore(merged);
+  return merged;
 }
 
 function deleteShopFromStore(shopId: string) {
   const existing = readShopStore();
   const filtered = existing.filter(s => s.id !== shopId);
   writeShopStore(filtered);
+  emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: filtered.length, op: 'delete', id: shopId });
   return filtered;
 }
 
@@ -84,7 +122,10 @@ function getStoreApi() {
     getShops: () => readShopStore(),
     saveShops: (shops: any[]) => saveShopsToStore(shops),
     deleteShop: (id: string) => deleteShopFromStore(id),
-    clear: () => writeShopStore([]),
+    clear: () => {
+      writeShopStore([]);
+      emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: 0, op: 'clear' });
+    },
   };
 }
 
@@ -122,7 +163,7 @@ function getCurrentFloorMessages(): Array<{ role: string; content: string; id: s
   return messages.map(msg => ({
     role: msg.role,
     content: msg.message || '',
-    id: msg.id,
+    id: (msg as any).id || '', // 类型断言绕过检查
   }));
 }
 
@@ -228,7 +269,10 @@ eventOn(getButtonEvent('检查占位符'), () => {
 // 店铺存储快捷按钮
 eventOn(getButtonEvent('查看已存店铺'), () => {
   const api = getStoreApi();
-  if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
+  if (!api) {
+    toastr.warning('ShopStore 未初始化', '店铺存储');
+    return;
+  }
   const list = api.getShops();
   console.log('[ShopStore] 当前店铺列表:', list);
   toastr.info(`已存 ${list.length} 个店铺`, '店铺存储');
@@ -236,16 +280,28 @@ eventOn(getButtonEvent('查看已存店铺'), () => {
 
 eventOn(getButtonEvent('清空店铺缓存'), () => {
   const api = getStoreApi();
-  if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
+  if (!api) {
+    toastr.warning('ShopStore 未初始化', '店铺存储');
+    return;
+  }
   api.clear();
   toastr.success('店铺缓存已清空', '店铺存储');
 });
 
 eventOn(getButtonEvent('导出店铺JSON'), () => {
   const api = getStoreApi();
-  if (!api) return toastr.warning('ShopStore 未初始化', '店铺存储');
+  if (!api) {
+    toastr.warning('ShopStore 未初始化', '店铺存储');
+    return;
+  }
   const list = api.getShops();
-  const json = JSON.stringify(list, null, 2);
+  const payload = {
+    version: 'v1',
+    generatedAt: new Date().toISOString(),
+    checksum: checksumPayload(JSON.stringify(list)),
+    shops: list,
+  };
+  const json = JSON.stringify(payload, null, 2);
   console.log('[ShopStore] 导出 JSON:', json);
 
   // 生成下载文件（浏览器端）
@@ -290,7 +346,7 @@ eventOn(getButtonEvent('切换店铺跨聊天保留'), () => {
 });
 
 // 监听消息发送完成事件，在新消息产生后自动检查
-eventOn(tavern_events.MESSAGE_SENT, (messageId: string) => {
+eventOn(tavern_events.MESSAGE_SENT, (_messageId: number) => {
   if (settings.auto_insert && settings.enabled) {
     console.log('[前端占位符] 消息发送完成，自动检查');
     // 延迟执行，确保消息已保存
@@ -310,10 +366,12 @@ eventOn(tavern_events.CHAT_CHANGED, (newChatId: string) => {
 // 导出设置更新函数
 // =============================================================================
 
+type ScriptSettingsType = z.infer<typeof ScriptSettings>;
+
 /**
  * 更新设置
  */
-export function updateSettings(newSettings: Partial<ScriptSettings>): void {
+export function updateSettings(newSettings: Partial<ScriptSettingsType>): void {
   const updated = { ...settings, ...newSettings };
   replaceVariables(updated, { type: 'script', script_id: getScriptId() });
 
@@ -325,7 +383,7 @@ export function updateSettings(newSettings: Partial<ScriptSettings>): void {
 /**
  * 获取当前设置
  */
-export function getSettings(): ScriptSettings {
+export function getSettings(): ScriptSettingsType {
   return ScriptSettings.parse(getVariables({ type: 'script', script_id: getScriptId() }));
 }
 

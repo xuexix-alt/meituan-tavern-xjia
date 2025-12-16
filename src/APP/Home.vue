@@ -39,7 +39,7 @@
                     <i class="fas fa-heart"></i>
                   </div>
                 </div>
-                <div class="version-info">v3.0.0.beta2</div>
+                <div class="version-info">v3.0.0.beta3</div>
               </div>
             </div>
 
@@ -52,23 +52,23 @@
               <div class="panel-content">
                 <div class="notice-item">
                   <span class="notice-tag">活动</span>
-                  <span class="notice-text">新增“国企往事”DLC 挂载世界书后点击即可</span>
+                  <span class="notice-text">新增“国企往事”DLC，挂载世界书后点击即可</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">要养成告诉AI“结束xx订单”的好习惯 </span>
+                  <span class="notice-text">现在店铺脚本有快捷按钮导出JSON，欢迎分享到发布贴中供大家品尝 </span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">当前生成前的前10店铺可以跨楼层保留。</span>
+                  <span class="notice-text">当前推荐非json格式的APP生成方式，深度为0，顺序-1，根据预设情况调整</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">搜索时最好注明店铺与套餐数量 部分截断也可以解析到</span>
+                  <span class="notice-text">截断问题多出自预设和正则，我也没有更好的办法，不行你就还我的预设</span>
                 </div>
                 <div class="notice-item">
                   <span class="notice-tag">更新</span>
-                  <span class="notice-text">经常被截断可以在世界书切换yaml和json两种生成尝试</span>
+                  <span class="notice-text">经常被截断推荐默认的非js生成模式，破限不完全的预设搜不出明星，只能搜出高仿货🤣</span>
                 </div>
               </div>
               <div class="panel-header mt-3">
@@ -77,7 +77,7 @@
               </div>
               <div class="panel-content">
                 <p class="instruction-text">
-                  1. 首页生成店铺后需要进发现页面才能查看店铺，并在那里下单<br />
+                  1. 女孩你不想玩了最好向AI下指令‘结束服务’<br />
                   2. 搜某种类别时最好加上“X店铺每个x套餐”<br />
                   3. 搜索模版：85后女明星集锦：2个店铺每个3个套餐<br />
                   4. 世界书有二选一模式，如果常截断可以试试不同框架

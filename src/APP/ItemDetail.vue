@@ -136,6 +136,18 @@ const itemData = ref<any>(null);
 const activeTab = ref('content');
 const showModal = ref(false);
 const remarkText = ref('');
+const shopStoreApi = ref<any>(null);
+const fallbackLogPrinted = ref(false);
+
+function dedupePackages(list: any[]) {
+  const map = new Map<string, any>();
+  list.forEach(p => {
+    if (!p) return;
+    const id = p.id ? String(p.id) : '';
+    if (id && !map.has(id)) map.set(id, p);
+  });
+  return Array.from(map.values());
+}
 
 // 显示备注模态框
 function showRemarkModal() {
@@ -187,10 +199,44 @@ function sendToAI(message: string) {
 }
 
 // 初始化
-onMounted(() => {
-  const data = extractDataFromMessage();
+onMounted(async () => {
   const itemId = route.params.id as string;
-  itemData.value = data.packages.find(p => p.id === itemId);
+
+  // 1) 解析当前楼层
+  const parsed = extractDataFromMessage().packages || [];
+
+  // 2) 读取 ShopStore 缓存（若可用）
+  let cached: any[] = [];
+  try {
+    await waitGlobalInitialized('ShopStore');
+    shopStoreApi.value = (window as any).ShopStore;
+    cached = (shopStoreApi.value?.getShops?.() || []).flatMap((s: any) => s.packages || []);
+  } catch (e) {
+    console.warn('[ItemDetail] ShopStore 不可用，使用解析数据', e);
+  }
+
+  const combined = dedupePackages([...parsed, ...cached]);
+  itemData.value = combined.find(p => String(p.id) === String(itemId));
+
+  // 3) 若按 id 未命中，尝试按名称/价格最相近的套餐兜底
+  if (!itemData.value) {
+    const fromQueryName = route.query?.name as string | undefined;
+    if (fromQueryName) {
+      itemData.value = combined.find(p => p.name === fromQueryName);
+    }
+  }
+  if (!itemData.value && combined.length > 0) {
+    itemData.value = combined[0];
+    if (!fallbackLogPrinted.value) {
+      console.warn('[ItemDetail] 未匹配到相同 ID，已兜底使用首个套餐', {
+        want: itemId,
+        candidates: combined.slice(0, 5).map(p => p.id),
+      });
+      fallbackLogPrinted.value = true;
+    }
+  }
+
+  console.log('[ItemDetail] loaded item:', itemData.value);
 });
 </script>
 

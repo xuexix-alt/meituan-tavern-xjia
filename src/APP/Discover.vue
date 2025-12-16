@@ -63,22 +63,36 @@
       </div>
     </div>
   </div>
-  <input
-    ref="fileInput"
-    class="hidden-input"
-    type="file"
-    accept=".json,application/json"
-    @change="handleFileChange"
-  />
+  <input ref="fileInput" class="hidden-input" type="file" accept=".json,application/json" @change="handleFileChange" />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { extractDataFromMessage } from './dataParser';
 
 const shops = ref<any[]>([]);
 const shopStoreApi = ref<any>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+const MAX_IMPORT_ITEMS = 200;
+const MAX_IMPORT_SIZE_MB = 5;
+
+function dedupeShops(list: any[]) {
+  const map = new Map<string, any>();
+  list.forEach(s => {
+    if (!s) return;
+    const id = s.id ? String(s.id) : '';
+    if (id && !map.has(id)) {
+      map.set(id, s);
+      return;
+    }
+    // fallback 按 name 去重
+    if (!id && s.name) {
+      const key = `name_${s.name}`;
+      if (!map.has(key)) map.set(key, s);
+    }
+  });
+  return Array.from(map.values());
+}
 
 // 初始化
 onMounted(async () => {
@@ -89,10 +103,82 @@ onMounted(async () => {
     console.warn('[Discover] ShopStore 未就绪，使用临时数据', e);
   }
 
+  // 1. 获取现有缓存
+  const existingShops = shopStoreApi.value?.getShops() || [];
+
+  // 2. 获取当前解析数据
   const data = extractDataFromMessage();
-  shops.value = data.shops;
-  shopStoreApi.value?.saveShops(shops.value);
-  console.log('[Discover] 已加载', shops.value.length, '个店铺');
+  const parsedShops = data.shops || [];
+
+  // 3. 合并 (优先保留新解析的数据，基于 id 去重)
+  const combinedShops = [...parsedShops, ...existingShops];
+  const uniqueById = Array.from(new Map(combinedShops.map(s => [s.id, s])).values());
+  // 确保 id 始终为字符串，避免路由/去重错判
+  uniqueById.forEach(s => (s.id = String(s.id)));
+
+  // 4. 高级清洗：基于店名去重，自动清理重复的垃圾数据
+  const nameMap = new Map<string, any[]>();
+  uniqueById.forEach(s => {
+    if (!s.name || s.name === '未命名店铺') return; // 跳过无效名
+    const list = nameMap.get(s.name) || [];
+    list.push(s);
+    nameMap.set(s.name, list);
+  });
+
+  const finalShops: any[] = [];
+  const idsToDelete: string[] = [];
+
+  // 处理有名字的店铺
+  nameMap.forEach(group => {
+    if (group.length === 1) {
+      finalShops.push(group[0]);
+    } else {
+      // 出现重复，选出一个保留
+      // 优先级：shop_名字 > shop_auto_ > 其他
+      group.sort((a, b) => {
+        const score = (id: string, name: string) => {
+          if (id === `shop_${name}`) return 3;
+          if (id.includes('_auto_')) return 2;
+          return 1;
+        };
+        return score(b.id, b.name) - score(a.id, a.name);
+      });
+
+      const winner = group[0];
+      finalShops.push(winner);
+      // 标记其余的为待删除
+      for (let i = 1; i < group.length; i++) {
+        idsToDelete.push(group[i].id);
+      }
+    }
+  });
+
+  // 把那些没有名字的店铺也加回来 (如果不希望保留无名店铺，可以注释掉)
+  uniqueById.forEach(s => {
+    if (!s.name || s.name === '未命名店铺') {
+      finalShops.push(s);
+    }
+  });
+
+  // 5. 执行清理和更新
+  shops.value = finalShops;
+
+  // 异步执行清理，避免阻塞
+  if (idsToDelete.length > 0) {
+    console.log('[Discover] 自动清理重复店铺:', idsToDelete);
+    idsToDelete.forEach(id => shopStoreApi.value?.deleteShop(id));
+  }
+
+  if (parsedShops.length > 0) {
+    shopStoreApi.value?.saveShops(finalShops);
+  }
+
+  console.log('[Discover] 已加载', shops.value.length, '个店铺 (清洗后)');
+
+  // 监听缓存更新事件
+  window.addEventListener('shop:cache:updated', () => {
+    shops.value = dedupeShops(shopStoreApi.value?.getShops() || []);
+  });
 });
 
 function deleteShop(id: string) {
@@ -110,25 +196,80 @@ function handleFileChange(event: Event) {
   const files = input.files;
   if (!files || files.length === 0) return;
   const file = files[0];
+  if (file.size > MAX_IMPORT_SIZE_MB * 1024 * 1024) {
+    toastr.error(`文件过大（>${MAX_IMPORT_SIZE_MB}MB）`, '导入失败');
+    input.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const text = String(reader.result || '');
       const parsed = JSON.parse(text);
+
+      // 版本信息检查
+      let versionInfo = '';
+      let importWarning = '';
+
+      if (parsed.version) {
+        versionInfo = ` v${parsed.version}`;
+
+        // 显示版本信息
+        if (parsed.generatedAt) {
+          const exportDate = new Date(parsed.generatedAt).toLocaleString('zh-CN');
+          versionInfo += ` (导出时间: ${exportDate})`;
+        }
+      }
+
+      // 检查校验和（如果存在）
+      if (parsed.checksum && parsed.shops) {
+        const currentChecksum = checksumPayload(JSON.stringify(parsed.shops));
+        if (currentChecksum !== parsed.checksum) {
+          importWarning = '数据校验和不匹配，文件可能已被修改';
+        }
+      }
+
+      // 显示版本信息提示
+      if (versionInfo) {
+        const currentVersion = 'v1'; // 当前APP支持的版本
+        if (parsed.version !== currentVersion) {
+          toastr.warning(`文件版本${versionInfo}，当前APP版本${currentVersion}，请检查版本兼容性`, '版本信息');
+        } else {
+          toastr.info(`文件版本${versionInfo}`, '版本信息');
+        }
+      }
+
+      // 显示警告信息
+      if (importWarning) {
+        toastr.warning(importWarning, '导入提示');
+      }
+
       const rawShops = Array.isArray(parsed)
         ? parsed
         : Array.isArray((parsed as any)?.shops)
           ? (parsed as any).shops
           : [parsed];
-      const cleaned = (rawShops || [])
-        .map((s: any) => (s && (s.id || s.name) ? { ...s, id: s.id ? String(s.id) : String(s.name) } : null))
-        .filter(Boolean);
+      const cleaned = dedupeShops(
+        (rawShops || [])
+          .map((s: any) => {
+            if (!s || (!s.id && !s.name)) return null;
+            let id = s.id ? String(s.id) : '';
+            if (!id && s.name) {
+              id = `shop_${s.name}`;
+            }
+            return { ...s, id };
+          })
+          .filter(Boolean),
+      ).slice(0, MAX_IMPORT_ITEMS);
       if (!cleaned.length) {
         toastr.error('你的json格式错误', '导入失败');
+      } else if (cleaned.length > MAX_IMPORT_ITEMS) {
+        toastr.warning(`最多导入 ${MAX_IMPORT_ITEMS} 条，已自动截断`, '导入提示');
       } else {
         shops.value = cleaned as any[];
         shopStoreApi.value?.saveShops(shops.value);
-        toastr.success(`从文件导入 ${cleaned.length} 个店铺`, '导入成功');
+        const successMsg = `从文件导入 ${cleaned.length} 个店铺${versionInfo}`;
+        toastr.success(successMsg, '导入成功');
       }
     } catch (e) {
       console.warn('[Discover] 导入失败', e);
@@ -138,6 +279,15 @@ function handleFileChange(event: Event) {
     }
   };
   reader.readAsText(file);
+}
+
+// 辅助函数：计算校验和
+function checksumPayload(str: string) {
+  let sum = 0;
+  for (let i = 0; i < str.length; i++) {
+    sum = (sum + str.charCodeAt(i)) % 65536;
+  }
+  return sum.toString(16);
 }
 </script>
 

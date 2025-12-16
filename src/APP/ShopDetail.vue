@@ -26,12 +26,18 @@
         <div class="section-header">
           <h3>精选套餐</h3>
         </div>
-        <div class="package-list">
-          <div v-if="shopPackages.length === 0" class="empty-state">
-            <i class="fas fa-box-open"></i>
-            <p>该店铺暂无套餐</p>
-          </div>
-          <div v-for="pkg in shopPackages" :key="pkg.id" class="package-card" @click="$router.push(`/item/${pkg.id}`)">
+<div class="package-list">
+  <div v-if="shopPackages.length === 0" class="empty-state">
+    <i class="fas fa-box-open"></i>
+    <p>该店铺暂无套餐</p>
+  </div>
+  <div
+    v-for="pkg in shopPackages"
+    :key="pkg.id"
+    class="package-card"
+    :data-id="pkg.id"
+    @click="goItemDetail(pkg)"
+  >
             <div class="avatar-text">
               <i v-if="pkg.icon" :class="pkg.icon"></i>
               <span v-else>套餐</span>
@@ -69,72 +75,69 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { extractDataFromMessage } from './dataParser';
+import { useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const shopInfo = ref<any>(null);
 const shopPackages = ref<any[]>([]);
 
-// 店铺持久化逻辑 (与脚本端保持一致)
-const SHOP_STORE_KEY = 'shop_store_cache';
-
 type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
+const SHOP_STORE_KEY = 'shop_store_cache';
+const shopStoreApi = ref<any>(null);
 
-function readShopStore(): StoredShop[] {
-  try {
-    const vars = getVariables({ type: 'global' }) || {};
-    const list = (vars as any)[SHOP_STORE_KEY];
-    console.log('[ShopDetail] 读取全局缓存:', list);
-    return Array.isArray(list) ? list : [];
-  } catch (e) {
-    console.warn('[ShopDetail] 读取缓存失败', e);
-    return [];
-  }
-}
-
-function writeShopStore(shops: StoredShop[]) {
-  try {
-    console.log('[ShopDetail] 写入全局缓存:', shops);
-    replaceVariables({ [SHOP_STORE_KEY]: shops }, { type: 'global' });
-  } catch (e) {
-    console.warn('[ShopDetail] 写入缓存失败', e);
-  }
-}
-
-function normalizeShops(raw: any[]): StoredShop[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter(s => s && s.id)
-    .map(s => ({
-      ...s,
-      id: String(s.id),
-    }));
+function dedupe(list: StoredShop[]) {
+  const map = new Map<string, StoredShop>();
+  list.forEach(s => {
+    if (!s) return;
+    const id = s.id ? String(s.id) : '';
+    if (id && !map.has(id)) map.set(id, { ...s, id });
+  });
+  return Array.from(map.values());
 }
 
 // 初始化
 onMounted(async () => {
+  try {
+    await waitGlobalInitialized('ShopStore');
+    shopStoreApi.value = (window as any).ShopStore;
+  } catch (e) {
+    console.warn('[ShopDetail] ShopStore 未就绪，使用全局变量兜底', e);
+  }
+
   const data = extractDataFromMessage();
   const shopIdParam = route.params.id as string;
   const matcher = (s: any) => String(s.id) === String(shopIdParam);
 
-  // 1. 读取现有缓存
-  const existingShops = readShopStore();
+  // 1. 读取解析数据和缓存数据
+  const parsedShops = dedupe((data.shops || []) as any);
+  const existingShops = shopStoreApi.value?.getShops?.() || [];
 
-  // 2. 使用解析结果（已由脚本追加到全局），若为空则兜底用缓存
-  const parsedShops = normalizeShops(data.shops || []);
-  const shopsToUse = parsedShops.length > 0 ? parsedShops : existingShops;
+  // 2. 合并去重
+  const combinedShops = dedupe([...parsedShops, ...existingShops]);
 
-  // 3. 查找目标店铺
-  shopInfo.value = shopsToUse.find(matcher) || null;
+  // 3. 更新缓存
+  shopStoreApi.value?.saveShops?.(combinedShops);
+
+  // 4. 查找目标店铺
+  shopInfo.value = combinedShops.find(matcher) || null;
 
   if (shopInfo.value) {
-    shopPackages.value = shopInfo.value.packages || [];
+    shopPackages.value = (shopInfo.value.packages || []).map((p: any) => ({
+      ...p,
+      id: String(p.id),
+      shop_id: String(p.shop_id || shopInfo.value.id),
+    }));
   } else {
-    // 兜底：从合并后的套餐列表里按 shop_id 匹配
-    const allPkgs =
-      (data.packages && data.packages.length ? data.packages : shopsToUse.flatMap(s => s.packages || [])) || [];
+    // 兜底：从所有套餐中查找
+    const allPkgs = combinedShops.flatMap(s => s.packages || []);
     shopPackages.value = allPkgs.filter((p: any) => String(p.shop_id) === String(shopIdParam));
   }
 });
+
+function goItemDetail(pkg: any) {
+  router.push({ path: `/item/${pkg.id}`, query: { name: pkg.name } });
+}
 </script>
 
 <style lang="scss" scoped>
