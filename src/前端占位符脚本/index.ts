@@ -54,7 +54,7 @@ function getStoreScope() {
   // 根据开关决定是全局还是当前聊天作用域
   if (settings.keep_cross_chat) return { type: 'global' as const };
   const chatId = SillyTavern.getCurrentChatId?.();
-  return chatId ? ({ type: 'chat' as const, chat_id: chatId } satisfies any) : ({ type: 'global' as const });
+  return chatId ? ({ type: 'chat' as const, chat_id: chatId } satisfies any) : { type: 'global' as const };
 }
 
 function readShopStore(): StoredShop[] {
