@@ -1094,6 +1094,7 @@ watch(currentTheme, val => {
     position: absolute;
     inset: 0;
     background: rgba(255, 255, 255, 0.5);
+    -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     z-index: 2;
     &::after {
@@ -1511,6 +1512,7 @@ watch(currentTheme, val => {
   justify-content: center;
   padding: 20px;
   background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   z-index: 999;
 }

@@ -353,7 +353,11 @@
 // 隐藏滚动条但保持滚动功能
 @mixin hide-scrollbar {
   -ms-overflow-style: none;
-  scrollbar-width: none;
+
+  // 使用@supports提供渐进增强支持
+  @supports (scrollbar-width: none) {
+    scrollbar-width: none;
+  }
 
   &::-webkit-scrollbar {
     display: none;

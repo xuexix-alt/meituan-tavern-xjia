@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 // 安全获取嵌套对象属性的工具函数，替代 _.get
 function safeGet<T = any>(obj: any, path: string, defaultValue: T = undefined as any): T {
@@ -133,14 +133,21 @@ const userAvatar = ref<string>(''); // 用户头像 URL
 
 // 统计数据
 const accountBalance = computed(() => {
-  if (fullStatData.value?.经济?.账户余额 !== undefined) {
-    return fullStatData.value.经济.账户余额;
+  const val = fullStatData.value?.经济?.账户余额;
+  if (val !== undefined && val !== null) {
+    return val;
   }
   return '--';
 });
 
 const totalSpending = computed(() => {
-  // 从服务中的订单计算累计消费
+  // 优先直接读取统计值
+  const val = fullStatData.value?.经济?.订单消费;
+  if (val !== undefined && val !== null) {
+    return val;
+  }
+
+  // 降级：从服务中的订单计算累计消费
   const orders = fullStatData.value?.['服务中的订单'] || fullStatData.value?.服务中的订单 || [];
   if (Array.isArray(orders)) {
     const total = orders.reduce((sum: number, order: any) => {
@@ -156,9 +163,9 @@ const totalSpending = computed(() => {
 function sendToAI(message: string) {
   console.log(`[发送至AI]: ${message}`);
   const fullCommand = `${message} | /trigger await=true`;
-  if (typeof window.triggerSlash !== 'undefined') {
+  if (typeof triggerSlash === 'function') {
     try {
-      window.triggerSlash(fullCommand);
+      triggerSlash(fullCommand);
     } catch (e) {
       console.error('执行triggerSlash时出错:', e);
     }
@@ -194,9 +201,11 @@ function regenerateShops() {
 async function getUserAvatar(): Promise<boolean> {
   // 优先：从最新一条用户消息中尝试读取头像
   try {
-    const msgs = await getChatMessages('latest');
-    const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
-    const avatarFromMsg = userMsg?.extra?.avatar || userMsg?.avatar || userMsg?.extra?.avatar_url;
+    const msgs = await getChatMessages(-1);
+    // 根据 ChatMessage 类型，role 是 'user'
+    const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.role === 'user') : null;
+    // 标准 ChatMessage 有 data 和 extra 字段，avatar 通常在 extra 或 data 中
+    const avatarFromMsg = userMsg?.extra?.avatar || userMsg?.data?.avatar || (userMsg as any)?.avatar;
     if (avatarFromMsg) {
       userAvatar.value = avatarFromMsg;
       return true;
@@ -223,14 +232,26 @@ async function getUserAvatar(): Promise<boolean> {
 // 初始化数据
 async function initDisplay() {
   try {
-    const messages = await getChatMessages('latest');
-    if (!messages || messages.length === 0 || !messages[0].data) {
+    // 检查是否有消息
+    const messages = await getChatMessages(-1);
+    if (!messages || messages.length === 0) {
       console.warn('未获取到消息数据，使用默认空数据');
       fullStatData.value = {};
       return true;
     }
 
-    const statData = messages[0].data.stat_data;
+    // 使用 getVariables 获取 MVU 数据 (stat_data)
+    // 根据规范，MVU 数据存储在消息楼层变量的 stat_data 字段中
+    let statData = null;
+    try {
+      const vars = getVariables({ type: 'message', message_id: 'latest' });
+      statData = vars?.stat_data;
+    } catch (e) {
+      console.warn('获取变量失败，尝试从消息 data 中获取', e);
+      // 降级：尝试从消息对象的 data 属性获取（如果是 MVU 注入的）
+      statData = messages[0].data?.stat_data;
+    }
+
     if (!statData) {
       console.warn('消息数据中无 stat_data，使用默认空数据');
       fullStatData.value = {};
@@ -243,39 +264,6 @@ async function initDisplay() {
   } catch (error) {
     console.error('加载失败:', error);
     return false;
-  }
-}
-
-async function getChatMessages(messageId: string) {
-  // 先用酒馆原生 API（含 name/avatar），再退回 MVU 数据
-  try {
-    const nativeGet = (window.top as any)?.getChatMessages || (window as any).getChatMessages;
-    if (typeof nativeGet === 'function') {
-      const msgs = nativeGet(messageId || 'latest');
-      if (Array.isArray(msgs) && msgs.length) return msgs;
-    }
-  } catch (e) {
-    console.log('native getChatMessages 失败，尝试 MVU', e);
-  }
-
-  try {
-    if (typeof (window as any).Mvu === 'undefined' || !(window as any).Mvu.getMvuData) return [];
-    const response = (window as any).Mvu.getMvuData({ type: 'message', message_id: messageId || 'latest' });
-    // 保留原结构，同时附上 name/avatar 方便兜底读取
-    if (response) {
-      const extraMsg = {
-        name: response?.name,
-        avatar: response?.avatar,
-        extra: response?.extra || {},
-        is_user: response?.role === 'user' || response?.is_user,
-        data: response,
-      };
-      return [extraMsg];
-    }
-    return [];
-  } catch (error) {
-    console.error('获取消息失败:', error);
-    return [];
   }
 }
 
@@ -331,21 +319,21 @@ onMounted(async () => {
       }
     }
 
-  // 备用：从最新一条用户消息读取 name
-  if (username.value === '玩家') {
-    try {
-      const msgs = await getChatMessages('latest');
-      const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
-      const nameFromMsg = userMsg?.name || userMsg?.extra?.name;
-      if (nameFromMsg) {
-        username.value = String(nameFromMsg);
-        console.log('从消息获取用户名:', username.value);
+    // 备用：从最新一条用户消息读取 name
+    if (username.value === '玩家') {
+      try {
+        const msgs = await getChatMessages(-1);
+        const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.role === 'user') : null;
+        const nameFromMsg = userMsg?.name || userMsg?.extra?.name;
+        if (nameFromMsg) {
+          username.value = String(nameFromMsg);
+          console.log('从消息获取用户名:', username.value);
+        }
+      } catch (e) {
+        console.log('从消息获取用户名失败', e);
       }
-    } catch (e) {
-      console.log('从消息获取用户名失败', e);
     }
-  }
-} catch (e) {
+  } catch (e) {
     console.log('获取SillyTavern信息失败:', e);
   }
 

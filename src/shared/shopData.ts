@@ -79,7 +79,10 @@ function logParse(step: string, ok: boolean, detail?: unknown) {
 function slicePhoneContent(text: string) {
   // 不再裁剪范围，而是直接移除标签本身，防止干扰解析
   // 这样无论数据在标签内还是标签外，都能被保留下来送入解析
-  return text.replace(/\[\/?手机界面(开始|结束)[^\]]*\]/g, '');
+  return text
+    .replace(/\[\/?手机界面(开始|结束)[^\]]*\]/g, '')
+    .replace(/\[\/?推荐标签[^\]]*\]/g, '')
+    .replace(/^\s*\[(推荐标签)\]\s*$/gm, '');
 }
 
 function extractJsonNorm(text: string): string | null {
@@ -137,10 +140,11 @@ function fetchMessagePayload(range?: string | number): { messageId: string; text
   } catch (err) {
     console.warn('[fetchMessagePayload] getCurrentMessageId failed', err);
   }
+  // 关键候选：最后一条消息(-1) 和 开场白(0)
+  // 由于 ShopStore 已经负责了持久化缓存，不再需要盲目向上扫描 10 楼
+  // 且原有的扫描逻辑存在 Bug (遇到第一条非空文本就停止，无论是否包含店铺)，因此移除无效的扫描循环
   pushCandidate(-1);
-  for (let i = 0; i < MSG_SCAN_LIMIT; i++) {
-    pushCandidate(-1 - i);
-  }
+  pushCandidate(0);
 
   for (const candidate of Array.from(tried)) {
     try {
@@ -155,13 +159,14 @@ function fetchMessagePayload(range?: string | number): { messageId: string; text
       if (!entries || entries.length === 0) continue;
       const parts: string[] = [];
       entries.forEach(entry => {
-        if (entry?.message) parts.push(String(entry.message));
-        const swipes = (entry as any).swipes;
-        if (Array.isArray(swipes)) {
-          swipes.forEach((swipe: any) => {
-            if (swipe) parts.push(String(swipe));
-          });
+        // 优先获取当前显示的消息内容
+        let content = (entry as any).message;
+        // 如果是 ChatMessageSwiped 类型（没有 message 字段），则根据 swipe_id 获取当前选中的 swipe
+        if (!content && Array.isArray((entry as any).swipes)) {
+          const swipeId = (entry as any).swipe_id || 0;
+          content = (entry as any).swipes[swipeId];
         }
+        if (content) parts.push(String(content));
       });
       const text = parts.join('\n\n').trim();
       if (!text) continue;
@@ -274,7 +279,14 @@ function parseTextOnly(src: string, makeShopId: () => string, makePkgId: () => s
     };
     const nameLine = shopLines.find(line => /^name[:：]/i.test(line));
     if (nameLine) {
-      shop.name = nameLine.replace(/^name[:：]/i, '').trim();
+      // 改进店铺名称提取：只取第一个[套餐]之前的内容
+      const rawName = nameLine.replace(/^name[:：]/i, '').trim();
+      const bracketIndex = rawName.indexOf('[套餐]');
+      if (bracketIndex !== -1) {
+        shop.name = rawName.substring(0, bracketIndex).trim();
+      } else {
+        shop.name = rawName;
+      }
     } else if (!section.includes('[店铺]')) {
       shop.name = '默认店铺';
     }
@@ -336,18 +348,48 @@ function parseTextOnly(src: string, makeShopId: () => string, makePkgId: () => s
         reviews: [],
       };
       let currentArrayField: string | null = null;
+      let currentScalarField: string | null = null;
+
       pkgLines.forEach(line => {
         const match = line.match(/^([^:：]+)[:：](.*)$/);
+        let isKnownField = false;
+
         if (match) {
-          const fieldNameRaw = match[1].trim();
-          const fieldName = fieldNameRaw.toLowerCase();
+          const keyRaw = match[1].trim().toLowerCase();
+          if (
+            [
+              'name',
+              'price',
+              'stars',
+              'icon',
+              'image1',
+              'image2',
+              'image3',
+              'description',
+              'tags',
+              'content',
+              'reviews',
+            ].includes(keyRaw)
+          ) {
+            isKnownField = true;
+          }
+        }
+
+        if (isKnownField && match) {
+          const fieldName = match[1].trim().toLowerCase();
           const value = match[2].trim();
           if (['name', 'price', 'stars', 'icon', 'image1', 'image2', 'image3', 'description'].includes(fieldName)) {
             const key = fieldName as keyof typeof pkg;
             pkg[key] = fieldName === 'stars' ? parseFloat(value) || 0 : value;
             currentArrayField = null;
+            if (['description', 'image1', 'image2', 'image3'].includes(fieldName)) {
+              currentScalarField = fieldName;
+            } else {
+              currentScalarField = null;
+            }
           } else if (['tags', 'content', 'reviews'].includes(fieldName)) {
             currentArrayField = fieldName;
+            currentScalarField = null;
             if (value) {
               const items = value.startsWith('-') ? [value.replace(/^-/, '').trim()] : splitArrayValues(value);
               items.forEach(v => {
@@ -358,9 +400,12 @@ function parseTextOnly(src: string, makeShopId: () => string, makePkgId: () => s
           }
         } else if (['tags', 'content', 'reviews'].includes(line.toLowerCase())) {
           currentArrayField = line.toLowerCase();
+          currentScalarField = null;
         } else if (currentArrayField) {
           const val = normalizeBullet(line);
           if (val) pkg[currentArrayField].push(val);
+        } else if (currentScalarField) {
+          pkg[currentScalarField] += '\n' + line;
         }
       });
       if (!pkg.name && (pkg.content.length > 0 || pkg.reviews.length > 0 || pkg.tags.length > 0)) {
@@ -598,6 +643,15 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
     }
   }
 
+  // 辅助函数：判断是否为无效的空结果（无套餐且店铺名为默认）
+  const isInvalidEmptyResult = (res: { shops: any[]; packages: any[] }) => {
+    if (res.packages.length > 0) return false;
+    const hasNamed = res.shops.some(
+      s => s.name && s.name !== '未命名店铺' && s.name !== '默认店铺' && !s.name.startsWith('默认店铺·'),
+    );
+    return !hasNamed;
+  };
+
   // 1. 尝试解析 JSON 格式
   try {
     // 移除可能的 Markdown 代码块标记
@@ -619,8 +673,12 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
     if (jsonText.startsWith('{') || jsonText.startsWith('[')) {
       const parsed = JSON.parse(jsonText);
       const normalized = normalizeJsonData(parsed);
-      logParse('json', true, { shops: normalized.shops.length });
-      return finalizeResult(normalized);
+      const finalRes = finalizeResult(normalized);
+      // 只有当结果有效时才返回
+      if (!isInvalidEmptyResult(finalRes)) {
+        logParse('json', true, { shops: finalRes.shops.length });
+        return finalRes;
+      }
     }
   } catch (e) {
     // 忽略直接解析错误，尝试后续的容错解析
@@ -630,8 +688,12 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
   // 专门针对用户提供的混合格式：文本中包含 { shops: [...] }
   const tolerant = tryParseLargestJsonChunk(text);
   if (tolerant) {
-    logParse('json_tolerant', true, { shops: tolerant.shops.length });
-    return finalizeResult(tolerant);
+    const finalRes = finalizeResult(tolerant);
+    // 同样进行有效性检查
+    if (!isInvalidEmptyResult(finalRes)) {
+      logParse('json_tolerant', true, { shops: tolerant.shops.length });
+      return finalRes;
+    }
   }
 
   // 2. 原有的文本解析逻辑（并允许直接是套餐块，此时构造一个虚拟店铺承载）
@@ -670,6 +732,27 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
   }
 
   const result = finalizeResult({ shops, packages });
+
+  // 3. 严格过滤：如果是文本解析模式（非 JSON/YAML），且没有显式店铺标签，且最终没有有效套餐
+  // 则视为解析失败，丢弃自动生成的空店铺。
+  // 这里的 text 已经是经过 slicePhoneContent 和 normalizeBracketTags 处理过的
+  const hasExplicitTag = text.includes('[店铺]');
+  // 简单的 YAML 特征检查（虽然前面有 YAML 解析块，但可能 fall through 到这里）
+  const hasYamlFeature = (window as any).YAML && (text.includes('shops:') || text.includes('- name:'));
+
+  if (!jsonNorm && !jsParsed && !hasExplicitTag && !hasYamlFeature && result.packages.length === 0) {
+    // 允许例外：如果原解析结果中有店铺明确被命名了（不是默认的未命名/默认店铺），则保留
+    // 这对应 "name: 某某店" 但没有套餐的情况
+    const hasNamedShop = result.shops.some(
+      s => s.name && s.name !== '未命名店铺' && s.name !== '默认店铺' && !s.name.startsWith('默认店铺·'),
+    );
+
+    if (!hasNamedShop) {
+      logParse('text_strict_filter', false, 'no packages and no explicit shop tag, discard empty shop');
+      return { shops: [], packages: [] };
+    }
+  }
+
   logParse('text', true, { shops: result.shops.length, packages: result.packages.length });
   return result;
 }
@@ -809,7 +892,9 @@ function tryParseLooseJsLiteral(str: string): any | null {
   // 2. 抽离所有字符串，避免干扰结构解析和安全检查
   const stringStore: string[] = [];
   const strSkeleton = processing.replace(/"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'/g, match => {
-    stringStore.push(match);
+    // 关键修复：将字符串内的物理换行符转义，否则 new Function 会报错
+    const safeStr = match.replace(/\r?\n/g, '\\n');
+    stringStore.push(safeStr);
     return `__STR_${stringStore.length - 1}__`;
   });
 
@@ -962,17 +1047,47 @@ function parseLoosePackage(text: string, shop: any, makePkgId: () => string): an
   };
 
   let currentArrayField: string | null = null;
+  let currentScalarField: string | null = null;
 
   lines.forEach(line => {
     const match = line.match(/^([^:：]+)[:：](.*)$/);
+    let isKnownField = false;
+
     if (match) {
+      const keyRaw = match[1].trim().toLowerCase();
+      if (
+        [
+          'name',
+          'price',
+          'stars',
+          'icon',
+          'image1',
+          'image2',
+          'image3',
+          'description',
+          'tags',
+          'content',
+          'reviews',
+        ].includes(keyRaw)
+      ) {
+        isKnownField = true;
+      }
+    }
+
+    if (isKnownField && match) {
       const key = match[1].trim().toLowerCase();
       const value = match[2].trim();
       if (['name', 'price', 'stars', 'icon', 'image1', 'image2', 'image3', 'description'].includes(key)) {
         pkg[key] = key === 'stars' ? parseFloat(value) || 0 : value;
         currentArrayField = null;
+        if (['description', 'image1', 'image2', 'image3'].includes(key)) {
+          currentScalarField = key;
+        } else {
+          currentScalarField = null;
+        }
       } else if (['tags', 'content', 'reviews'].includes(key)) {
         currentArrayField = key;
+        currentScalarField = null;
         if (value) {
           const items = value.startsWith('-')
             ? [value.replace(/^-/, '').trim()]
@@ -985,9 +1100,12 @@ function parseLoosePackage(text: string, shop: any, makePkgId: () => string): an
       }
     } else if (['tags', 'content', 'reviews'].includes(line.toLowerCase())) {
       currentArrayField = line.toLowerCase();
+      currentScalarField = null;
     } else if (currentArrayField) {
       const val = normalizeBullet(line);
       if (val) pkg[currentArrayField].push(val);
+    } else if (currentScalarField) {
+      pkg[currentScalarField] += '\n' + line;
     }
   });
 
@@ -1190,8 +1308,9 @@ function normalizeJsonData(data: any): { shops: any[]; packages: any[] } {
         return ShopSchema.parse({
           ...rawShop,
           id: String(generateShopId(rawShop)),
-          shop_id: rawShop.shop_id,
+          shop_id: rawShop.shop_id ? String(rawShop.shop_id) : undefined, // 兼容数字类型ID
           name: rawShop.name || '未命名店铺',
+          packages: [], // 暂不验证套餐，防止单一套餐错误导致整个店铺丢弃
         });
       } catch (e) {
         logParse('schema', false, e);

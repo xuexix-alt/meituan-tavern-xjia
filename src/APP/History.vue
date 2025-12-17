@@ -71,7 +71,7 @@
                 <span class="summary-identity">{{ selectedOrder.identity || '-' }}</span>
               </div>
               <div class="summary-package">{{ selectedOrder.package_name || '未命名套餐' }}</div>
-              <div class="summary-tags" v-if="currentOrderFeatures.length">
+              <div v-if="currentOrderFeatures.length" class="summary-tags">
                 <span v-for="tag in currentOrderFeatures.slice(0, 4)" :key="tag" class="summary-tag">{{ tag }}</span>
                 <span v-if="currentOrderFeatures.length > 4" class="summary-tag more"
                   >+{{ currentOrderFeatures.length - 4 }}</span
@@ -313,12 +313,17 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
-import { getNestedValue } from './utils';
 import { filterCompletedOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
+import { getNestedValue } from './utils';
 
 // 格式化怀孕几率
 function formatPregnancyChance(value: any): string {
   if (value === null || value === undefined) return '-';
+
+  // 如果已经是带%的字符串，直接返回
+  if (typeof value === 'string' && value.includes('%')) {
+    return value;
+  }
 
   const num = Number(value);
   if (!Number.isFinite(num)) return '-';
@@ -326,8 +331,6 @@ function formatPregnancyChance(value: any): string {
   // MVU 已保证为 0-100 的整数百分比，这里兜底 clamp 并统一两位小数
   const clamped = Math.min(100, Math.max(0, num));
   return `${Math.round(clamped * 100) / 100}%`;
-
-  return '-';
 }
 
 // 响应式数据

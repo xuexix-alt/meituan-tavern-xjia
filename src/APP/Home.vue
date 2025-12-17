@@ -39,7 +39,7 @@
                     <i class="fas fa-heart"></i>
                   </div>
                 </div>
-                <div class="version-info">v3.0.0.beta3</div>
+                <div class="version-info">v3.0.0.beta4</div>
               </div>
             </div>
 
@@ -79,7 +79,7 @@
                 <p class="instruction-text">
                   1. 女孩你不想玩了最好向AI下指令‘结束服务’<br />
                   2. 搜某种类别时最好加上“X店铺每个x套餐”<br />
-                  3. 搜索模版：85后女明星集锦：2个店铺每个3个套餐<br />
+                  3. 正确更新APP的方式是关掉酒馆清空浏览器缓存<br />
                   4. 世界书有二选一模式，如果常截断可以试试不同框架
                 </p>
               </div>
