@@ -733,6 +733,21 @@ export function parseShopData(text: string): { shops: any[]; packages: any[] } {
 
   const result = finalizeResult({ shops, packages });
 
+  // 2.5 幽灵店铺过滤：移除“未命名店铺”且只有“自动命名套餐”的条目
+  // 这通常是因为解析器在普通聊天文本中误识别了关键词（如 content/tags）而生成的垃圾数据
+  result.shops = result.shops.filter(shop => {
+    const isDefaultShop =
+      ['未命名店铺', '默认店铺'].includes(shop.name || '') || (shop.name || '').startsWith('默认店铺·');
+    const hasOnlyGhostPkgs = shop.packages.every((p: any) => p.name.startsWith('套餐')); // 自动命名的套餐通常以"套餐"开头
+    if (isDefaultShop && hasOnlyGhostPkgs) {
+      console.log('[parse] filter ghost shop:', shop.id);
+      return false;
+    }
+    return true;
+  });
+  // 同步更新 packages 列表
+  result.packages = flattenPackagesFromShops(result.shops);
+
   // 3. 严格过滤：如果是文本解析模式（非 JSON/YAML），且没有显式店铺标签，且最终没有有效套餐
   // 则视为解析失败，丢弃自动生成的空店铺。
   // 这里的 text 已经是经过 slicePhoneContent 和 normalizeBracketTags 处理过的

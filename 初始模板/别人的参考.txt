@@ -1,0 +1,412 @@
+@@preprocessing
+<%
+const currentFloorMessages = TavernHelper.getChatMessages(-1);
+const isFloorZero = currentFloorMessages.length > 0 && currentFloorMessages[0].message_id === 0;
+
+if (typeof currentDomain === 'undefined') var currentDomain = getvar('stat_data.世界定位.当前大域[0]') || '中央神州';
+if (typeof currentArea === 'undefined') var currentArea = getvar('stat_data.世界定位.当前区域[0]') || '';
+if (typeof currentScene === 'undefined') var currentScene = getvar('stat_data.世界定位.当前场景[0]') || '';
+if (typeof presentCharacters === 'undefined') var presentCharacters = getvar('stat_data.在场人物[0]') || [];
+if (typeof userCultivation === 'undefined') var userCultivation = getvar('stat_data.用户信息.修为境界[0]') || '';
+
+if (typeof messageText === 'undefined') {
+  const userMessages = TavernHelper.getChatMessages('-1', { role: 'user' });
+  var messageText = userMessages.length > 0 ? userMessages[0].message : '';
+}
+
+if (typeof detectedCharacters === 'undefined') {
+  var detectedCharacters = new Set(Array.isArray(presentCharacters) ? presentCharacters : []);
+  const allCharacters = [
+    '殷冬雪', '冬雪', '卫疏影', '疏影', '姜千青',
+    '云蕴', '凌菲',
+    '顾千雪', '林寒月', '苏清河', '叶冰心',
+    '宋馨', '沈艺清',
+    '沈折渊', '焚璃璇', '绫芷澜',
+    '弥苍赦', '苏翎霜',
+    '玉横枝', '苏妍', '楼玄烬',
+    '铁无泪', '幽霜瑶',
+    '苏沐青', '叶清', '萧千翎',
+    '苍曜·景祁', '炎祯', '苍曜·锦程', '苍曜·璃音', '苍曜·无瑜',
+    '北冥玄狩', '苍阙影', '北冥幽荧', '北冥寂月',
+    '呼延战戈', '烈凰儿', '呼延明焰', '秦晚烟',
+    '白瑶光', '司星瑶',
+    '沈微澜', '洛璃',
+    '萧远山', '林月华', '萧凝霜',
+    '蚀夜', '苏雪', '幽临', '血鸦', '璃眠',
+    '魅千姬', '千姬', '怜星',
+    '洛红尘', '红尘',
+    '风烬雪', '烬雪',
+    '黎萱',
+    '曲十一', '十一',
+    '云倾颜', '倾颜',
+    '涂山鸾', '涂山玉', '涂山小九', '小九',
+    '擎怒', '羽洛',
+    '敖凝霜', '璃月',
+    '夜幽', '离恨', '夜烬', '万骸老祖',
+    '洛幽',
+    '萧衍', '顾清霜', '梦涵', '柳飞絮', '苏媚儿',
+    '神斩', '勿忘',
+    '玄阳真人', '凌风', '洛溪月', '姚江雪',
+    '苏青檀', '林清雪', '清雪',
+    '王腾', '北帝',
+    '夜千泷', '千泷',
+    '司命玄', '叶非凡', '曦瑶',
+    '姬皓月', '昭武女帝',
+    '姬清舞', '清舞',
+    '姬灵均',
+    '凰', '零号机', '刹那',
+    '云纤纤', '纤纤',
+    '林微月', '微月',
+    '灵月曦', '月曦',
+    '焚天', '寂灭魔君',
+    '梵楚',
+    '叱骨',
+    '渊煞魔王',
+    '阴月魔妃', '毒妃',
+    '罗刹雪', '血狱罗刹',
+    '玲涟', '堕落菩萨',
+    '赵曦月', '昭阳公主', '囚凤',
+    '月咏', '囚月',
+    '浅间咲',
+    '烛云',
+    '月姬', '幽魂帝女', '万恶之华',
+    '绯烟',
+    '苏清晏',
+    '司空玄',
+    '柳白衣',
+    '秦无伤', '苍穹大帝',
+    '聆溪',
+    '清奶', '玄清仙子', '太上玄清天尊'
+  ];
+  for (const charName of allCharacters) {
+    if (messageText.includes(charName)) {
+      detectedCharacters.add(charName);
+    }
+  }
+  var detectedCharacters = Array.from(detectedCharacters);
+}
+%>
+
+<%- await getwi(null, '元指令_AI权威准则') %>
+
+<% if (!isFloorZero) { %>
+<% if (typeof currentSceneType === 'undefined') var currentSceneType = getvar('stat_data.世界定位.场景类型[0]') || ''; %>
+<% if (typeof userStatus === 'undefined') var userStatus = getvar('stat_data.用户信息.当前状态[0]') || ''; %>
+<% if (typeof currentEvent === 'undefined') var currentEvent = getvar('stat_data.世界定位.当前事件[0]') || ''; %>
+
+<% if (currentEvent === '宗门大比' || currentEvent.includes('宗门大比') || messageText.includes('宗门大比') || messageText.includes('比武') || messageText.includes('大比')) { %>
+  <%- await getwi(null, '动态事件_宗门大比指南') %>
+<% } %>
+
+<% if (currentEvent === '秘境' || currentEvent.includes('秘境') || messageText.includes('秘境') || messageText.includes('进入秘境') || messageText.includes('探索秘境')) { %>
+  <%- await getwi(null, '动态事件_秘境设计指南') %>
+<% } %>
+
+<% if (currentEvent === '历练任务' || currentEvent.includes('历练任务') || messageText.includes('历练任务') || messageText.includes('接取任务') || messageText.includes('宗门任务')) { %>
+  <%- await getwi(null, '动态事件_历练任务指南') %>
+<% } %>
+
+<% if (currentEvent === '境界突破' || userStatus.includes('突破在即') || userStatus.includes('突破中') || messageText.includes('境界突破') || messageText.includes('修为突破') || messageText.includes('渡劫')) { %>
+  <%- await getwi(null, '动态事件_境界突破指南') %>
+<% } %>
+
+<% if (currentEvent === '炼器' || messageText.includes('炼器') || messageText.includes('炼制法宝') || messageText.includes('祭炼') || currentScene.includes('炼器室') || currentScene.includes('地火室')) { %>
+  <%- await getwi(null, '动态事件_炼器指南') %>
+<% } %>
+
+<% if (currentEvent === '炼丹' || messageText.includes('炼丹') || messageText.includes('炼制丹药') || messageText.includes('炼药') || currentScene.includes('丹室')) { %>
+  <%- await getwi(null, '动态事件_炼丹指南') %>
+<% } %>
+
+<% if (currentEvent === '奇遇' || currentEvent === '机缘' || messageText.includes('奇遇') || messageText.includes('机缘') || messageText.includes('获得传承')) { %>
+  <%- await getwi(null, '动态事件_奇遇机缘指南') %>
+<% } %>
+
+<% if (currentEvent === '宗门战争' || currentEvent === '战争' || messageText.includes('宗门战争') || messageText.includes('宣战') || messageText.includes('宗门大战')) { %>
+  <%- await getwi(null, '动态事件_宗门战争指南') %>
+<% } %>
+
+<% if (currentEvent === '拍卖会' || messageText.includes('拍卖') || currentScene.includes('拍卖会') || currentScene.includes('拍卖行')) { %>
+  <%- await getwi(null, '动态事件_拍卖会指南') %>
+<% } %>
+
+<% if (currentEvent === '阵法' || messageText.includes('布阵') || messageText.includes('破阵') || messageText.includes('阵法')) { %>
+  <%- await getwi(null, '动态事件_阵法指南') %>
+<% } %>
+
+<% if (currentEvent === '符箓' || messageText.includes('符箓') || messageText.includes('画符') || messageText.includes('制符')) { %>
+  <%- await getwi(null, '动态事件_符箓指南') %>
+<% } %>
+
+<% if (currentEvent === '驭兽' || messageText.includes('驭兽') || messageText.includes('收服妖兽') || messageText.includes('契约妖兽') || messageText.includes('驯兽')) { %>
+  <%- await getwi(null, '动态事件_驭兽指南') %>
+<% } %>
+
+<% if (currentEvent === '狩猎' || messageText.includes('狩猎') || messageText.includes('猎杀妖兽') || messageText.includes('狩猎妖兽')) { %>
+  <%- await getwi(null, '动态事件_妖兽狩猎指南') %>
+<% } %>
+
+<% if (currentEvent === '宗门职务' || messageText.includes('担任职务') || messageText.includes('宗门职务') || messageText.includes('执事') || messageText.includes('宗门贡献')) { %>
+  <%- await getwi(null, '动态事件_宗门职务指南') %>
+<% } %>
+
+<% if (currentDomain === '中央神州' || currentDomain.includes('中央神州')) { %>
+  <%- await getwi(null, '地图_中央神州') %>
+<% } else if (currentDomain === '东荒妖域' || currentDomain.includes('东荒妖域')) { %>
+  <%- await getwi(null, '地图_东荒妖域') %>
+<% } else if (currentDomain === '北原魔土' || currentDomain.includes('北原魔土')) { %>
+  <%- await getwi(null, '地图_北原魔土') %>
+<% } else if (currentDomain === '南疆巫地' || currentDomain.includes('南疆巫地')) { %>
+  <%- await getwi(null, '地图_南疆巫地') %>
+<% } else if (currentDomain === '西漠佛国' || currentDomain.includes('西漠佛国')) { %>
+  <%- await getwi(null, '地图_西漠佛国') %>
+<% } else if (currentDomain === '阴曹地府' || currentDomain.includes('阴曹地府')) { %>
+  <%- await getwi(null, '地图_阴曹地府') %>
+<% } else if (currentDomain === '四海' || currentDomain.includes('四海') || currentArea.includes('北冥海') || currentArea.includes('东海') || currentArea.includes('南海') || currentArea.includes('西海')) { %>
+  <%- await getwi(null, '地图_四海') %>
+<% } %>
+
+<% if (currentArea.includes('天剑峰') || currentScene.includes('天剑圣地')) { %>
+  <%- await getwi(null, '天剑圣地') %>
+<% } %>
+
+<% if (currentArea.includes('玉清峰') || currentScene.includes('玉清道宫')) { %>
+  <%- await getwi(null, '玉清道宫') %>
+<% } %>
+
+<% if (currentArea.includes('药神峰') || currentScene.includes('药神谷')) { %>
+  <%- await getwi(null, '药神谷') %>
+<% } %>
+
+<% if (currentArea.includes('万剑山脉') || currentScene.includes('剑宗')) { %>
+  <%- await getwi(null, '剑宗') %>
+<% } %>
+
+<% if (currentArea.includes('丹霞灵原') || currentScene.includes('丹宗')) { %>
+  <%- await getwi(null, '丹宗') %>
+<% } %>
+
+<% if (currentArea.includes('星辰山脉') || currentArea.includes('天枢峰') || currentScene.includes('玄天宗')) { %>
+  <%- await getwi(null, '玄天宗') %>
+<% } %>
+
+<% if (currentArea.includes('极寒冰原') || currentScene.includes('凛霜剑门')) { %>
+  <%- await getwi(null, '凛霜剑门') %>
+<% } %>
+
+<% if (currentArea.includes('欢愉圣地') || currentArea.includes('极乐幻城') || currentScene.includes('合欢宗')) { %>
+  <%- await getwi(null, '合欢宗') %>
+<% } %>
+
+<% if (currentArea.includes('百毒沼泽') || currentArea.includes('九幽蛊渊') || currentScene.includes('蛊魔宗')) { %>
+  <%- await getwi(null, '蛊魔宗') %>
+<% } %>
+
+<% if (currentArea.includes('蛊神谷') || currentScene.includes('万毒神教')) { %>
+  <%- await getwi(null, '万毒神教') %>
+<% } %>
+
+<% if (currentArea.includes('悬空山') || currentArea.includes('浮空岛') || currentScene.includes('太虚宗')) { %>
+  <%- await getwi(null, '太虚宗') %>
+<% } %>
+
+<% if (currentArea.includes('冰火交界') || currentScene.includes('万禁教')) { %>
+  <%- await getwi(null, '万禁教') %>
+<% } %>
+
+<% if (currentArea.includes('落日峡谷') || currentScene.includes('噬荒教')) { %>
+  <%- await getwi(null, '噬荒教') %>
+<% } %>
+
+<% if (currentArea.includes('黑雾沼泽') || currentScene.includes('噬心殿')) { %>
+  <%- await getwi(null, '噬心殿') %>
+<% } %>
+
+<% if (currentArea.includes('血月深渊') || currentScene.includes('幽血门')) { %>
+  <%- await getwi(null, '幽血门') %>
+<% } %>
+
+<% if (currentArea.includes('幽落海') || currentScene.includes('魅花宫')) { %>
+  <%- await getwi(null, '魅花宫') %>
+<% } %>
+
+<% if (currentArea.includes('百草灵原') || currentScene.includes('百草庐')) { %>
+  <%- await getwi(null, '百草庐') %>
+<% } %>
+
+<% if (currentArea.includes('兽王山脉') || currentScene.includes('万兽山庄')) { %>
+  <%- await getwi(null, '万兽山庄') %>
+<% } %>
+
+<% if (currentArea.includes('炎焰峰') || currentScene.includes('赤阳谷')) { %>
+  <%- await getwi(null, '赤阳谷') %>
+<% } %>
+
+<% if (currentScene.includes('天机阁') || currentArea.includes('机关天阁')) { %>
+  <%- await getwi(null, '天机阁') %>
+<% } %>
+
+<% if (currentArea.includes('万象城') || currentScene.includes('万法宗')) { %>
+  <%- await getwi(null, '万法宗') %>
+<% } %>
+
+<% if (currentArea.includes('涂山王庭') || currentArea.includes('青丘') || currentScene.includes('青丘国')) { %>
+  <%- await getwi(null, '青丘国') %>
+<% } %>
+
+<% if (currentArea.includes('九霄天顶') || currentScene.includes('迦楼罗天')) { %>
+  <%- await getwi(null, '迦楼罗天') %>
+<% } %>
+
+<% if (currentArea.includes('冰晶龙殿') || currentArea.includes('东溟海') || currentScene.includes('东海龙宫')) { %>
+  <%- await getwi(null, '东海龙宫') %>
+<% } %>
+
+<% if (currentArea.includes('南离海') || currentScene.includes('南海龙宫')) { %>
+  <%- await getwi(null, '南海龙宫') %>
+<% } %>
+
+<% if (currentArea.includes('极乐宫深处') || currentScene.includes('极乐宫')) { %>
+  <%- await getwi(null, '极乐宫') %>
+<% } %>
+
+<% if (currentArea.includes('灵霄山') || currentScene.includes('灵霄宗')) { %>
+  <%- await getwi(null, '灵霄宗') %>
+<% } %>
+
+<% if (currentArea.includes('青云山脉') || currentScene.includes('青云宗')) { %>
+  <%- await getwi(null, '青云宗') %>
+<% } %>
+
+<% if (currentArea.includes('天仙岭') || currentScene.includes('天仙门')) { %>
+  <%- await getwi(null, '天仙门') %>
+<% } %>
+
+<% if (currentArea.includes('流金城') || currentScene.includes('万宝商会')) { %>
+  <%- await getwi(null, '万宝商会') %>
+<% } %>
+
+<% if (currentArea.includes('天魔帝都') || currentScene.includes('天魔帝都')) { %>
+  <%- await getwi(null, '天魔帝都') %>
+<% } %>
+
+<% if (currentArea.includes('巫神山') || currentArea.includes('天蛛圣殿') || currentScene.includes('巫神教')) { %>
+  <%- await getwi(null, '巫神教') %>
+<% } %>
+
+<% if (currentArea.includes('灵山') || currentArea.includes('大雄宝殿') || currentScene.includes('小雷音寺')) { %>
+  <%- await getwi(null, '小雷音寺') %>
+<% } %>
+
+<% if (currentArea.includes('万妖圣城') || currentScene.includes('万妖国')) { %>
+  <%- await getwi(null, '万妖国') %>
+<% } %>
+
+<% if (currentArea.includes('天启城') && !currentArea.includes('极乐幻城') || currentScene.includes('大雍皇朝')) { %>
+  <%- await getwi(null, '大雍皇朝') %>
+<% } %>
+
+
+<% if (currentArea.includes('黑石深渊') || currentArea.includes('幽冥魔殿') || currentScene.includes('幽冥魔宗')) { %>
+  <%- await getwi(null, '幽冥魔宗') %>
+<% } %>
+
+<% if (currentScene.includes('万魔窟')) { %>
+  <%- await getwi(null, '万魔窟') %>
+<% } %>
+
+<% if (currentArea.includes('洛水城') || currentArea.includes('天命神殿') || currentScene.includes('天命神教')) { %>
+  <%- await getwi(null, '天命神教') %>
+<% } %>
+
+<% if (currentScene.includes('墨家机关城')) { %>
+  <%- await getwi(null, '墨家机关城') %>
+<% } %>
+
+<% if (currentArea.includes('阁主峰') || currentScene.includes('玲珑绣阁')) { %>
+  <%- await getwi(null, '玲珑绣阁') %>
+<% } %>
+
+<% if (currentArea.includes('生命古树') || currentScene.includes('生命之森')) { %>
+  <%- await getwi(null, '生命之森') %>
+<% } %>
+
+<% if (currentArea.includes('东方海外') || currentScene.includes('东瀛')) { %>
+  <%- await getwi(null, '东瀛') %>
+<% } %>
+
+<% if (currentArea.includes('绯山') || currentScene.includes('绯家')) { %>
+  <%- await getwi(null, '绯家') %>
+<% } %>
+
+<% if (currentArea.includes('月牙泉绿洲') || currentScene.includes('万宝楼')) { %>
+  <%- await getwi(null, '万宝楼') %>
+<% } %>
+
+<% if (currentArea.includes('无界山脉') || currentScene.includes('万法楼')) { %>
+  <%- await getwi(null, '万法楼') %>
+<% } %>
+
+<% if (currentArea.includes('归墟魔渊') || currentScene.includes('归墟魔渊')) { %>
+  <%- await getwi(null, '归墟魔渊') %>
+<% } %>
+
+<% if (currentArea.includes('万蛊噬龙窟') || currentScene.includes('万蛊噬龙窟')) { %>
+  <%- await getwi(null, '万蛊噬龙窟') %>
+<% } %>
+
+<% if (currentArea.includes('王家') || currentScene.includes('王家')) { %>
+  <%- await getwi(null, '王家') %>
+<% } %>
+
+<% if (currentArea.includes('万魔殿') || currentScene.includes('大魔国')) { %>
+  <%- await getwi(null, '大魔国') %>
+<% } %>
+
+<% if (currentArea.includes('苍澜城') || currentScene.includes('苍澜国')) { %>
+  <%- await getwi(null, '苍澜国') %>
+<% } %>
+
+<% if (currentArea.includes('玄渊城') || currentScene.includes('玄渊城')) { %>
+  <%- await getwi(null, '玄渊城') %>
+<% } %>
+
+<% if (Array.isArray(detectedCharacters)) { %>
+  <% for (const charName of detectedCharacters) { %>
+    <% if (typeof charName === 'string' && charName.trim() !== '') { %>
+  <%- await getwi(null, charName.trim()) %>
+    <% } %>
+  <% } %>
+<% } %>
+
+<% if (currentScene.includes('红尘酒家')) { %>
+  <%- await getwi(null, '红尘酒家') %>
+<% } %>
+
+<% if (userCultivation) { %>
+  <% if (userCultivation.includes('炼气')) { %>
+  <%- await getwi(null, '元指令_修为_炼气期') %>
+  <% } else if (userCultivation.includes('筑基')) { %>
+  <%- await getwi(null, '元指令_修为_筑基期') %>
+  <% } else if (userCultivation.includes('金丹')) { %>
+  <%- await getwi(null, '元指令_修为_金丹期') %>
+  <% } else if (userCultivation.includes('元婴')) { %>
+  <%- await getwi(null, '元指令_修为_元婴期') %>
+  <% } else if (userCultivation.includes('化神')) { %>
+  <%- await getwi(null, '元指令_修为_化神期') %>
+  <% } else if (userCultivation.includes('炼虚')) { %>
+  <%- await getwi(null, '元指令_修为_炼虚期') %>
+  <% } else if (userCultivation.includes('合体')) { %>
+  <%- await getwi(null, '元指令_修为_合体期') %>
+  <% } else if (userCultivation.includes('大乘')) { %>
+  <%- await getwi(null, '元指令_修为_大乘期') %>
+  <% } else if (userCultivation.includes('渡劫')) { %>
+  <%- await getwi(null, '元指令_修为_渡劫期') %>
+  <% } else if (userCultivation.includes('真仙')) { %>
+  <%- await getwi(null, '元指令_修为_真仙境') %>
+  <% } %>
+<% } %>
+
+<% if (typeof swordHeartRealm === 'undefined') var swordHeartRealm = getvar('stat_data.用户信息.剑心境界[0]') || ''; %>
+<% if (typeof alchemyRealm === 'undefined') var alchemyRealm = getvar('stat_data.用户信息.丹道境界[0]') || ''; %>
+<% } %>
