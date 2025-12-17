@@ -322,8 +322,13 @@ onMounted(async () => {
     // 备用：从最新一条用户消息读取 name
     if (username.value === '玩家') {
       try {
+<<<<<<< HEAD
         const msgs = await getChatMessages(-1);
         const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.role === 'user') : null;
+=======
+        const msgs = await getChatMessages('latest');
+        const userMsg = Array.isArray(msgs) ? msgs.find((m: any) => m?.is_user || m?.role === 'user') : null;
+>>>>>>> ff4cd42ddac05a27f83c8e63b86d5984d32673e2
         const nameFromMsg = userMsg?.name || userMsg?.extra?.name;
         if (nameFromMsg) {
           username.value = String(nameFromMsg);
