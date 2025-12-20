@@ -17,7 +17,11 @@ description: 当需要编写脚本时, 你应该参考本文件
 
 ## 脚本 iframe 样式与酒馆网页样式的区别
 
+<<<<<<< HEAD
 由于脚本运行在 iframe 中, 项目中所使用的 style 仅会应用于 iframe 内而不会应用到整个酒馆网页. 因此, 当通过脚本向酒馆网页添加 DOM 时 (无论是通过 jquery 添加, 还是通过 vue 挂载), 你都需要将样式复制到酒馆网页的 `<head>` 中:
+=======
+由于脚本运行在 iframe 中, 项目中所使用的 style 仅会应用于 iframe 内而不会应用到整个酒馆网页. 因此, 当通过脚本向酒馆网页添加 DOM 时 (无论是通过 jquery 添加, 还是通过 vue 挂载), 你都需要将样式复制到酒馆网页的 `<head>` 中. 为此, 你可以用 `src/util/script.ts` 中定义好了的工具函数:
+>>>>>>> a3304f5c537f59bab41e4904c632b679abfda9d6
 
 ```typescript
 export function teleport_style() {
@@ -47,6 +51,7 @@ eventOn(getButtonEvent('按钮名'), () => {
   console.log('按钮被点击了');
 });
 ```
+<<<<<<< HEAD
 
 ## 第三方库和CDN引用
 
@@ -72,3 +77,5 @@ import something from 'https://testingcf.jsdelivr.net/npm/package-name@version/+
 // ❌ 错误：可能无法在国内访问
 import something from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
 ```
+=======
+>>>>>>> a3304f5c537f59bab41e4904c632b679abfda9d6
