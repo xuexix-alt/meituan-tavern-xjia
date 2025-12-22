@@ -32,3 +32,10 @@ declare namespace z {
   export type input<T> = import('zod').input<T>;
   export type output<T> = import('zod').output<T>;
 }
+<<<<<<< HEAD
+=======
+
+declare module 'https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js' {
+  export function registerMvuSchema(schema: z.ZodObject | (() => z.ZodObject)): void;
+}
+>>>>>>> 716752b8f21fc75a91a1604ff7eb277d5de3327e
