@@ -8,13 +8,24 @@
       "type-fest",
       "yaml",
       "zod",
+<<<<<<< HEAD
       "vue",
+=======
+>>>>>>> 6750c9a8961718a9d3a32b787ee7d4012d452c3c
     ],
     "target": "ESNext",
     "module": "ESNext",
     "outDir": "dist",
     "baseUrl": "src",
+<<<<<<< HEAD
     "paths": {},
+=======
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+>>>>>>> 6750c9a8961718a9d3a32b787ee7d4012d452c3c
     "moduleDetection": "auto",
     "moduleResolution": "bundler",
     "allowUmdGlobalAccess": true,

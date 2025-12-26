@@ -1,5 +1,9 @@
 ---
 description: 当需要编写前端界面时, 你应该参考本文件
+<<<<<<< HEAD
+=======
+alwaysApply: false
+>>>>>>> 6750c9a8961718a9d3a32b787ee7d4012d452c3c
 ---
 # 前端界面
 
@@ -26,6 +30,13 @@ description: 当需要编写前端界面时, 你应该参考本文件
 - 禁止在 `index.html` 中用 `<script src="./index.ts">` 来引用 `index.ts` 或其他本地脚本. `index.ts` 及它导入的文件会由 webpack 直接加入到最终打包好的 `dist/**/index.html` 中.
 - 在 `index.html` 中填入 `<img>` 标签时, 禁止使用 `src=""` 占位. 要么引用实际的图片, 要么不要有这个属性, 否则会导致 webpack 打包错误.
 
+<<<<<<< HEAD
+=======
+## 图标使用
+
+你可以任意使用 fontawesome 的免费图标.
+
+>>>>>>> 6750c9a8961718a9d3a32b787ee7d4012d452c3c
 ## 样式设计
 
 ### 简单内嵌样式
@@ -45,6 +56,7 @@ description: 当需要编写前端界面时, 你应该参考本文件
 - 避免使用会强制撑高父容器的元素 (如 `min-height`、`overflow: auto`)
 - 页面整体应适配容器宽度，不产生横向滚动条
 - 如果样式更适合卡片形状，则不要有背景颜色，除非用户有明确要求
+<<<<<<< HEAD
 
 ## CDN资源引用
 
@@ -70,3 +82,5 @@ import something from 'https://testingcf.jsdelivr.net/npm/package-name@version/+
 // ❌ 错误：可能无法在国内访问
 import something from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
 ```
+=======
+>>>>>>> 6750c9a8961718a9d3a32b787ee7d4012d452c3c
