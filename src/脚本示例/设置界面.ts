@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { createScriptIdDiv, destroyScriptIdDiv, deteleportStyle, teleportStyle } from '@/util/script';
+>>>>>>> 77bb1b89597f225cde547babb33ff2d9af028c76
 import 界面 from './设置界面.vue';
 
 const app = createApp(界面).use(createPinia());
@@ -14,6 +18,7 @@ $(window).on('pagehide', () => {
   deteleportStyle();
   destroyScriptIdDiv();
 });
+<<<<<<< HEAD
 
 function teleportStyle() {
   if ($(`head > div[script_id="${getScriptId()}"]`).length > 0) {
@@ -34,3 +39,5 @@ function createScriptIdDiv(): JQuery<HTMLDivElement> {
 function destroyScriptIdDiv(): void {
   $(`div[script_id="${getScriptId()}"]`).remove();
 }
+=======
+>>>>>>> 77bb1b89597f225cde547babb33ff2d9af028c76
