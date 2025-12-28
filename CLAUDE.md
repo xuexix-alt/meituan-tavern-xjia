@@ -6,5 +6,9 @@
 @.cursor/rules/前端界面.mdc
 @.cursor/rules/脚本.mdc
 @.cursor/rules/mvu变量框架.mdc
+<<<<<<< HEAD
 @.cursor/rules/GitHub和jsdelivr.mdc
 @.cursor/rules/Cloudflare Pages文件引用指南.mdc
+=======
+@.cursor/rules/mvu角色卡.mdc
+>>>>>>> 4ac7bf5d47e725f28c4278aa1dbabc21eb9be37e
