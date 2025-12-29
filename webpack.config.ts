@@ -3,7 +3,11 @@ import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import _ from 'lodash';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+<<<<<<< HEAD
 import { exec } from 'node:child_process';
+=======
+import { ChildProcess, exec, spawn } from 'node:child_process';
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -81,29 +85,54 @@ const config: Config = {
 };
 
 let io: Server;
+<<<<<<< HEAD
 function watch_it(compiler: webpack.Compiler) {
+=======
+function watch_tavern_helper(compiler: webpack.Compiler) {
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
   if (compiler.options.watch) {
     if (!io) {
       const port = config.port ?? 6621;
       io = new Server(port, { cors: { origin: '*' } });
+<<<<<<< HEAD
       console.info(`[Listener] 已启动酒馆监听服务, 正在监听: http://0.0.0.0:${port}`);
       io.on('connect', socket => {
         console.info(`[Listener] 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
         socket.on('disconnect', reason => {
           console.info(`[Listener] 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
+=======
+      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
+      io.on('connect', socket => {
+        console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
+        io.emit('iframe_updated');
+        socket.on('disconnect', reason => {
+          console.info(`\x1b[36m[tavern_helper]\x1b[0m 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
         });
       });
     }
 
+<<<<<<< HEAD
     compiler.hooks.done.tap('updater', () => {
       console.info('\n[Listener] 检测到完成编译, 推送更新事件...');
       io.emit('iframe_updated');
+=======
+    compiler.hooks.done.tap('watch_tavern_helper', () => {
+      console.info('\n\x1b[36m[tavern_helper]\x1b[0m 检测到完成编译, 推送更新事件...');
+      io.emit('iframe_updated');
+      if (compiler.options.plugins.find(plugin => plugin instanceof HtmlWebpackPlugin)) {
+        io.emit('message_iframe_updated');
+      } else {
+        io.emit('script_iframe_updated');
+      }
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
     });
   }
 }
 
 let watcher: FSWatcher;
+<<<<<<< HEAD
 function dump_schema(compiler: webpack.Compiler) {
   const execute = () => {
     exec('pnpm dump', { cwd: import.meta.dirname });
@@ -111,6 +140,16 @@ function dump_schema(compiler: webpack.Compiler) {
   const execute_debounced = _.debounce(execute, 500, { leading: true, trailing: false });
   if (!compiler.options.watch) {
     execute();
+=======
+const execute = () => {
+  exec('pnpm dump', { cwd: import.meta.dirname });
+  console.info('\x1b[36m[schema_dump]\x1b[0m 已将所有 schema.ts 转换为 schema.json');
+};
+const execute_debounced = _.debounce(execute, 500, { leading: true, trailing: false });
+function dump_schema(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    execute_debounced();
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
   } else if (!watcher) {
     watcher = watch('src', {
       awaitWriteFinish: true,
@@ -122,6 +161,56 @@ function dump_schema(compiler: webpack.Compiler) {
   }
 }
 
+<<<<<<< HEAD
+=======
+let child_process: ChildProcess;
+function watch_tavern_sync(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    return;
+  }
+  compiler.hooks.watchRun.tap('watch_tavern_sync', () => {
+    if (!child_process) {
+      child_process = spawn('pnpm', ['sync', 'watch', 'all', '-f'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        cwd: import.meta.dirname,
+        env: { ...process.env, FORCE_COLOR: '1' },
+      });
+      child_process.stdout?.on('data', (data: Buffer) => {
+        console.info(
+          data
+            .toString()
+            .trimEnd()
+            .split('\n')
+            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
+            .join('\n'),
+        );
+      });
+      child_process.stderr?.on('data', (data: Buffer) => {
+        console.error(
+          data
+            .toString()
+            .trimEnd()
+            .split('\n')
+            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
+            .join('\n'),
+        );
+      });
+      child_process.on('error', error => {
+        console.error(`\x1b[31m[tavern_sync]\x1b[0m Error: ${error.message}`);
+      });
+    }
+  });
+  compiler.hooks.watchClose.tap('watch_tavern_sync', () => {
+    child_process?.kill();
+  });
+  ['SIGINT', 'SIGTERM'].forEach(signal => {
+    process.on(signal, () => {
+      child_process?.kill();
+    });
+  });
+}
+
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
 function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Configuration {
   const should_obfuscate = fs
     .readFileSync(path.join(import.meta.dirname, entry.script), 'utf-8')
@@ -132,7 +221,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     experiments: {
       outputModule: true,
     },
+<<<<<<< HEAD
     devtool: false, // argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+=======
+    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },
@@ -160,9 +253,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       asyncChunks: true,
       clean: true,
       publicPath: '',
+<<<<<<< HEAD
       // library: {
       //   type: 'module',
       // },
+=======
+      library: {
+        type: 'module',
+      },
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
     },
     module: {
       rules: [
@@ -231,10 +330,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             },
             {
               test: /\.css$/,
+<<<<<<< HEAD
               use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'],
             },
             {
               test: /\.css$/,
+=======
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
               use: ['postcss-loader'],
               resourceQuery: /url/,
               type: 'asset/inline',
@@ -340,11 +442,14 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 ] as any[]),
           ),
         },
+<<<<<<< HEAD
         // 字体资源全部内联，避免被宿主页面的相对路径解析成 404（兼容 jQuery .load 场景）
         {
           test: /\.(woff2?|ttf|eot|otf)$/i,
           type: 'asset/inline',
         },
+=======
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
       ],
     },
     resolve: {
@@ -363,7 +468,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
             filename: path.parse(entry.html).base,
+<<<<<<< HEAD
             scriptLoading: 'blocking',
+=======
+            scriptLoading: 'module',
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
             cache: false,
           }),
           new HtmlInlineScriptWebpackPlugin(),
@@ -376,8 +485,14 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         ]
     )
       .concat(
+<<<<<<< HEAD
         { apply: watch_it },
         { apply: dump_schema },
+=======
+        { apply: watch_tavern_helper },
+        { apply: dump_schema },
+        { apply: watch_tavern_sync },
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
         new VueLoaderPlugin(),
         unpluginAutoImport({
           dts: true,
@@ -461,17 +576,23 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+<<<<<<< HEAD
       // 不外部化样式资源，统一打包进产物，避免运行时再拉 CDN
       if (request.match(/\.(css|scss|sass|less)$/i)) {
         return callback();
       }
 
+=======
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
       if (
         request.startsWith('-') ||
         request.startsWith('.') ||
         request.startsWith('/') ||
         request.startsWith('!') ||
+<<<<<<< HEAD
         request.startsWith('data:') ||
+=======
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
         request.startsWith('http') ||
         request.startsWith('@/') ||
         path.isAbsolute(request) ||
@@ -491,6 +612,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (['react'].some(key => request.includes(key))) {
         return callback();
       }
+<<<<<<< HEAD
       // 这些库在 Tavern 环境提供全局，但为保证本地预览/单独打开可用，这里选择直接打包，不再 external
       const bundleThese = ['vue', 'vue-router', 'jquery', 'lodash', 'toastr'];
       if (bundleThese.includes(request) || request.startsWith('@vue/')) {
@@ -499,6 +621,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
 
       const global = {
         showdown: 'showdown',
+=======
+      const global = {
+        jquery: '$',
+        lodash: '_',
+        showdown: 'showdown',
+        toastr: 'toastr',
+        vue: 'Vue',
+        'vue-router': 'VueRouter',
+>>>>>>> 51076cdf0ae6bd538c42ff664a04939d09afd915
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
