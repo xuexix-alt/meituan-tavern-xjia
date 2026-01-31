@@ -3,6 +3,7 @@
 import _ from 'lodash';
 import fs from 'node:fs';
 import path from 'node:path';
+<<<<<<< HEAD
 import { z } from 'zod';
 
 fs.globSync('src/**/schema.ts').forEach(async schema_file => {
@@ -16,5 +17,28 @@ fs.globSync('src/**/schema.ts').forEach(async schema_file => {
     }
   } catch (e) {
     /** ignore */
+=======
+import z from 'zod';
+
+fs.globSync('src/**/schema.ts').forEach(async schema_file => {
+  try {
+    globalThis._ = _;
+    globalThis.z = z;
+    const module = await import(
+      (process.platform === 'win32' ? 'file://' : '') + path.resolve(import.meta.dirname, schema_file)
+    );
+    if (_.has(module, 'Schema')) {
+      const schema = _.get(module, 'Schema');
+      if (_.isFunction(schema)) {
+        schema = schema();
+      }
+      fs.writeFileSync(
+        path.join(path.dirname(schema_file), 'schema.json'),
+        JSON.stringify(z.toJSONSchema(schema, { io: 'input', reused: 'ref' }), null, 2),
+      );
+    }
+  } catch (e) {
+    console.error(`生成 '${schema_file}' 对应的 schema.json 失败: ${e}`);
+>>>>>>> 3ff3ec895fe0b8683e26537ccb33fbb96c7c9535
   }
 });
