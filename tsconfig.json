@@ -8,6 +8,7 @@
       "type-fest",
       "yaml",
       "zod",
+<<<<<<< HEAD
       "vue",
     ],
     "target": "ESNext",
@@ -15,6 +16,21 @@
     "outDir": "dist",
     "baseUrl": "src",
     "paths": {},
+=======
+    ],
+    "target": "ESNext",
+    "module": "ESNext",
+    "rootDir": ".",
+    "outDir": "dist",
+    "paths": {
+      "@util/*": [
+        "./util/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    },
+>>>>>>> 299b9bb0dd0e1b9c9863f20ca4cbc261e552bdd5
     "moduleDetection": "auto",
     "moduleResolution": "bundler",
     "allowUmdGlobalAccess": true,
@@ -34,7 +50,14 @@
   },
   "include": [
     "@types",
+<<<<<<< HEAD
     "src",
+=======
+    "初始模板",
+    "示例",
+    "src",
+    "util",
+>>>>>>> 299b9bb0dd0e1b9c9863f20ca4cbc261e552bdd5
     "*.d.ts",
   ],
   "exclude": [
