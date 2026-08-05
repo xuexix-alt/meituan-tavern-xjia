@@ -12,7 +12,10 @@
           "type": "number"
         }
       },
-      "required": ["账户余额", "订单消费"],
+      "required": [
+        "账户余额",
+        "订单消费"
+      ],
       "additionalProperties": false
     },
     "系统状态": {
@@ -32,7 +35,11 @@
           "type": "string"
         }
       },
-      "required": ["多人服务触发", "复购记忆保留", "当前场景"],
+      "required": [
+        "多人服务触发",
+        "复购记忆保留",
+        "当前场景"
+      ],
       "additionalProperties": false
     },
     "订单模板": {
@@ -46,7 +53,10 @@
             },
             "订单状态": {
               "type": "string",
-              "enum": ["服务中", "服务结束"]
+              "enum": [
+                "服务中",
+                "服务结束"
+              ]
             },
             "基础信息": {
               "type": "object",
@@ -64,7 +74,12 @@
                   "type": "string"
                 }
               },
-              "required": ["姓名", "年龄", "身份", "描述"],
+              "required": [
+                "姓名",
+                "年龄",
+                "身份",
+                "描述"
+              ],
               "additionalProperties": false
             },
             "服装": {
@@ -99,7 +114,13 @@
                   "type": "string"
                 }
               },
-              "required": ["套餐名称", "套餐价格", "折后价格", "玩法特色", "商品类型"],
+              "required": [
+                "套餐名称",
+                "套餐价格",
+                "折后价格",
+                "玩法特色",
+                "商品类型"
+              ],
               "additionalProperties": false
             },
             "心理状态": {
@@ -121,7 +142,12 @@
                   "type": "number"
                 }
               },
-              "required": ["当前所想", "好感度", "兴奋度", "性格类型"],
+              "required": [
+                "当前所想",
+                "好感度",
+                "兴奋度",
+                "性格类型"
+              ],
               "additionalProperties": false
             },
             "身体特征": {
@@ -137,7 +163,10 @@
                       "type": "string"
                     }
                   },
-                  "required": ["描述", "罩杯"],
+                  "required": [
+                    "描述",
+                    "罩杯"
+                  ],
                   "additionalProperties": false
                 },
                 "乳房": {
@@ -147,7 +176,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["形状"],
+                  "required": [
+                    "形状"
+                  ],
                   "additionalProperties": false
                 },
                 "姿势": {
@@ -160,7 +191,13 @@
                   "type": "string"
                 }
               },
-              "required": ["三围", "乳房", "姿势", "胸部", "私处"],
+              "required": [
+                "三围",
+                "乳房",
+                "姿势",
+                "胸部",
+                "私处"
+              ],
               "additionalProperties": false
             },
             "性经验": {
@@ -168,7 +205,10 @@
               "properties": {
                 "处女": {
                   "type": "string",
-                  "enum": ["是", "否"]
+                  "enum": [
+                    "是",
+                    "否"
+                  ]
                 },
                 "性伴侣数量": {
                   "type": "number"
@@ -183,7 +223,13 @@
                   "type": "number"
                 }
               },
-              "required": ["处女", "性伴侣数量", "初次性行为对象", "怀孕几率", "下单次数"],
+              "required": [
+                "处女",
+                "性伴侣数量",
+                "初次性行为对象",
+                "怀孕几率",
+                "下单次数"
+              ],
               "additionalProperties": false
             },
             "服务统计": {
@@ -200,23 +246,37 @@
                   "type": "number"
                 }
               },
-              "required": ["本次服务性交次数", "内射次数"],
+              "required": [
+                "本次服务性交次数",
+                "内射次数"
+              ],
               "additionalProperties": false
             }
           },
-          "required": ["id", "订单状态", "基础信息", "套餐", "心理状态", "身体特征", "性经验", "服务统计"],
+          "required": [
+            "id",
+            "订单状态",
+            "基础信息",
+            "套餐",
+            "心理状态",
+            "身体特征",
+            "性经验",
+            "服务统计"
+          ],
           "additionalProperties": false
         }
       },
-      "required": ["新订单原型"],
+      "required": [
+        "新订单原型"
+      ],
       "additionalProperties": false
     },
     "服务中的订单": {
       "default": {},
       "type": "object",
       "propertyNames": {
-        "description": "订单ID",
-        "type": "string"
+        "type": "string",
+        "description": "订单ID"
       },
       "additionalProperties": {
         "type": "object",
@@ -226,7 +286,10 @@
           },
           "订单状态": {
             "type": "string",
-            "enum": ["服务中", "服务结束"]
+            "enum": [
+              "服务中",
+              "服务结束"
+            ]
           },
           "基础信息": {
             "type": "object",
@@ -244,7 +307,12 @@
                 "type": "string"
               }
             },
-            "required": ["姓名", "年龄", "身份", "描述"],
+            "required": [
+              "姓名",
+              "年龄",
+              "身份",
+              "描述"
+            ],
             "additionalProperties": false
           },
           "服装": {
@@ -279,7 +347,13 @@
                 "type": "string"
               }
             },
-            "required": ["套餐名称", "套餐价格", "折后价格", "玩法特色", "商品类型"],
+            "required": [
+              "套餐名称",
+              "套餐价格",
+              "折后价格",
+              "玩法特色",
+              "商品类型"
+            ],
             "additionalProperties": false
           },
           "心理状态": {
@@ -301,7 +375,12 @@
                 "type": "number"
               }
             },
-            "required": ["当前所想", "好感度", "兴奋度", "性格类型"],
+            "required": [
+              "当前所想",
+              "好感度",
+              "兴奋度",
+              "性格类型"
+            ],
             "additionalProperties": false
           },
           "身体特征": {
@@ -317,7 +396,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["描述", "罩杯"],
+                "required": [
+                  "描述",
+                  "罩杯"
+                ],
                 "additionalProperties": false
               },
               "乳房": {
@@ -327,7 +409,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["形状"],
+                "required": [
+                  "形状"
+                ],
                 "additionalProperties": false
               },
               "姿势": {
@@ -340,7 +424,13 @@
                 "type": "string"
               }
             },
-            "required": ["三围", "乳房", "姿势", "胸部", "私处"],
+            "required": [
+              "三围",
+              "乳房",
+              "姿势",
+              "胸部",
+              "私处"
+            ],
             "additionalProperties": false
           },
           "性经验": {
@@ -348,7 +438,10 @@
             "properties": {
               "处女": {
                 "type": "string",
-                "enum": ["是", "否"]
+                "enum": [
+                  "是",
+                  "否"
+                ]
               },
               "性伴侣数量": {
                 "type": "number"
@@ -363,7 +456,13 @@
                 "type": "number"
               }
             },
-            "required": ["处女", "性伴侣数量", "初次性行为对象", "怀孕几率", "下单次数"],
+            "required": [
+              "处女",
+              "性伴侣数量",
+              "初次性行为对象",
+              "怀孕几率",
+              "下单次数"
+            ],
             "additionalProperties": false
           },
           "服务统计": {
@@ -380,14 +479,30 @@
                 "type": "number"
               }
             },
-            "required": ["本次服务性交次数", "内射次数"],
+            "required": [
+              "本次服务性交次数",
+              "内射次数"
+            ],
             "additionalProperties": false
           }
         },
-        "required": ["id", "订单状态", "基础信息", "套餐", "心理状态", "身体特征", "性经验", "服务统计"],
+        "required": [
+          "id",
+          "订单状态",
+          "基础信息",
+          "套餐",
+          "心理状态",
+          "身体特征",
+          "性经验",
+          "服务统计"
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["经济", "系统状态", "订单模板"]
+  "required": [
+    "经济",
+    "系统状态",
+    "订单模板"
+  ]
 }
