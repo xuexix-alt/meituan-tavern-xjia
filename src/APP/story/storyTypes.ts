@@ -38,11 +38,13 @@ export interface StorySession {
   error: Ref<string>;
   activeGenerationId: Ref<string | null>;
   busy: ComputedRef<boolean>;
+  canRetry: ComputedRef<boolean>;
   latestAssistant: ComputedRef<StoryTranscriptItem | null>;
   refresh: (reason?: string) => void;
   submitPrompt: (text?: string) => Promise<StorySubmitResult>;
   updateStreamingText: (text: string, generationId?: string) => void;
   cancelGeneration: () => void;
+  retryLast: () => Promise<boolean>;
   regenerate: (messageId?: number) => Promise<boolean>;
   rollbackFrom: (messageId: number) => Promise<boolean>;
   bind: () => void;

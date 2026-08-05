@@ -82,7 +82,19 @@
           <span>从套餐下单或在下方输入行动。</span>
         </div>
 
-        <div v-if="session.error.value" class="reader-error" role="alert">{{ session.error.value }}</div>
+        <div v-if="session.error.value" class="reader-error" role="alert">
+          <span>{{ session.error.value }}</span>
+          <button
+            v-if="session.canRetry.value"
+            type="button"
+            class="retry-button"
+            :disabled="session.busy.value"
+            @click="retryGeneration"
+          >
+            <i class="fas fa-rotate-right"></i>
+            重试生成
+          </button>
+        </div>
       </div>
     </main>
 
@@ -148,6 +160,10 @@ async function submitComposer() {
 async function submitChoice(option: string) {
   session.composerText.value = option;
   await submitComposer();
+}
+
+async function retryGeneration() {
+  await session.retryLast();
 }
 
 async function confirmRollback(messageId: number) {
@@ -369,7 +385,26 @@ defineExpose<{ session: typeof session }>({ session });
 
 .reader-error {
   color: var(--status-danger);
-  text-align: left;
+  text-align: center;
+
+  .retry-button {
+    min-height: 44px;
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent-primary);
+    color: #2c2500;
+    font-weight: 700;
+
+    i {
+      color: inherit;
+      font-size: 1rem;
+    }
+    &:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+  }
 }
 
 .reader-composer {

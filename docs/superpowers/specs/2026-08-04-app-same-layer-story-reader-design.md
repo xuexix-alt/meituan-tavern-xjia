@@ -123,8 +123,13 @@ The operation is:
 5. Refresh the local transcript so the submitted instruction is visible in the reader.
 6. Generate with the current Tavern API and preset, streaming enabled and associated with the generation ID.
 7. Reserve the next host-floor hide.
-8. Persist the returned assistant text with `createChatMessages(..., { refresh: 'affected' })`.
-9. Clear the streaming item and refresh the final transcript.
+8. Create a short user transport placeholder so `createChatMessages` does not emit a premature `MESSAGE_RECEIVED` for the final正文.
+9. Rewrite that same message with `setChatMessages` as the assistant正文, then emit one controlled `MESSAGE_RECEIVED` event so MVUbeta can process the existing floor.
+10. Clear the streaming item and refresh the final transcript.
+
+The MVUbeta callback must never be persisted as a second assistant floor. Its normal return path is `setChatMessages` on the existing assistant message. If that callback or its extra model fails, the正文 remains saved and readable; the APP logs the MVU failure separately.
+
+The APP only removes structurally invalid `UpdateVariable` blocks before saving. It does not call `Mvu.parseMessage` as a preflight, because that would execute a second variable pass before MVUbeta's `MESSAGE_RECEIVED` handler. MVUbeta remains the single owner of parsing, variable persistence, Zod listeners, and its final `setChatMessages` rewrite.
 
 Generation failures keep the submitted user floor, show an actionable error in the reader, and permit retry. Cancellation targets the active generation ID and clears only transient streaming state.
 

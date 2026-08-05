@@ -6,7 +6,8 @@ type StopHandle = { stop: () => void } | (() => void) | void;
 
 export interface StorySessionDependencies {
   readMessages: (range: string) => StoryChatMessage[];
-  createMessages: (messages: Array<{ role: 'user' | 'assistant'; message: string }>) => Promise<void>;
+  createMessages: (messages: Array<{ role: 'user'; message: string }>) => Promise<void>;
+  persistAssistantMessage: (message: { message_id: number; message: string }) => Promise<void>;
   deleteMessages: (messageIds: number[]) => Promise<void>;
   generate: (config: { user_input: string; should_stream: true; generation_id: string }) => Promise<string>;
   stopGeneration: (generationId: string) => void;
@@ -41,11 +42,15 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
   const status = ref<StoryStatus>('idle');
   const error = ref('');
   const activeGenerationId = ref<string | null>(null);
+  const failedPrompt = ref('');
+  const failedUserMessageId = ref<number | null>(null);
+  const failedAssistantMessageId = ref<number | null>(null);
   const cancelledGenerationIds = new Set<string>();
   const stops: Array<() => void> = [];
   let bound = false;
 
   const busy = computed(() => BUSY_STATUSES.has(status.value));
+  const canRetry = computed(() => status.value === 'error' && !busy.value && Boolean(failedPrompt.value.trim()));
   const latestAssistant = computed(
     () => [...baseItems.value].reverse().find(item => item.role === 'assistant') ?? null,
   );
@@ -78,10 +83,36 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     return dependencies.readMessages('0-{{lastMessageId}}');
   }
 
+  function findFailedUserMessage(prompt: string): StoryChatMessage | null {
+    const carrier = dependencies.carrierMessageId();
+    const messages = readAllMessages()
+      .filter(message => message.role === 'user' && message.message_id > 0 && message.message_id !== carrier)
+      .sort((a, b) => a.message_id - b.message_id);
+    const tracked =
+      failedUserMessageId.value == null
+        ? null
+        : (messages.find(message => message.message_id === failedUserMessageId.value) ?? null);
+    return tracked ?? [...messages].reverse().find(message => message.message.trim() === prompt) ?? null;
+  }
+
   function refresh(_reason = 'manual'): void {
-    const messages = readAllMessages();
-    baseItems.value = buildStoryTranscript(messages, dependencies);
-    dependencies.replaceHostFloors(dependencies.listHostMessageIds());
+    if (_reason === 'chat_changed') {
+      failedPrompt.value = '';
+      failedUserMessageId.value = null;
+      failedAssistantMessageId.value = null;
+    }
+    try {
+      const messages = readAllMessages();
+      baseItems.value = buildStoryTranscript(messages, dependencies);
+    } catch (caught) {
+      console.warn('[APP story] 刷新正文快照失败，保留当前内容:', caught);
+      return;
+    }
+    try {
+      dependencies.replaceHostFloors(dependencies.listHostMessageIds());
+    } catch (caught) {
+      console.warn('[APP story] 同步宿主楼层可见性失败:', caught);
+    }
   }
 
   function updateStreamingText(text: string, generationId?: string): void {
@@ -92,18 +123,26 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
 
   async function persistAssistant(prompt: string, generationId: string): Promise<void> {
     status.value = 'streaming';
-    const response = await dependencies.generate({
+    const generatedResponse = await dependencies.generate({
       user_input: prompt,
       should_stream: true,
       generation_id: generationId,
     });
+    const response = String(generatedResponse ?? '').trim() ? String(generatedResponse) : streamingText.value;
+    if (!response.trim()) {
+      throw new Error('酒馆 API 未返回正文文本，也未收到流式正文。');
+    }
     streamingText.value = response;
     status.value = 'persisting';
     const nextId = dependencies.nextMessageId();
+    failedAssistantMessageId.value = nextId;
     dependencies.reserveHostFloor(nextId);
-    await dependencies.createMessages([{ role: 'assistant', message: response }]);
+    await dependencies.persistAssistantMessage({ message_id: nextId, message: response });
+    failedAssistantMessageId.value = null;
     streamingText.value = '';
     status.value = 'done';
+    failedPrompt.value = '';
+    failedUserMessageId.value = null;
     refresh('assistant_persisted');
   }
 
@@ -117,9 +156,13 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     status.value = 'preparing';
     error.value = '';
     streamingText.value = '';
+    failedPrompt.value = text;
+    failedUserMessageId.value = null;
+    failedAssistantMessageId.value = null;
     composerText.value = '';
     try {
       const nextId = dependencies.nextMessageId();
+      failedUserMessageId.value = nextId;
       dependencies.reserveHostFloor(nextId);
       await dependencies.createMessages([{ role: 'user', message: text }]);
       refresh('user_submitted');
@@ -154,9 +197,60 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     streamingText.value = '';
   }
 
+  async function retryLast(): Promise<boolean> {
+    if (!canRetry.value) return false;
+    const prompt = failedPrompt.value.trim();
+    if (!prompt) return false;
+
+    const generationId = dependencies.createGenerationId();
+    activeGenerationId.value = generationId;
+    status.value = 'preparing';
+    error.value = '';
+    streamingText.value = '';
+
+    try {
+      const failedAssistantId = failedAssistantMessageId.value;
+      if (failedAssistantId != null && failedAssistantId !== dependencies.carrierMessageId()) {
+        const assistantExists = readAllMessages().some(message => message.message_id === failedAssistantId);
+        if (assistantExists) {
+          await dependencies.deleteMessages([failedAssistantId]);
+          dependencies.clearHostFloors([failedAssistantId]);
+          refresh('retry_cleanup');
+        }
+        failedAssistantMessageId.value = null;
+      }
+
+      const existingUser = findFailedUserMessage(prompt);
+      if (existingUser) {
+        failedUserMessageId.value = existingUser.message_id;
+      } else {
+        const nextId = dependencies.nextMessageId();
+        failedUserMessageId.value = nextId;
+        dependencies.reserveHostFloor(nextId);
+        await dependencies.createMessages([{ role: 'user', message: prompt }]);
+        refresh('retry_user_submitted');
+      }
+
+      await persistAssistant(prompt, generationId);
+      return true;
+    } catch (caught) {
+      status.value = 'error';
+      error.value = errorText(caught);
+      return false;
+    } finally {
+      if (activeGenerationId.value === generationId) activeGenerationId.value = null;
+    }
+  }
+
   async function regenerate(messageId?: number): Promise<boolean> {
     if (busy.value) return false;
-    const allMessages = readAllMessages().sort((a, b) => a.message_id - b.message_id);
+    let allMessages: StoryChatMessage[];
+    try {
+      allMessages = readAllMessages().sort((a, b) => a.message_id - b.message_id);
+    } catch (caught) {
+      console.warn('[APP story] 读取正文历史失败，无法重新生成:', caught);
+      return false;
+    }
     const carrier = dependencies.carrierMessageId();
     const target =
       messageId == null
@@ -168,7 +262,8 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
       .find(
         message => message.role === 'user' && message.message_id < target.message_id && message.message_id !== carrier,
       );
-    const prompt = String(promptMessage?.message ?? '').trim();
+    if (!promptMessage) return false;
+    const prompt = String(promptMessage.message ?? '').trim();
     if (!prompt) return false;
 
     const deleteIds = allMessages
@@ -179,6 +274,9 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     status.value = 'preparing';
     error.value = '';
     streamingText.value = '';
+    failedPrompt.value = prompt;
+    failedUserMessageId.value = promptMessage.message_id;
+    failedAssistantMessageId.value = null;
     try {
       if (deleteIds.length) await dependencies.deleteMessages(deleteIds);
       refresh('regenerate_deleted');
@@ -228,13 +326,15 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     ['message_sent', 'message_received', 'message_deleted', 'chat_changed'].forEach(event => {
       stops.push(stopHandle(dependencies.subscribe?.(event, () => refresh(event))));
     });
-    stops.push(
-      stopHandle(
-        dependencies.subscribe('stream_full', (...args: unknown[]) => {
-          updateStreamingText(String(args[0] ?? ''), typeof args[1] === 'string' ? args[1] : undefined);
-        }),
-      ),
-    );
+    ['stream_full', 'generation_ended'].forEach(event => {
+      stops.push(
+        stopHandle(
+          dependencies.subscribe?.(event, (...args: unknown[]) => {
+            updateStreamingText(String(args[0] ?? ''), typeof args[1] === 'string' ? args[1] : undefined);
+          }),
+        ),
+      );
+    });
   }
 
   function dispose(): void {
@@ -255,11 +355,13 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     error,
     activeGenerationId,
     busy,
+    canRetry,
     latestAssistant,
     refresh,
     submitPrompt,
     updateStreamingText,
     cancelGeneration,
+    retryLast,
     regenerate,
     rollbackFrom,
     bind,

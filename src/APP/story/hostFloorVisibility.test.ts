@@ -31,6 +31,7 @@ class FakeStyle {
 
 class FakeDocument {
   readonly roots = new Map<number, FakeRoot[]>();
+  readonly iframes = [{ id: 'TH-message--4--0' }, { id: 'TH-message--5--0' }];
   readonly styles = new Map<string, FakeStyle>();
   readonly body = null;
   readonly head = {
@@ -40,6 +41,7 @@ class FakeDocument {
   };
 
   querySelectorAll(selector: string) {
+    if (selector === 'iframe[id^="TH-message--"]') return this.iframes;
     const match = selector.match(/(?:mesid|data-message-index|data-message-id)='(\d+)'/);
     return match ? (this.roots.get(Number(match[1])) ?? []) : [];
   }
@@ -81,5 +83,15 @@ assert(firstCopy.attrs.get('data-meituan-story-host-hidden') === 'true', '创建
 controller.destroy();
 assert(!firstCopy.attrs.has('data-meituan-story-host-hidden'), '销毁清理由控制器拥有的属性');
 assert(!secondCopy.attrs.has('data-meituan-story-host-hidden'), '销毁清理重复副本属性');
+
+const secondController = createHostFloorVisibilityController({
+  documents: () => [doc as unknown as Document],
+  carrierMessageId: () => 5,
+  nextMessageId: () => 6,
+});
+secondController.replace([4, 5]);
+assert(!carrier.attrs.has('data-meituan-story-host-hidden'), '多个 APP iframe 必须共享最早宿主');
+assert(firstCopy.attrs.get('data-meituan-story-host-hidden') === 'true', '多个 APP iframe仍隐藏非宿主楼层');
+secondController.destroy();
 
 console.log('host floor visibility contract passed');

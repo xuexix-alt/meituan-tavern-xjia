@@ -127,8 +127,7 @@ export const Schema = z.object({
     )
     .default({}),
   服务中的订单: z
-    .record(
-      z.string().describe('订单ID'),
+    .array(
       z
         .object({
           id: z.string(),
@@ -187,7 +186,7 @@ export const Schema = z.object({
         })
         .strict(),
     )
-    .default({}),
+    .default([]),
 });
 
 $(() => {

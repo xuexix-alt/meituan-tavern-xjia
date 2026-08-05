@@ -81,6 +81,19 @@ function selectorsFor(messageId: number): string[] {
   ];
 }
 
+function listStoryHostMessageIds(documents: Document[]): number[] {
+  const ids = new Set<number>();
+  for (const doc of documents) {
+    doc.querySelectorAll('iframe[id^="TH-message--"]').forEach(element => {
+      const match = element.id.match(/^TH-message--(\d+)--/);
+      if (!match) return;
+      const id = Number(match[1]);
+      if (Number.isFinite(id) && id >= 0) ids.add(Math.trunc(id));
+    });
+  }
+  return Array.from(ids).sort((a, b) => a - b);
+}
+
 function ensureStyles(doc: Document): void {
   if (!doc.getElementById(STATIC_STYLE_ID)) {
     const style = doc.createElement('style');
@@ -162,7 +175,10 @@ export function createHostFloorVisibilityController(options: HostFloorVisibility
 
   function withoutCarrier(input: MessageIdInput): Set<number> {
     const ids = normalizeIds(input);
-    const carrier = readCarrierMessageId();
+    // 一个聊天可能同时存在多个 APP 消息 iframe。每个 iframe 都各自运行
+    // 这段脚本时，必须使用同一个宿主，否则 A 隐藏 B、B 隐藏 A，最终整段聊天会变成空白。
+    const hostMessageIds = listStoryHostMessageIds(readDocuments());
+    const carrier = hostMessageIds[0] ?? readCarrierMessageId();
     if (carrier !== null) ids.delete(carrier);
     return ids;
   }
@@ -178,6 +194,12 @@ export function createHostFloorVisibilityController(options: HostFloorVisibility
   function replace(input: MessageIdInput): void {
     ensureObservers();
     const nextIds = withoutCarrier(input);
+    const allIds = normalizeIds(input);
+    // 清理旧实例遗留在唯一可见宿主上的标记，避免热重载或重复 iframe
+    // 初始化后，宿主仍被前一套控制器保持为隐藏状态。
+    allIds.forEach(id => {
+      if (!nextIds.has(id)) clearOne(id);
+    });
     Array.from(hiddenIds).forEach(id => {
       if (nextIds.has(id)) return;
       clearOne(id);
