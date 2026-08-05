@@ -21,7 +21,7 @@
         @change="onMessageChange"
         @copy="onCopy(message)"
         @delete="onDelete(message)"
-        @move="(direction) => onMove(message, index, direction)"
+        @move="direction => onMove(message, index, direction)"
       />
     </div>
     <button class="secondary-button add-message" type="button" @click="onAdd">
@@ -51,7 +51,10 @@ function onMacroInput(event: Event) {
 }
 
 function onMessageChange(next: ChatMessage) {
-  emit('change', props.messages.map((item) => (item.id === next.id ? next : item)));
+  emit(
+    'change',
+    props.messages.map(item => (item.id === next.id ? next : item)),
+  );
 }
 
 function onCopy(message: ChatMessage) {

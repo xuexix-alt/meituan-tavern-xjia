@@ -13,7 +13,14 @@
           aria-label="预设名称"
           @keydown.enter="savePreset"
         />
-        <button class="icon-button" type="button" title="保存预设" aria-label="保存预设" :disabled="!presetName.trim()" @click="savePreset">
+        <button
+          class="icon-button"
+          type="button"
+          title="保存预设"
+          aria-label="保存预设"
+          :disabled="!presetName.trim()"
+          @click="savePreset"
+        >
           <i class="fas fa-save" aria-hidden="true"></i>
         </button>
       </div>
@@ -25,13 +32,31 @@
             <span>{{ preset.draft.model }}</span>
           </div>
           <div class="library-actions">
-            <button class="icon-button" type="button" :aria-label="`加载预设 ${preset.name}`" title="加载预设" @click="$emit('load-preset', preset)">
+            <button
+              class="icon-button"
+              type="button"
+              :aria-label="`加载预设 ${preset.name}`"
+              title="加载预设"
+              @click="$emit('load-preset', preset)"
+            >
               <i class="fas fa-upload" aria-hidden="true"></i>
             </button>
-            <button class="icon-button" type="button" :aria-label="`复制预设 ${preset.name}`" title="复制预设" @click="$emit('copy-preset', preset)">
+            <button
+              class="icon-button"
+              type="button"
+              :aria-label="`复制预设 ${preset.name}`"
+              title="复制预设"
+              @click="$emit('copy-preset', preset)"
+            >
               <i class="fas fa-copy" aria-hidden="true"></i>
             </button>
-            <button class="icon-button danger" type="button" :aria-label="`删除预设 ${preset.name}`" title="删除预设" @click="deleteTarget = { type: 'preset', id: preset.id, label: preset.name }">
+            <button
+              class="icon-button danger"
+              type="button"
+              :aria-label="`删除预设 ${preset.name}`"
+              title="删除预设"
+              @click="deleteTarget = { type: 'preset', id: preset.id, label: preset.name }"
+            >
               <i class="fas fa-trash" aria-hidden="true"></i>
             </button>
           </div>
@@ -53,13 +78,31 @@
             <span>{{ entry.model }} · {{ historyStatusLabels[entry.status] }} · {{ entry.durationMs }} 毫秒</span>
           </div>
           <div class="library-actions">
-            <button class="icon-button" type="button" title="加载请求" aria-label="加载历史请求" @click="$emit('load-history', entry)">
+            <button
+              class="icon-button"
+              type="button"
+              title="加载请求"
+              aria-label="加载历史请求"
+              @click="$emit('load-history', entry)"
+            >
               <i class="fas fa-upload" aria-hidden="true"></i>
             </button>
-            <button class="icon-button" type="button" title="重新发送请求" aria-label="重新发送历史请求" @click="$emit('resend-history', entry)">
+            <button
+              class="icon-button"
+              type="button"
+              title="重新发送请求"
+              aria-label="重新发送历史请求"
+              @click="$emit('resend-history', entry)"
+            >
               <i class="fas fa-rotate-right" aria-hidden="true"></i>
             </button>
-            <button class="icon-button danger" type="button" title="删除请求" aria-label="删除历史请求" @click="deleteTarget = { type: 'history', id: entry.id, label: historySummary(entry) }">
+            <button
+              class="icon-button danger"
+              type="button"
+              title="删除请求"
+              aria-label="删除历史请求"
+              @click="deleteTarget = { type: 'history', id: entry.id, label: historySummary(entry) }"
+            >
               <i class="fas fa-trash" aria-hidden="true"></i>
             </button>
           </div>
@@ -68,7 +111,12 @@
     </section>
 
     <div v-if="deleteTarget" class="modal-backdrop" role="presentation">
-      <section class="confirm-dialog" role="dialog" aria-modal="true" :aria-label="deleteTarget.type === 'preset' ? '删除预设' : '删除历史记录'">
+      <section
+        class="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="deleteTarget.type === 'preset' ? '删除预设' : '删除历史记录'"
+      >
         <h3>{{ deleteTarget.type === 'preset' ? '删除这个预设？' : '删除这条历史记录？' }}</h3>
         <p>{{ deleteTarget.label }}</p>
         <div class="dialog-actions">
@@ -126,12 +174,13 @@ function confirmDelete() {
 
 function historySummary(entry: RequestHistory): string {
   const messages = Array.isArray(entry.payload.messages) ? entry.payload.messages : [];
-  const candidate = [...messages].reverse().find(
-    (message) => message && typeof message === 'object' && (message as { role?: unknown }).role === 'user',
-  );
-  const content = candidate && typeof (candidate as { content?: unknown }).content === 'string'
-    ? (candidate as { content: string }).content.trim()
-    : '';
+  const candidate = [...messages]
+    .reverse()
+    .find(message => message && typeof message === 'object' && (message as { role?: unknown }).role === 'user');
+  const content =
+    candidate && typeof (candidate as { content?: unknown }).content === 'string'
+      ? (candidate as { content: string }).content.trim()
+      : '';
   return content.slice(0, 52) || new Date(entry.timestamp).toLocaleString();
 }
 </script>

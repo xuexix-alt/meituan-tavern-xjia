@@ -19,7 +19,7 @@ export function resolveMacros(draft: PromptDraft, macroName: string, macroValue:
   const macro = effectiveMacroName(macroName);
   return {
     ...draft,
-    messages: draft.messages.map((message) =>
+    messages: draft.messages.map(message =>
       message.content.includes(macro)
         ? { ...message, content: replaceMacro(message.content, macro, macroValue) }
         : message,
@@ -38,7 +38,7 @@ export function applyMacroToPayload(
   if (!Array.isArray(messages)) return payload;
   return {
     ...payload,
-    messages: messages.map((message) => {
+    messages: messages.map(message => {
       if (!message || typeof message !== 'object' || !('content' in message)) return message;
       const record = message as Record<string, unknown>;
       if (typeof record.content !== 'string' || !record.content.includes(macro)) return message;

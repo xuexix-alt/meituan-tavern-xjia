@@ -45,9 +45,7 @@ export interface ChatCompletionPayload {
   [field: string]: unknown;
 }
 
-export type RawImportResult =
-  | { success: true; draft: PromptDraft }
-  | { success: false; error: string };
+export type RawImportResult = { success: true; draft: PromptDraft } | { success: false; error: string };
 
 export function buildPayload(draft: PromptDraft): ChatCompletionPayload {
   for (const field of Object.keys(draft.generation.additional)) {
@@ -91,7 +89,7 @@ export function importRawPayload(text: string): RawImportResult {
     success: true,
     draft: {
       model: parsedPayload.data.model,
-      messages: parsedPayload.data.messages.map((message) => ({
+      messages: parsedPayload.data.messages.map(message => ({
         id: crypto.randomUUID(),
         role: message.role,
         content: message.content,
@@ -116,9 +114,7 @@ function toWireMessage(message: ChatMessage): ChatCompletionPayload['messages'][
   return {
     role: message.role,
     content: message.content,
-    ...(message.role === 'tool' && message.tool_call_id !== undefined
-      ? { tool_call_id: message.tool_call_id }
-      : {}),
+    ...(message.role === 'tool' && message.tool_call_id !== undefined ? { tool_call_id: message.tool_call_id } : {}),
   };
 }
 

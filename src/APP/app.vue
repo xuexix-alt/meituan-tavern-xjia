@@ -332,7 +332,9 @@ body,
   height: 100%;
   min-width: 0;
   overflow: hidden;
-  transition: top 0.18s ease, height 0.18s ease;
+  transition:
+    top 0.18s ease,
+    height 0.18s ease;
 }
 
 .phone-frame.has-generation-status :deep(.app-view) {

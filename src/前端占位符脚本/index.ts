@@ -71,10 +71,7 @@ function readShopStore(): StoredShop[] {
 function writeShopStore(shops: StoredShop[]) {
   try {
     console.log('[ShopStore] 写入全局缓存:', shops);
-    updateVariablesWith(
-      variables => ({ ...variables, [SHOP_STORE_KEY]: shops }),
-      getStoreScope(),
-    );
+    updateVariablesWith(variables => ({ ...variables, [SHOP_STORE_KEY]: shops }), getStoreScope());
     emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: shops.length, op: 'write' });
   } catch (e) {
     console.warn('[ShopStore] 写入失败', e);
@@ -341,10 +338,10 @@ eventOn(getButtonEvent('导出店铺JSON'), () => {
 eventOn(getButtonEvent('切换店铺跨聊天保留'), () => {
   if (!settings.keep_cross_chat) {
     settings.keep_cross_chat = true;
-    updateVariablesWith(
-      variables => ({ ...variables, keep_cross_chat: true }),
-      { type: 'script', script_id: getScriptId() },
-    );
+    updateVariablesWith(variables => ({ ...variables, keep_cross_chat: true }), {
+      type: 'script',
+      script_id: getScriptId(),
+    });
   }
   toastr.info('店铺缓存已固定为跨聊天共享。', '店铺存储');
 });

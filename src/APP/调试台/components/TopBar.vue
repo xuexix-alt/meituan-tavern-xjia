@@ -22,7 +22,11 @@
       <button class="secondary-button compact-action" type="button" @click="$emit('export')">
         <i class="fas fa-download" aria-hidden="true"></i> 导出 JSON
       </button>
-      <button :class="running ? 'stop-button' : 'send-button'" type="button" @click="running ? $emit('stop') : $emit('send')">
+      <button
+        :class="running ? 'stop-button' : 'send-button'"
+        type="button"
+        @click="running ? $emit('stop') : $emit('send')"
+      >
         <i :class="['fas', running ? 'fa-stop' : 'fa-play']" aria-hidden="true"></i>
         {{ running ? '停止请求' : '发送请求' }}
       </button>

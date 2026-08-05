@@ -7,10 +7,8 @@ function assertEqual(actual: unknown, expected: unknown, label: string): void {
 }
 
 function testPartialXmlReplacement() {
-  const html = renderStreamingStoryHtml(
-    '正文\n<UpdateVariable>{"foo":1',
-    'assistant',
-    text => text.replace(/<UpdateVariable>[\s\S]*$/i, '<div class="variable-pending">变量处理中</div>'),
+  const html = renderStreamingStoryHtml('正文\n<UpdateVariable>{"foo":1', 'assistant', text =>
+    text.replace(/<UpdateVariable>[\s\S]*$/i, '<div class="variable-pending">变量处理中</div>'),
   );
   assertEqual(html, '正文\n<div class="variable-pending">变量处理中</div>', '未闭合 XML 应用显示正则');
 }
@@ -30,11 +28,7 @@ function testIntentionalEmptyOutput() {
 function testUnchangedUnsafeXmlIsEscaped() {
   const source = '<unknown onclick="alert(1)">raw</unknown>';
   const html = renderStreamingStoryHtml(source, 'assistant', text => text);
-  assertEqual(
-    html,
-    '&lt;unknown onclick=&quot;alert(1)&quot;&gt;raw&lt;/unknown&gt;',
-    '未被正则处理的 XML 安全转义',
-  );
+  assertEqual(html, '&lt;unknown onclick=&quot;alert(1)&quot;&gt;raw&lt;/unknown&gt;', '未被正则处理的 XML 安全转义');
 }
 
 function testRegexFailureFallsBackSafely() {

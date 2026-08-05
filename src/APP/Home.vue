@@ -130,7 +130,11 @@
       <div class="search-bar-container">
         <i class="fas fa-search"></i>
         <input v-model="searchKeyword" placeholder="要养成告诉AI“结束XX订单”的好习惯" @keyup.enter="doSearch" />
-        <button class="search-btn" :class="{ 'is-stopping': isGenerating }" @click="isGenerating ? cancelGeneration() : doSearch()">
+        <button
+          class="search-btn"
+          :class="{ 'is-stopping': isGenerating }"
+          @click="isGenerating ? cancelGeneration() : doSearch()"
+        >
           {{ isGenerating ? '停止' : '搜索' }}
         </button>
       </div>

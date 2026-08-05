@@ -12,13 +12,31 @@
       <span>{{ run.durationMs }} 毫秒</span>
     </div>
     <div class="response-tabs" role="tablist" aria-label="响应视图">
-      <button type="button" role="tab" :aria-selected="tab === 'text'" :class="{ active: tab === 'text' }" @click="tab = 'text'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="tab === 'text'"
+        :class="{ active: tab === 'text' }"
+        @click="tab = 'text'"
+      >
         <i class="fas fa-message" aria-hidden="true"></i>文本
       </button>
-      <button type="button" role="tab" :aria-selected="tab === 'raw'" :class="{ active: tab === 'raw' }" @click="tab = 'raw'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="tab === 'raw'"
+        :class="{ active: tab === 'raw' }"
+        @click="tab = 'raw'"
+      >
         <i class="fas fa-code" aria-hidden="true"></i>原始数据
       </button>
-      <button type="button" role="tab" :aria-selected="tab === 'diagnostics'" :class="{ active: tab === 'diagnostics' }" @click="tab = 'diagnostics'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="tab === 'diagnostics'"
+        :class="{ active: tab === 'diagnostics' }"
+        @click="tab = 'diagnostics'"
+      >
         <i class="fas fa-chart-line" aria-hidden="true"></i>诊断
       </button>
     </div>
@@ -42,15 +60,24 @@
       </template>
 
       <dl v-if="tab === 'diagnostics'" class="diagnostics-grid">
-        <dt>状态</dt><dd>{{ statusLabels[run.status] }}</dd>
-        <dt>HTTP 状态码</dt><dd>{{ run.httpStatus ?? '—' }}</dd>
-        <dt>耗时</dt><dd>{{ run.durationMs }} 毫秒</dd>
-        <dt>结束原因</dt><dd>{{ run.finishReason ?? '—' }}</dd>
-        <dt>请求 ID</dt><dd>{{ run.requestId ?? '—' }}</dd>
-        <dt>输入 Token</dt><dd>{{ run.usage?.prompt_tokens ?? '—' }}</dd>
-        <dt>输出 Token</dt><dd>{{ run.usage?.completion_tokens ?? '—' }}</dd>
-        <dt>Token 总数</dt><dd>{{ run.usage?.total_tokens ?? '—' }}</dd>
-        <dt>解析错误</dt><dd>{{ run.parserErrors.length }}</dd>
+        <dt>状态</dt>
+        <dd>{{ statusLabels[run.status] }}</dd>
+        <dt>HTTP 状态码</dt>
+        <dd>{{ run.httpStatus ?? '—' }}</dd>
+        <dt>耗时</dt>
+        <dd>{{ run.durationMs }} 毫秒</dd>
+        <dt>结束原因</dt>
+        <dd>{{ run.finishReason ?? '—' }}</dd>
+        <dt>请求 ID</dt>
+        <dd>{{ run.requestId ?? '—' }}</dd>
+        <dt>输入 Token</dt>
+        <dd>{{ run.usage?.prompt_tokens ?? '—' }}</dd>
+        <dt>输出 Token</dt>
+        <dd>{{ run.usage?.completion_tokens ?? '—' }}</dd>
+        <dt>Token 总数</dt>
+        <dd>{{ run.usage?.total_tokens ?? '—' }}</dd>
+        <dt>解析错误</dt>
+        <dd>{{ run.parserErrors.length }}</dd>
       </dl>
     </div>
   </section>
@@ -95,4 +122,3 @@ function downloadText() {
   URL.revokeObjectURL(url);
 }
 </script>
-

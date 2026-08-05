@@ -56,7 +56,10 @@ function listHostMessageIds(): number[] {
   const ids = new Set<number>();
   for (const doc of hostDocuments()) {
     doc.querySelectorAll('.mes[mesid], .mes[data-message-index], .mes[data-message-id]').forEach(element => {
-      const value = element.getAttribute('mesid') ?? element.getAttribute('data-message-index') ?? element.getAttribute('data-message-id');
+      const value =
+        element.getAttribute('mesid') ??
+        element.getAttribute('data-message-index') ??
+        element.getAttribute('data-message-id');
       const id = Number(value);
       if (Number.isFinite(id) && id >= 0) ids.add(Math.trunc(id));
     });
@@ -103,11 +106,20 @@ export function createDefaultStorySession(): StorySession {
       return normalizeMessages(getChatMessages(range, { hide_state: 'all' }));
     },
     createMessages: async messages => {
-      const create = requireApi(typeof createChatMessages === 'undefined' ? undefined : createChatMessages, 'createChatMessages');
-      await create(messages.map(message => ({ ...message, is_hidden: false })), { refresh: 'affected' });
+      const create = requireApi(
+        typeof createChatMessages === 'undefined' ? undefined : createChatMessages,
+        'createChatMessages',
+      );
+      await create(
+        messages.map(message => ({ ...message, is_hidden: false })),
+        { refresh: 'affected' },
+      );
     },
     deleteMessages: async messageIds => {
-      const remove = requireApi(typeof deleteChatMessages === 'undefined' ? undefined : deleteChatMessages, 'deleteChatMessages');
+      const remove = requireApi(
+        typeof deleteChatMessages === 'undefined' ? undefined : deleteChatMessages,
+        'deleteChatMessages',
+      );
       await remove(messageIds, { refresh: 'all' });
     },
     generate: async config => {

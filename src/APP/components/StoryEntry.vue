@@ -49,14 +49,25 @@ const statusText = computed(() => {
   border-radius: 8px;
   background: var(--accent-primary);
   color: #2c2500;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2), 0 0 0 3px color-mix(in srgb, var(--bg-primary) 86%, transparent);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.2),
+    0 0 0 3px color-mix(in srgb, var(--bg-primary) 86%, transparent);
   font-weight: 800;
   transform: translateX(-50%);
-  transition: transform 140ms ease, filter 140ms ease;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
 
-  &:hover { transform: translateX(-50%) translateY(-2px); filter: brightness(1.03); }
-  &:active { transform: translateX(-50%) scale(0.97); }
-  &.error { border-color: var(--status-danger); }
+  &:hover {
+    transform: translateX(-50%) translateY(-2px);
+    filter: brightness(1.03);
+  }
+  &:active {
+    transform: translateX(-50%) scale(0.97);
+  }
+  &.error {
+    border-color: var(--status-danger);
+  }
 }
 
 .story-entry-dot {
@@ -67,13 +78,26 @@ const statusText = computed(() => {
   animation: entry-pulse 1s ease-in-out infinite;
 }
 
-@keyframes entry-pulse { 50% { opacity: 0.35; } }
+@keyframes entry-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
 
 @media (max-width: 420px) {
-  .story-entry { bottom: 68px; min-width: 96px; min-height: 44px; padding: 8px 13px; }
+  .story-entry {
+    bottom: 68px;
+    min-width: 96px;
+    min-height: 44px;
+    padding: 8px 13px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .story-entry, .story-entry-dot { transition: none; animation: none; }
+  .story-entry,
+  .story-entry-dot {
+    transition: none;
+    animation: none;
+  }
 }
 </style>

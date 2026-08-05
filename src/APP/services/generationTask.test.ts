@@ -51,7 +51,9 @@ async function testExplicitCancellation() {
     generate: (_input, options) => {
       capturedSignal = options.signal;
       return new Promise((_resolve, reject) => {
-        options.signal?.addEventListener('abort', () => reject(new DOMException('已取消', 'AbortError')), { once: true });
+        options.signal?.addEventListener('abort', () => reject(new DOMException('已取消', 'AbortError')), {
+          once: true,
+        });
       });
     },
     ingest: () => ({ parsedCount: 0, savedCount: 0, packageCount: 0, shops: [] }),
@@ -76,11 +78,7 @@ async function testParseFailure() {
 
   await task.start('搜索：测试', '测试');
   assertEqual(task.state.value.status, 'error', '空解析结果进入错误状态');
-  assertEqual(
-    task.state.value.error,
-    '模型回复未解析出有效店铺，请检查调试台预设与回复格式。',
-    '空解析错误文案',
-  );
+  assertEqual(task.state.value.error, '模型回复未解析出有效店铺，请检查调试台预设与回复格式。', '空解析错误文案');
 }
 
 void Promise.resolve()

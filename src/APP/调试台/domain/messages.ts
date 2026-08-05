@@ -14,24 +14,22 @@ export function addMessage(messages: ChatMessage[]): ChatMessage[] {
 }
 
 export function copyMessage(messages: ChatMessage[], id: string): ChatMessage[] {
-  const sourceIndex = messages.findIndex((message) => message.id === id);
+  const sourceIndex = messages.findIndex(message => message.id === id);
   if (sourceIndex === -1) return messages;
 
   const source = messages[sourceIndex];
   const copy = {
     ...createMessage(source.role, source.content),
     collapsed: source.collapsed,
-    ...(source.role === 'tool' && source.tool_call_id !== undefined
-      ? { tool_call_id: source.tool_call_id }
-      : {}),
+    ...(source.role === 'tool' && source.tool_call_id !== undefined ? { tool_call_id: source.tool_call_id } : {}),
   };
 
   return [...messages.slice(0, sourceIndex + 1), copy, ...messages.slice(sourceIndex + 1)];
 }
 
 export function removeMessage(messages: ChatMessage[], id: string): ChatMessage[] {
-  if (messages.length <= 1 || !messages.some((message) => message.id === id)) return messages;
-  return messages.filter((message) => message.id !== id);
+  if (messages.length <= 1 || !messages.some(message => message.id === id)) return messages;
+  return messages.filter(message => message.id !== id);
 }
 
 export function moveMessage(messages: ChatMessage[], fromIndex: number, toIndex: number): ChatMessage[] {

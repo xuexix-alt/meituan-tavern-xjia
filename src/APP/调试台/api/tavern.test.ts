@@ -21,12 +21,16 @@ const payload = {
 
 const config = buildTavernGenerateConfig(payload, 'generation-1');
 
-assertEqual(config.ordered_prompts, [
-  { role: 'system', content: 'system prompt' },
-  { role: 'user', content: 'hello' },
-  { role: 'assistant', content: 'calling tool' },
-  { role: 'user', content: '[工具 lookup_1 的返回]\ntool result' },
-], 'ordered_prompts');
+assertEqual(
+  config.ordered_prompts,
+  [
+    { role: 'system', content: 'system prompt' },
+    { role: 'user', content: 'hello' },
+    { role: 'assistant', content: 'calling tool' },
+    { role: 'user', content: '[工具 lookup_1 的返回]\ntool result' },
+  ],
+  'ordered_prompts',
+);
 assertEqual(config.generation_id, 'generation-1', 'generation_id');
 assertEqual(config.should_silence, true, 'should_silence');
 assertEqual(config.max_chat_history, 0, 'max_chat_history');

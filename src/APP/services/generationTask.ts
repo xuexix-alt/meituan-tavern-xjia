@@ -51,9 +51,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function createGenerationTask(
-  dependencies: GenerationTaskDependencies,
-) {
+export function createGenerationTask(dependencies: GenerationTaskDependencies) {
   const state = ref<GenerationTaskState>({ ...IDLE_STATE });
   const isBusy = computed(() => state.value.status === 'running' || state.value.status === 'parsing');
   let controller: AbortController | null = null;

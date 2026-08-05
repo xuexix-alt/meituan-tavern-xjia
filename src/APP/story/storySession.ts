@@ -1,12 +1,6 @@
 import { computed, ref } from 'vue';
 import { buildStoryTranscript } from './storyTranscript';
-import type {
-  StoryChatMessage,
-  StorySession,
-  StoryStatus,
-  StorySubmitResult,
-  StoryTranscriptItem,
-} from './storyTypes';
+import type { StoryChatMessage, StorySession, StoryStatus, StorySubmitResult, StoryTranscriptItem } from './storyTypes';
 
 type StopHandle = { stop: () => void } | (() => void) | void;
 
@@ -61,7 +55,11 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
       messageId: dependencies.nextMessageId(),
       role: 'assistant',
       raw: streamingText.value,
-      preview: streamingText.value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100),
+      preview: streamingText.value
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 100),
       finalHtml: '',
       hidden: false,
       isStreaming: true,
@@ -160,13 +158,16 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     if (busy.value) return false;
     const allMessages = readAllMessages().sort((a, b) => a.message_id - b.message_id);
     const carrier = dependencies.carrierMessageId();
-    const target = messageId == null
-      ? [...allMessages].reverse().find(message => message.role === 'assistant' && message.message_id !== carrier)
-      : allMessages.find(message => message.message_id === messageId && message.role === 'assistant');
+    const target =
+      messageId == null
+        ? [...allMessages].reverse().find(message => message.role === 'assistant' && message.message_id !== carrier)
+        : allMessages.find(message => message.message_id === messageId && message.role === 'assistant');
     if (!target || target.message_id === carrier) return false;
     const promptMessage = [...allMessages]
       .reverse()
-      .find(message => message.role === 'user' && message.message_id < target.message_id && message.message_id !== carrier);
+      .find(
+        message => message.role === 'user' && message.message_id < target.message_id && message.message_id !== carrier,
+      );
     const prompt = String(promptMessage?.message ?? '').trim();
     if (!prompt) return false;
 
@@ -227,9 +228,13 @@ export function createStorySession(dependencies: StorySessionDependencies): Stor
     ['message_sent', 'message_received', 'message_deleted', 'chat_changed'].forEach(event => {
       stops.push(stopHandle(dependencies.subscribe?.(event, () => refresh(event))));
     });
-    stops.push(stopHandle(dependencies.subscribe('stream_full', (...args: unknown[]) => {
-      updateStreamingText(String(args[0] ?? ''), typeof args[1] === 'string' ? args[1] : undefined);
-    })));
+    stops.push(
+      stopHandle(
+        dependencies.subscribe('stream_full', (...args: unknown[]) => {
+          updateStreamingText(String(args[0] ?? ''), typeof args[1] === 'string' ? args[1] : undefined);
+        }),
+      ),
+    );
   }
 
   function dispose(): void {

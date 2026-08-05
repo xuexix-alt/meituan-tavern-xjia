@@ -49,7 +49,8 @@ function createHarness(initial: StoryChatMessage[] = []) {
     stopGeneration: id => stopped.push(id),
     carrierMessageId: () => 2,
     nextMessageId: () => Math.max(0, ...messages.map(item => item.message_id)) + 1,
-    readHostHtml: id => (messages.find(message => message.message_id === id)?.role === 'assistant' ? `<p>#${id}</p>` : ''),
+    readHostHtml: id =>
+      messages.find(message => message.message_id === id)?.role === 'assistant' ? `<p>#${id}</p>` : '',
     formatDisplayedMessage: text => `<p>${text}</p>`,
     listHostMessageIds: () => messages.map(message => message.message_id),
     reserveHostFloor: id => hiddenReservations.push(id),
@@ -81,10 +82,11 @@ async function testSubmissionOrderAndStreamingFilter() {
 
   const running = session.submitPrompt('我要下单：雪夜套餐');
   await Promise.resolve();
-  assertEqual(harness.operations.slice(0, 2), [
-    'create:user:我要下单：雪夜套餐',
-    'generate:我要下单：雪夜套餐',
-  ], '先创建玩家楼层再调用生成');
+  assertEqual(
+    harness.operations.slice(0, 2),
+    ['create:user:我要下单：雪夜套餐', 'generate:我要下单：雪夜套餐'],
+    '先创建玩家楼层再调用生成',
+  );
   assertEqual(harness.hiddenReservations, [3], '创建玩家前预留楼层');
 
   let acceptedBeforeGeneration: unknown;
@@ -104,11 +106,11 @@ async function testSubmissionOrderAndStreamingFilter() {
   await Promise.resolve();
   await Promise.resolve();
   await Promise.resolve();
-  assertEqual(harness.operations, [
-    'create:user:我要下单：雪夜套餐',
-    'generate:我要下单：雪夜套餐',
-    'create:assistant:故事回复',
-  ], '完整发送顺序');
+  assertEqual(
+    harness.operations,
+    ['create:user:我要下单：雪夜套餐', 'generate:我要下单：雪夜套餐', 'create:assistant:故事回复'],
+    '完整发送顺序',
+  );
   assertEqual(harness.hiddenReservations, [3, 4], '玩家与助手楼层都提前预留');
   assertEqual(session.baseItems.value.at(-1)?.finalHtml, '<p>#4</p>', '完成态优先宿主 HTML');
 }
@@ -141,11 +143,11 @@ async function testRegenerateAndRollback() {
   assertEqual(harness.getGenerationPrompt(), '玩家行动', '重生复用前置玩家指令');
   harness.resolveGeneration('新回复');
   assertEqual(await regenerating, true, '重新生成完成');
-  assertEqual(harness.operations, [
-    'delete:4',
-    'generate:玩家行动',
-    'create:assistant:新回复',
-  ], '重生不重复创建玩家楼层');
+  assertEqual(
+    harness.operations,
+    ['delete:4', 'generate:玩家行动', 'create:assistant:新回复'],
+    '重生不重复创建玩家楼层',
+  );
 
   harness.operations.length = 0;
   await session.rollbackFrom(2);

@@ -23,7 +23,11 @@
         </button>
       </div>
       <small v-if="sendMode === 'tavern'">
-        {{ tavernAvailable ? '已连接酒馆生成（使用酒馆当前配置的模型，忽略下方地址/密钥）' : (tavernError || '未检测到酒馆助手') }}
+        {{
+          tavernAvailable
+            ? '已连接酒馆生成（使用酒馆当前配置的模型，忽略下方地址/密钥）'
+            : tavernError || '未检测到酒馆助手'
+        }}
       </small>
       <small v-else>直连模式会直接请求下方接口地址（自动补 /v1），效果等同原调试台代理。</small>
     </div>
@@ -58,7 +62,10 @@
     <template v-if="models.length > 0">
       <label class="field">
         <span>模型</span>
-        <select :value="manualModel || !models.includes(connection.model) ? '__manual__' : connection.model" @change="onModelSelect">
+        <select
+          :value="manualModel || !models.includes(connection.model) ? '__manual__' : connection.model"
+          @change="onModelSelect"
+        >
           <option v-for="model in models" :key="model" :value="model">{{ model }}</option>
           <option value="__manual__">其他模型（手动输入）</option>
         </select>
@@ -160,13 +167,27 @@ function onModelSelect(event: Event) {
   patch('model', value);
 }
 
-function onSavePreset(name: string) { emit('save-preset', name); }
-function onLoadPreset(preset: PromptPreset) { emit('load-preset', preset); }
-function onCopyPreset(preset: PromptPreset) { emit('copy-preset', preset); }
-function onDeletePreset(id: string) { emit('delete-preset', id); }
-function onLoadHistory(entry: RequestHistory) { emit('load-history', entry); }
-function onResendHistory(entry: RequestHistory) { emit('resend-history', entry); }
-function onDeleteHistory(id: string) { emit('delete-history', id); }
+function onSavePreset(name: string) {
+  emit('save-preset', name);
+}
+function onLoadPreset(preset: PromptPreset) {
+  emit('load-preset', preset);
+}
+function onCopyPreset(preset: PromptPreset) {
+  emit('copy-preset', preset);
+}
+function onDeletePreset(id: string) {
+  emit('delete-preset', id);
+}
+function onLoadHistory(entry: RequestHistory) {
+  emit('load-history', entry);
+}
+function onResendHistory(entry: RequestHistory) {
+  emit('resend-history', entry);
+}
+function onDeleteHistory(id: string) {
+  emit('delete-history', id);
+}
 </script>
 
 <style scoped lang="scss">

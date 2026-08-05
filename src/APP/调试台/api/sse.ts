@@ -52,8 +52,8 @@ export class SseParser {
   private processFrame(frame: string): void {
     const data = frame
       .split('\n')
-      .filter((line) => line.startsWith('data:'))
-      .map((line) => line.slice(5).replace(/^ /, ''))
+      .filter(line => line.startsWith('data:'))
+      .map(line => line.slice(5).replace(/^ /, ''))
       .join('\n');
     if (!data) return;
 
@@ -84,7 +84,8 @@ export class SseParser {
       const existing = this.toolCalls[delta.index] ?? { index: delta.index, function: { arguments: '' } };
       if (delta.id !== undefined) existing.id = delta.id;
       if (delta.type !== undefined) existing.type = delta.type;
-      if (delta.function?.name !== undefined) existing.function.name = (existing.function.name ?? '') + delta.function.name;
+      if (delta.function?.name !== undefined)
+        existing.function.name = (existing.function.name ?? '') + delta.function.name;
       if (delta.function?.arguments !== undefined) existing.function.arguments += delta.function.arguments;
       this.toolCalls[delta.index] = existing;
     }

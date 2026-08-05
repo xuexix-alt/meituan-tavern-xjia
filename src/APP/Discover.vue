@@ -92,9 +92,7 @@ onMounted(() => {
   const existingShops = shopStoreApi.value.getShops();
 
   // 2. 全局缓存是主数据源；仅在空缓存时迁移一次旧聊天楼层数据。
-  const parsedShops = existingShops.length === 0
-    ? (extractDataFromMessage().shops || [])
-    : [];
+  const parsedShops = existingShops.length === 0 ? extractDataFromMessage().shops || [] : [];
 
   // 3. shop_id 是唯一主键：相同 ID 更新，同名不同 ID 保留。
   const finalShops = mergeShopsById(existingShops, parsedShops);

@@ -1,12 +1,16 @@
 <template>
   <div class="story-reader">
     <header class="reader-header">
-      <button type="button" class="icon-button" aria-label="返回" @click="router.back()"><i class="fas fa-arrow-left"></i></button>
+      <button type="button" class="icon-button" aria-label="返回" @click="router.back()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
       <div class="reader-title">
         <strong>正文</strong>
         <span>{{ statusText }}</span>
       </div>
-      <button type="button" class="icon-button" aria-label="查看正文历史" @click="historyOpen = true"><i class="fas fa-clock-rotate-left"></i></button>
+      <button type="button" class="icon-button" aria-label="查看正文历史" @click="historyOpen = true">
+        <i class="fas fa-clock-rotate-left"></i>
+      </button>
     </header>
 
     <main ref="readerScroller" class="reader-scroll">
@@ -42,12 +46,32 @@
           <div v-if="!latestAssistant.isStreaming && latestAssistant.canRegenerate" class="paper-actions">
             <template v-if="rollbackConfirmId === latestAssistant.messageId">
               <span>删除当前及后续正文？</span>
-              <button type="button" class="danger" :disabled="session.busy.value" @click="confirmRollback(latestAssistant.messageId)">确认</button>
+              <button
+                type="button"
+                class="danger"
+                :disabled="session.busy.value"
+                @click="confirmRollback(latestAssistant.messageId)"
+              >
+                确认
+              </button>
               <button type="button" :disabled="session.busy.value" @click="rollbackConfirmId = null">取消</button>
             </template>
             <template v-else>
-              <button type="button" :disabled="session.busy.value" @click="session.regenerate(latestAssistant.messageId)"><i class="fas fa-rotate-right"></i> 重新生成</button>
-              <button type="button" class="danger" :disabled="session.busy.value" @click="rollbackConfirmId = latestAssistant.messageId"><i class="fas fa-clock-rotate-left"></i> 回退</button>
+              <button
+                type="button"
+                :disabled="session.busy.value"
+                @click="session.regenerate(latestAssistant.messageId)"
+              >
+                <i class="fas fa-rotate-right"></i> 重新生成
+              </button>
+              <button
+                type="button"
+                class="danger"
+                :disabled="session.busy.value"
+                @click="rollbackConfirmId = latestAssistant.messageId"
+              >
+                <i class="fas fa-clock-rotate-left"></i> 回退
+              </button>
             </template>
           </div>
         </article>
@@ -106,9 +130,7 @@ const relatedUser = computed(() => {
   const assistant = latestAssistant.value;
   if (!assistant) return null;
   const beforeId = assistant.messageId;
-  return [...session.baseItems.value]
-    .reverse()
-    .find(item => item.role === 'user' && item.messageId < beforeId) ?? null;
+  return [...session.baseItems.value].reverse().find(item => item.role === 'user' && item.messageId < beforeId) ?? null;
 });
 const statusText = computed(() => {
   if (session.status.value === 'streaming') return '生成中';
@@ -133,15 +155,21 @@ async function confirmRollback(messageId: number) {
   rollbackConfirmId.value = null;
 }
 
-watch(() => relatedUser.value?.messageId, () => {
-  userExpanded.value = false;
-});
+watch(
+  () => relatedUser.value?.messageId,
+  () => {
+    userExpanded.value = false;
+  },
+);
 
-watch(() => latestAssistant.value?.raw, async () => {
-  await nextTick();
-  const scroller = readerScroller.value;
-  if (scroller) scroller.scrollTop = scroller.scrollHeight;
-});
+watch(
+  () => latestAssistant.value?.raw,
+  async () => {
+    await nextTick();
+    const scroller = readerScroller.value;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+  },
+);
 
 defineExpose<{ session: typeof session }>({ session });
 </script>
@@ -174,8 +202,13 @@ defineExpose<{ session: typeof session }>({ session });
   min-width: 0;
   justify-items: center;
 
-  strong { font-size: 19px; }
-  span { color: var(--text-secondary); font-size: 12px; }
+  strong {
+    font-size: 19px;
+  }
+  span {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
 }
 
 .icon-button {
@@ -221,12 +254,24 @@ defineExpose<{ session: typeof session }>({ session });
     color: var(--text-primary);
     text-align: left;
 
-    span:first-child { color: var(--accent-dark); font-size: 13px; font-weight: 700; }
-    span:nth-child(2) { overflow: hidden; color: var(--text-secondary); text-overflow: ellipsis; white-space: nowrap; }
+    span:first-child {
+      color: var(--accent-dark);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    span:nth-child(2) {
+      overflow: hidden;
+      color: var(--text-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 
-.user-body { padding: 6px 16px 16px; border-top: 1px solid var(--border-color); }
+.user-body {
+  padding: 6px 16px 16px;
+  border-top: 1px solid var(--border-color);
+}
 
 .story-paper {
   display: grid;
@@ -237,7 +282,9 @@ defineExpose<{ session: typeof session }>({ session });
   background: var(--bg-item);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.09);
 
-  &.streaming { border-color: color-mix(in srgb, var(--accent-primary) 62%, var(--border-color)); }
+  &.streaming {
+    border-color: color-mix(in srgb, var(--accent-primary) 62%, var(--border-color));
+  }
 }
 
 .paper-meta {
@@ -284,9 +331,20 @@ defineExpose<{ session: typeof session }>({ session });
   color: var(--text-secondary);
   font-size: 13px;
 
-  span { margin-right: auto; }
-  button { min-height: 38px; padding: 7px 11px; border: 0; border-radius: 8px; background: var(--bg-card-light); color: var(--text-primary); }
-  .danger { color: var(--status-danger); }
+  span {
+    margin-right: auto;
+  }
+  button {
+    min-height: 38px;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--bg-card-light);
+    color: var(--text-primary);
+  }
+  .danger {
+    color: var(--status-danger);
+  }
 }
 
 .reader-empty,
@@ -300,11 +358,19 @@ defineExpose<{ session: typeof session }>({ session });
   color: var(--text-secondary);
   text-align: center;
 
-  i { color: var(--accent-dark); font-size: 28px; }
-  strong { color: var(--text-primary); }
+  i {
+    color: var(--accent-dark);
+    font-size: 28px;
+  }
+  strong {
+    color: var(--text-primary);
+  }
 }
 
-.reader-error { color: var(--status-danger); text-align: left; }
+.reader-error {
+  color: var(--status-danger);
+  text-align: left;
+}
 
 .reader-composer {
   display: grid;
@@ -326,7 +392,10 @@ defineExpose<{ session: typeof session }>({ session });
     color: var(--text-primary);
     outline: none;
 
-    &:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(255, 195, 0, 0.14); }
+    &:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(255, 195, 0, 0.14);
+    }
   }
 }
 
@@ -339,10 +408,22 @@ defineExpose<{ session: typeof session }>({ session });
   background: var(--accent-primary);
   color: #2c2500;
 
-  &.cancel { background: var(--status-danger); color: white; }
+  &.cancel {
+    background: var(--status-danger);
+    color: white;
+  }
 }
 
-@keyframes story-pulse { 50% { opacity: 0.35; transform: scale(0.8); } }
+@keyframes story-pulse {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
 
-@media (prefers-reduced-motion: reduce) { .stream-dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .stream-dot {
+    animation: none;
+  }
+}
 </style>

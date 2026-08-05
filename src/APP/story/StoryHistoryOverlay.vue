@@ -1,5 +1,12 @@
 <template>
-  <div v-if="open" class="history-overlay" role="dialog" aria-modal="true" aria-label="正文历史" @click.self="$emit('close')">
+  <div
+    v-if="open"
+    class="history-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="正文历史"
+    @click.self="$emit('close')"
+  >
     <section class="history-panel">
       <header>
         <div>
@@ -35,9 +42,12 @@ function toggle(messageId: number) {
   expandedId.value = expandedId.value === messageId ? null : messageId;
 }
 
-watch(() => props.open, open => {
-  if (!open) expandedId.value = null;
-});
+watch(
+  () => props.open,
+  open => {
+    if (!open) expandedId.value = null;
+  },
+);
 </script>
 
 <style scoped lang="scss">

@@ -5,7 +5,10 @@ const OPTION_BLOCK_RE = /<option(?:\s[^>]*)?>([\s\S]*?)(?:<\/option>|$)/gi;
 const OPTION_MARKER_RE = /^(?:[-*]+|\d+[.)、]|[（(]?\d+[)）、]|(?:【|\[)?[A-Da-d](?:】|\]|\.|、|\)))\s*/;
 
 function preview(text: string, maxLength = 100): string {
-  const normalized = String(text ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const normalized = String(text ?? '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   return normalized.length > maxLength ? `${normalized.slice(0, maxLength)}...` : normalized;
 }
 
@@ -15,7 +18,13 @@ function extractOptions(text: string): string[] {
     const lines = String(match[1] ?? '')
       .replace(/<br\s*\/?>/gi, '\n')
       .split('\n')
-      .map(line => line.replace(/<[^>]+>/g, ' ').replace(OPTION_MARKER_RE, '').replace(/\s+/g, ' ').trim())
+      .map(line =>
+        line
+          .replace(/<[^>]+>/g, ' ')
+          .replace(OPTION_MARKER_RE, '')
+          .replace(/\s+/g, ' ')
+          .trim(),
+      )
       .filter(Boolean);
     for (const line of lines) {
       if (!options.includes(line)) options.push(line);
@@ -38,10 +47,11 @@ export function buildStoryTranscript(
 ): StoryTranscriptItem[] {
   const carrier = dependencies.carrierMessageId();
   const selected = messages
-    .filter(message =>
-      message.message_id > 0 &&
-      message.message_id !== carrier &&
-      (message.role === 'user' || message.role === 'assistant'),
+    .filter(
+      message =>
+        message.message_id > 0 &&
+        message.message_id !== carrier &&
+        (message.role === 'user' || message.role === 'assistant'),
     )
     .sort((a, b) => a.message_id - b.message_id)
     .slice(-limit);

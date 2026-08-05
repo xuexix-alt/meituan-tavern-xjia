@@ -183,7 +183,9 @@ onBeforeUnmount(() => {
 
 .generation-status-enter-active,
 .generation-status-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 
 .generation-status-enter-from,

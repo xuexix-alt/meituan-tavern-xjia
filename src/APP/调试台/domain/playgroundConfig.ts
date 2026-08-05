@@ -11,20 +11,22 @@ const messageSchema = z.object({
   tool_call_id: z.string().optional(),
 });
 
-const configSchema = z.object({
-  baseUrl: z.string().optional(),
-  model: z.string().min(1),
-  temperature: z.number().finite().optional(),
-  topP: z.number().finite().optional(),
-  top_p: z.number().finite().optional(),
-  maxTokens: z.number().finite().optional(),
-  max_tokens: z.number().finite().optional(),
-  stream: z.boolean().optional(),
-  stop: z.array(z.string()).optional(),
-  macroName: z.string().optional(),
-  appendReply: z.boolean().optional(),
-  messages: z.array(messageSchema).min(1),
-}).passthrough();
+const configSchema = z
+  .object({
+    baseUrl: z.string().optional(),
+    model: z.string().min(1),
+    temperature: z.number().finite().optional(),
+    topP: z.number().finite().optional(),
+    top_p: z.number().finite().optional(),
+    maxTokens: z.number().finite().optional(),
+    max_tokens: z.number().finite().optional(),
+    stream: z.boolean().optional(),
+    stop: z.array(z.string()).optional(),
+    macroName: z.string().optional(),
+    appendReply: z.boolean().optional(),
+    messages: z.array(messageSchema).min(1),
+  })
+  .passthrough();
 
 export interface PromptPlaygroundConfig {
   baseUrl: string;
@@ -51,9 +53,9 @@ export function createDefaultPlaygroundConfig(): PromptPlaygroundConfig {
   return normalizeConfig(defaultConfig);
 }
 
-export function importPlaygroundConfig(text: string):
-  | { success: true; config: ImportedPlaygroundConfig }
-  | { success: false; error: string } {
+export function importPlaygroundConfig(
+  text: string,
+): { success: true; config: ImportedPlaygroundConfig } | { success: false; error: string } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -107,17 +109,34 @@ export function exportPlaygroundConfig(input: {
 export function draftFromConfig(config: z.infer<typeof configSchema>): PromptDraft {
   return {
     model: config.model,
-    messages: config.messages.map((message) => messageFromConfig(message)),
+    messages: config.messages.map(message => messageFromConfig(message)),
     generation: {
       stream: config.stream ?? false,
       ...(config.temperature === undefined ? {} : { temperature: config.temperature }),
       ...((config.topP ?? config.top_p) === undefined ? {} : { top_p: config.topP ?? config.top_p }),
-      ...((config.maxTokens ?? config.max_tokens) === undefined ? {} : { max_tokens: config.maxTokens ?? config.max_tokens }),
+      ...((config.maxTokens ?? config.max_tokens) === undefined
+        ? {}
+        : { max_tokens: config.maxTokens ?? config.max_tokens }),
       stop: config.stop ?? [],
-      additional: Object.fromEntries(Object.entries(config).filter(([key]) => ![
-        'baseUrl', 'model', 'temperature', 'topP', 'top_p', 'maxTokens', 'max_tokens', 'stream', 'stop',
-        'macroName', 'appendReply', 'messages',
-      ].includes(key))),
+      additional: Object.fromEntries(
+        Object.entries(config).filter(
+          ([key]) =>
+            ![
+              'baseUrl',
+              'model',
+              'temperature',
+              'topP',
+              'top_p',
+              'maxTokens',
+              'max_tokens',
+              'stream',
+              'stop',
+              'macroName',
+              'appendReply',
+              'messages',
+            ].includes(key),
+        ),
+      ),
     },
   };
 }

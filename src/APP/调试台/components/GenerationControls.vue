@@ -4,15 +4,30 @@
     <div class="generation-grid">
       <label class="field">
         <span>随机性（Temperature）</span>
-        <input type="number" step="0.1" :value="generation.temperature ?? ''" @input="onNumber('temperature', ($event.target as HTMLInputElement).value)" />
+        <input
+          type="number"
+          step="0.1"
+          :value="generation.temperature ?? ''"
+          @input="onNumber('temperature', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label class="field">
         <span>核采样（Top P）</span>
-        <input type="number" step="0.1" :value="generation.top_p ?? ''" @input="onNumber('top_p', ($event.target as HTMLInputElement).value)" />
+        <input
+          type="number"
+          step="0.1"
+          :value="generation.top_p ?? ''"
+          @input="onNumber('top_p', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label class="field">
         <span>最大 Token 数</span>
-        <input type="number" step="1" :value="generation.max_tokens ?? ''" @input="onNumber('max_tokens', ($event.target as HTMLInputElement).value)" />
+        <input
+          type="number"
+          step="1"
+          :value="generation.max_tokens ?? ''"
+          @input="onNumber('max_tokens', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <label class="checkbox-field">
         <input type="checkbox" :checked="generation.stream" @change="onStreamChange" />
@@ -49,7 +64,7 @@ const additionalError = ref('');
 
 watch(
   () => props.generation.additional,
-  (additional) => {
+  additional => {
     additionalText.value = JSON.stringify(additional, null, 2);
   },
 );
@@ -73,7 +88,7 @@ function onAdditionalInput(event: Event) {
   try {
     const parsed: unknown = JSON.parse(text);
     if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('请输入 JSON 对象。');
-    const conflict = Object.keys(parsed).find((key) => RESERVED_PAYLOAD_FIELDS.has(key));
+    const conflict = Object.keys(parsed).find(key => RESERVED_PAYLOAD_FIELDS.has(key));
     if (conflict) throw new Error(`“${conflict}” 是保留的请求字段。`);
     additionalError.value = '';
     emit('change', { ...props.generation, additional: parsed as Record<string, unknown> });

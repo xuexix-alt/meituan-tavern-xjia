@@ -8,7 +8,7 @@
       <div class="status-grid">
         <div class="status-item">
           <span class="label">变量状态:</span>
-          <span class="value" :class="{ 'success': mvuReady, 'error': !mvuReady }">
+          <span class="value" :class="{ success: mvuReady, error: !mvuReady }">
             {{ mvuReady ? '✅ 已连接' : '❌ 未连接' }}
           </span>
         </div>
@@ -137,9 +137,9 @@ async function requestVariableUpdate(userInput: string) {
       char_personality: '',
       scenario: '',
       chat_history: {
-        prompts: []
-      }
-    }
+        prompts: [],
+      },
+    },
   });
 
   addLog('AI响应已接收，正在解析...', 'info');
@@ -158,7 +158,7 @@ async function requestVariableUpdate(userInput: string) {
 
   const response = UpdateResponseSchema.parse({
     analysis,
-    updates
+    updates,
   });
 
   addLog(`AI分析: ${response.analysis}`, 'info');
@@ -405,12 +405,12 @@ onMounted(() => {
 
   &.info {
     background: #e7f3ff;
-    border-left: 3px solid #2196F3;
+    border-left: 3px solid #2196f3;
   }
 
   &.success {
     background: #e8f5e9;
-    border-left: 3px solid #4CAF50;
+    border-left: 3px solid #4caf50;
   }
 
   &.error {

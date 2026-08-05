@@ -47,7 +47,7 @@ export function mergeShopsById(existing: unknown, incoming: unknown): StoredShop
 
 export function removeShopById(existing: unknown, shopId: string | number): StoredShop[] {
   const target = String(shopId).trim();
-  return normalizeShopList(existing).filter((shop) => shop.shop_id !== target);
+  return normalizeShopList(existing).filter(shop => shop.shop_id !== target);
 }
 
 export function updateShopCacheVariables(

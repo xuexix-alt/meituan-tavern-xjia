@@ -45,7 +45,7 @@ export function createDefaultDraft(): PromptDraft {
   };
   return {
     model: config.model,
-    messages: config.messages.map((message) => createMessage(message.role, message.content, message.tool_call_id)),
+    messages: config.messages.map(message => createMessage(message.role, message.content, message.tool_call_id)),
     generation: {
       stream: config.stream ?? false,
       ...(config.temperature === undefined ? {} : { temperature: config.temperature }),

@@ -8,16 +8,37 @@
       </label>
       <span class="message-index">#{{ index + 1 }}</span>
       <div class="row-actions">
-        <button class="icon-button" type="button" aria-label="上移消息" title="上移" :disabled="index === 0" @click="$emit('move', -1)">
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="上移消息"
+          title="上移"
+          :disabled="index === 0"
+          @click="$emit('move', -1)"
+        >
           <i class="fas fa-chevron-up" aria-hidden="true"></i>
         </button>
-        <button class="icon-button" type="button" aria-label="下移消息" title="下移" :disabled="index === count - 1" @click="$emit('move', 1)">
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="下移消息"
+          title="下移"
+          :disabled="index === count - 1"
+          @click="$emit('move', 1)"
+        >
           <i class="fas fa-chevron-down" aria-hidden="true"></i>
         </button>
         <button class="icon-button" type="button" aria-label="复制消息" title="复制消息" @click="$emit('copy')">
           <i class="fas fa-copy" aria-hidden="true"></i>
         </button>
-        <button class="icon-button danger" type="button" aria-label="删除消息" title="删除消息" :disabled="count === 1" @click="$emit('delete')">
+        <button
+          class="icon-button danger"
+          type="button"
+          aria-label="删除消息"
+          title="删除消息"
+          :disabled="count === 1"
+          @click="$emit('delete')"
+        >
           <i class="fas fa-trash" aria-hidden="true"></i>
         </button>
       </div>

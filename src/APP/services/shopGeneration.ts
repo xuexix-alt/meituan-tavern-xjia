@@ -1,10 +1,5 @@
 import { parseShopData } from '../../shared/shopData';
-import {
-  mergeShopsById,
-  normalizeShopList,
-  updateShopCacheVariables,
-  type StoredShop,
-} from '../../shared/shopCache';
+import { mergeShopsById, normalizeShopList, updateShopCacheVariables, type StoredShop } from '../../shared/shopCache';
 
 const SHOP_STORE_KEY = 'shop_store_cache';
 
@@ -26,9 +21,11 @@ function resolveShopStore(): ShopStoreApi | null {
 }
 
 function emitCacheUpdated(count: number): void {
-  window.dispatchEvent(new CustomEvent('shop:cache:updated', {
-    detail: { scope: { type: 'global' }, count, op: 'write' },
-  }));
+  window.dispatchEvent(
+    new CustomEvent('shop:cache:updated', {
+      detail: { scope: { type: 'global' }, count, op: 'write' },
+    }),
+  );
 }
 
 export function parseShopResponse(text: string): StoredShop[] {
@@ -47,11 +44,14 @@ export function persistGeneratedShops(incoming: StoredShop[]): StoredShop[] {
   }
 
   let merged: StoredShop[] = [];
-  updateVariablesWith((variables) => {
-    const updated = updateShopCacheVariables(variables, incoming, SHOP_STORE_KEY);
-    merged = normalizeShopList(updated[SHOP_STORE_KEY]);
-    return updated;
-  }, { type: 'global' });
+  updateVariablesWith(
+    variables => {
+      const updated = updateShopCacheVariables(variables, incoming, SHOP_STORE_KEY);
+      merged = normalizeShopList(updated[SHOP_STORE_KEY]);
+      return updated;
+    },
+    { type: 'global' },
+  );
   emitCacheUpdated(merged.length);
   return merged;
 }

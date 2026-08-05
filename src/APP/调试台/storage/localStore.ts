@@ -163,17 +163,19 @@ export function loadWorkspace(storage: Storage = localStorage): WorkspaceState {
 }
 
 function isLegacyBlankDraft(draft: PromptDraft): boolean {
-  return draft.model === 'deepseek-chat'
-    && draft.messages.length === 2
-    && draft.messages[0].role === 'system'
-    && draft.messages[1].role === 'user'
-    && draft.messages.every((message) => message.content === '')
-    && draft.generation.stream === false
-    && draft.generation.temperature === undefined
-    && draft.generation.top_p === undefined
-    && draft.generation.max_tokens === undefined
-    && draft.generation.stop.length === 0
-    && Object.keys(draft.generation.additional).length === 0;
+  return (
+    draft.model === 'deepseek-chat' &&
+    draft.messages.length === 2 &&
+    draft.messages[0].role === 'system' &&
+    draft.messages[1].role === 'user' &&
+    draft.messages.every(message => message.content === '') &&
+    draft.generation.stream === false &&
+    draft.generation.temperature === undefined &&
+    draft.generation.top_p === undefined &&
+    draft.generation.max_tokens === undefined &&
+    draft.generation.stop.length === 0 &&
+    Object.keys(draft.generation.additional).length === 0
+  );
 }
 
 export function saveWorkspace(state: WorkspaceState, storage: Storage = localStorage): WorkspaceState {

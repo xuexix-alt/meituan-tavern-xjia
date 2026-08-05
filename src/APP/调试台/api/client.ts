@@ -83,10 +83,11 @@ export async function runChat(
     body: JSON.stringify(payload),
     signal,
   });
-  const requestId = response.headers.get('x-request-id')
-    ?? response.headers.get('request-id')
-    ?? response.headers.get('openai-request-id')
-    ?? undefined;
+  const requestId =
+    response.headers.get('x-request-id') ??
+    response.headers.get('request-id') ??
+    response.headers.get('openai-request-id') ??
+    undefined;
 
   if (!response.ok) {
     const body = await response.text();
@@ -103,7 +104,7 @@ export async function runChat(
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
   if (contentType.includes('text/event-stream')) {
     if (!response.body) throw new ChatApiError('流式响应没有内容。', response.status, '', requestId);
-    const parser = new SseParser((current) => onUpdate(snapshotFromParser(current)));
+    const parser = new SseParser(current => onUpdate(snapshotFromParser(current)));
     const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
@@ -160,7 +161,7 @@ function snapshotFromParser(parser: SseParser): ChatRunSnapshot {
   return {
     text: parser.text,
     rawFrames: [...parser.rawFrames],
-    toolCalls: parser.toolCalls.map((call) => ({ ...call, function: { ...call.function } })),
+    toolCalls: parser.toolCalls.map(call => ({ ...call, function: { ...call.function } })),
     finishReason: parser.finishReason,
     usage: parser.usage,
     parserErrors: [...parser.errors],
@@ -170,8 +171,8 @@ function snapshotFromParser(parser: SseParser): ChatRunSnapshot {
 function normalizeToolCalls(value: unknown): AccumulatedToolCall[] {
   if (!Array.isArray(value)) return [];
   return value.map((call, index) => {
-    const item = call && typeof call === 'object' ? call as Record<string, unknown> : {};
-    const fn = item.function && typeof item.function === 'object' ? item.function as Record<string, unknown> : {};
+    const item = call && typeof call === 'object' ? (call as Record<string, unknown>) : {};
+    const fn = item.function && typeof item.function === 'object' ? (item.function as Record<string, unknown>) : {};
     return {
       index,
       ...(typeof item.id === 'string' ? { id: item.id } : {}),

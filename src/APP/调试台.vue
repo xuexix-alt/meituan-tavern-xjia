@@ -18,21 +18,46 @@
     />
 
     <div class="mobile-tabs" role="tablist" aria-label="工作区">
-      <button type="button" role="tab" :aria-selected="activeArea === 'connection'" :class="{ active: activeArea === 'connection' }" @click="activeArea = 'connection'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="activeArea === 'connection'"
+        :class="{ active: activeArea === 'connection' }"
+        @click="activeArea = 'connection'"
+      >
         <i class="fas fa-plug" aria-hidden="true"></i><span>连接</span>
       </button>
-      <button type="button" role="tab" :aria-selected="activeArea === 'compose'" :class="{ active: activeArea === 'compose' }" @click="activeArea = 'compose'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="activeArea === 'compose'"
+        :class="{ active: activeArea === 'compose' }"
+        @click="activeArea = 'compose'"
+      >
         <i class="fas fa-comments" aria-hidden="true"></i><span>编辑</span>
       </button>
-      <button type="button" role="tab" :aria-selected="activeArea === 'inspect'" :class="{ active: activeArea === 'inspect' }" @click="activeArea = 'inspect'">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="activeArea === 'inspect'"
+        :class="{ active: activeArea === 'inspect' }"
+        @click="activeArea = 'inspect'"
+      >
         <i class="fas fa-code" aria-hidden="true"></i><span>检查</span>
       </button>
     </div>
 
     <section class="workbench">
-      <section class="work-area connection-area" :class="{ 'mobile-active': activeArea === 'connection' }" aria-labelledby="connection-heading">
+      <section
+        class="work-area connection-area"
+        :class="{ 'mobile-active': activeArea === 'connection' }"
+        aria-labelledby="connection-heading"
+      >
         <header class="work-area-header">
-          <div><span class="section-kicker">01</span><h2 id="connection-heading">连接</h2></div>
+          <div>
+            <span class="section-kicker">01</span>
+            <h2 id="connection-heading">连接</h2>
+          </div>
         </header>
         <ConnectionPanel
           :connection="workspace.connection"
@@ -53,9 +78,16 @@
         />
       </section>
 
-      <section class="work-area compose-area" :class="{ 'mobile-active': activeArea === 'compose' }" aria-labelledby="compose-heading">
+      <section
+        class="work-area compose-area"
+        :class="{ 'mobile-active': activeArea === 'compose' }"
+        aria-labelledby="compose-heading"
+      >
         <header class="work-area-header">
-          <div><span class="section-kicker">02</span><h2 id="compose-heading">编辑</h2></div>
+          <div>
+            <span class="section-kicker">02</span>
+            <h2 id="compose-heading">编辑</h2>
+          </div>
           <span class="count-badge">{{ workspace.draft.messages.length }} 条消息</span>
         </header>
         <MessageComposer
@@ -68,9 +100,16 @@
         <GenerationControls :generation="workspace.draft.generation" @change="updateGeneration" />
       </section>
 
-      <section class="work-area inspect-area" :class="{ 'mobile-active': activeArea === 'inspect' }" aria-labelledby="inspect-heading">
+      <section
+        class="work-area inspect-area"
+        :class="{ 'mobile-active': activeArea === 'inspect' }"
+        aria-labelledby="inspect-heading"
+      >
         <header class="work-area-header">
-          <div><span class="section-kicker">03</span><h2 id="inspect-heading">检查</h2></div>
+          <div>
+            <span class="section-kicker">03</span>
+            <h2 id="inspect-heading">检查</h2>
+          </div>
         </header>
         <RawRequestPanel
           :text="rawText"
@@ -159,7 +198,14 @@ function onMacroValueChange(value: string) {
   min-width: 320px;
   padding: 14px 18px 24px;
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   color: #26332e;
   background: #e7ece9;
   --paper: #e7ece9;
@@ -286,7 +332,11 @@ function onMacroValueChange(value: string) {
   border-radius: var(--radius);
   background: var(--green-dark);
   color: #fff;
-  font: 700 16px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    700 16px/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
   box-shadow: var(--shadow-raised-small);
 }
 
@@ -430,7 +480,11 @@ function onMacroValueChange(value: string) {
 
 .debug-lab .section-kicker {
   color: var(--green);
-  font: 700 0.68rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    700 0.68rem/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
 }
 
 .debug-lab .count-badge {
@@ -601,7 +655,11 @@ function onMacroValueChange(value: string) {
 
 .debug-lab .message-index {
   color: var(--muted);
-  font: 0.7rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    0.7rem/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
 }
 
 .debug-lab .row-actions {
@@ -678,7 +736,11 @@ function onMacroValueChange(value: string) {
 }
 
 .debug-lab .code-input {
-  font: 0.75rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    0.75rem/1.5 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
   tab-size: 2;
 }
 
@@ -704,7 +766,11 @@ function onMacroValueChange(value: string) {
 
 .debug-lab .empty-glyph {
   color: var(--blue);
-  font: 700 1.6rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    700 1.6rem/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
 }
 
 .debug-lab .raw-panel {
@@ -783,7 +849,11 @@ function onMacroValueChange(value: string) {
   margin: 0;
   border: 0;
   padding: 9px;
-  font: 0.72rem/1.52 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    0.72rem/1.52 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
   tab-size: 2;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -984,7 +1054,11 @@ function onMacroValueChange(value: string) {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font: 0.76rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    0.76rem/1.55 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
 }
 
 .debug-lab .response-raw,
@@ -1078,7 +1152,11 @@ function onMacroValueChange(value: string) {
 .debug-lab .library-heading > span {
   margin-left: auto;
   color: var(--muted);
-  font: 0.68rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    0.68rem/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
 }
 
 .debug-lab .preset-create {
@@ -1368,5 +1446,3 @@ function onMacroValueChange(value: string) {
   }
 }
 </style>
-
-

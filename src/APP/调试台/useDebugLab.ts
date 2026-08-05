@@ -83,7 +83,7 @@ export function useDebugLab() {
   if (sendMode.value === 'tavern') checkTavern();
 
   // 持久化到 localStorage（与原调试台相同存储键）
-  watch(workspace, (state) => saveWorkspace(state), { deep: true });
+  watch(workspace, state => saveWorkspace(state), { deep: true });
 
   // 原始 JSON 与结构化草稿保持同步（仅在未手动编辑原始 JSON 时）
   watch(
@@ -110,30 +110,27 @@ export function useDebugLab() {
   );
 
   // 请求结束后写入历史（成功 / 错误 / 取消）
-  watch(
-    [() => chatState.value.status, () => chatState.value.runId],
-    () => {
-      const status = chatState.value.status;
-      if (!['success', 'error', 'cancelled'].includes(status)) return;
-      if (!pendingPayload.value || recordedRunId.value === chatState.value.runId) return;
-      recordedRunId.value = chatState.value.runId;
-      const pending = pendingPayload.value;
-      const entry = sanitizeHistoryEntry({
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        model: typeof pending.payload.model === 'string' ? pending.payload.model : pending.connection.model,
-        baseUrl: pending.connection.baseUrl,
-        status: status as RequestHistory['status'],
-        durationMs: chatState.value.durationMs,
-        payload: cloneSerializable(pending.payload),
-        responseText: chatState.value.text,
-        requestId: chatState.value.requestId,
-        httpStatus: chatState.value.httpStatus,
-        error: chatState.value.error,
-      } as RequestHistory);
-      workspace.value = { ...workspace.value, history: [entry, ...workspace.value.history].slice(0, HISTORY_LIMIT) };
-    },
-  );
+  watch([() => chatState.value.status, () => chatState.value.runId], () => {
+    const status = chatState.value.status;
+    if (!['success', 'error', 'cancelled'].includes(status)) return;
+    if (!pendingPayload.value || recordedRunId.value === chatState.value.runId) return;
+    recordedRunId.value = chatState.value.runId;
+    const pending = pendingPayload.value;
+    const entry = sanitizeHistoryEntry({
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      model: typeof pending.payload.model === 'string' ? pending.payload.model : pending.connection.model,
+      baseUrl: pending.connection.baseUrl,
+      status: status as RequestHistory['status'],
+      durationMs: chatState.value.durationMs,
+      payload: cloneSerializable(pending.payload),
+      responseText: chatState.value.text,
+      requestId: chatState.value.requestId,
+      httpStatus: chatState.value.httpStatus,
+      error: chatState.value.error,
+    } as RequestHistory);
+    workspace.value = { ...workspace.value, history: [entry, ...workspace.value.history].slice(0, HISTORY_LIMIT) };
+  });
 
   const updateDraft = (draft: PromptDraft) => {
     workspace.value = { ...workspace.value, draft };
@@ -260,11 +257,11 @@ export function useDebugLab() {
   };
 
   const deletePreset = (id: string) => {
-    workspace.value = { ...workspace.value, presets: workspace.value.presets.filter((preset) => preset.id !== id) };
+    workspace.value = { ...workspace.value, presets: workspace.value.presets.filter(preset => preset.id !== id) };
   };
 
   const deleteHistory = (id: string) => {
-    workspace.value = { ...workspace.value, history: workspace.value.history.filter((entry) => entry.id !== id) };
+    workspace.value = { ...workspace.value, history: workspace.value.history.filter(entry => entry.id !== id) };
   };
 
   const loadHistory = (entry: RequestHistory) => {
@@ -294,7 +291,7 @@ export function useDebugLab() {
       const result = await runChat(
         connection,
         payload,
-        (snapshot) => {
+        snapshot => {
           if (chatState.value.runId === runId) {
             chatState.value = {
               ...chatState.value,
