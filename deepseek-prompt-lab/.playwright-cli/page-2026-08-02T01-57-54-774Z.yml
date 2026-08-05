@@ -1,0 +1,134 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: P
+      - generic [ref=e7]:
+        - heading "提示词调试台" [level=1] [ref=e8]
+        - paragraph [ref=e9]: 本地代理 · deepseek-chat · https://api.deepseek.com
+    - button "发送请求" [ref=e10] [cursor=pointer]
+  - region "提示词调试工作区" [ref=e13]:
+    - region [ref=e14]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: "01"
+        - heading "连接" [level=2] [ref=e18]
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: 接口地址（Base URL）
+          - textbox "接口地址（Base URL）" [ref=e22]: https://api.deepseek.com
+        - generic [ref=e23]:
+          - generic [ref=e24]: API 密钥
+          - generic [ref=e25]:
+            - textbox "API 密钥" [ref=e26]
+            - button "显示 API 密钥" [ref=e27] [cursor=pointer]
+        - generic [ref=e196]:
+          - generic [ref=e197]: 模型
+          - combobox "模型" [ref=e198]:
+            - option "deepseek-chat" [selected]
+            - option "deepseek-reasoner"
+            - option "其他模型（手动输入）"
+        - button "拉取模型列表" [ref=e34] [cursor=pointer]
+        - paragraph [ref=e199]: 已获取 2 个模型
+        - generic [ref=e40]:
+          - region [ref=e41]:
+            - heading "预设" [level=3] [ref=e47]
+            - generic [ref=e48]:
+              - generic [ref=e49]: 预设名称
+              - textbox "预设名称" [ref=e50]
+              - button "保存预设" [disabled] [ref=e51]
+            - paragraph [ref=e56]: 暂无已保存的预设
+          - region [ref=e57]:
+            - generic [ref=e58]:
+              - heading "历史记录" [level=3] [ref=e63]
+              - generic [ref=e64]: "0"
+            - paragraph [ref=e65]: 暂无请求记录
+    - region [ref=e66]:
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - generic [ref=e69]: "02"
+          - heading "编辑" [level=2] [ref=e70]
+        - generic [ref=e71]: 2 条消息
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - article [ref=e74]:
+            - generic [ref=e75]:
+              - button "拖动消息" [ref=e76]
+              - generic [ref=e84]:
+                - generic [ref=e85]: 第 1 条消息的角色
+                - combobox "第 1 条消息的角色" [ref=e86]:
+                  - option "系统" [selected]
+                  - option "用户"
+                  - option "助手"
+                  - option "工具"
+              - generic [ref=e87]: "#1"
+              - generic [ref=e88]:
+                - button "上移消息" [disabled] [ref=e89]
+                - button "下移消息" [ref=e92] [cursor=pointer]
+                - button "复制消息" [ref=e95] [cursor=pointer]
+                - button "删除消息" [ref=e99] [cursor=pointer]
+            - generic [ref=e104]:
+              - generic [ref=e105]: 消息内容
+              - textbox "消息内容" [ref=e106]:
+                - /placeholder: 系统消息
+          - article [ref=e107]:
+            - generic [ref=e108]:
+              - button "拖动消息" [ref=e109]
+              - generic [ref=e117]:
+                - generic [ref=e118]: 第 2 条消息的角色
+                - combobox "第 2 条消息的角色" [ref=e119]:
+                  - option "系统"
+                  - option "用户" [selected]
+                  - option "助手"
+                  - option "工具"
+              - generic [ref=e120]: "#2"
+              - generic [ref=e121]:
+                - button "上移消息" [ref=e122] [cursor=pointer]
+                - button "下移消息" [disabled] [ref=e125]
+                - button "复制消息" [ref=e128] [cursor=pointer]
+                - button "删除消息" [ref=e132] [cursor=pointer]
+            - generic [ref=e137]:
+              - generic [ref=e138]: 消息内容
+              - textbox "消息内容" [ref=e139]:
+                - /placeholder: 用户消息
+        - status [ref=e140]
+        - button "添加消息" [ref=e141] [cursor=pointer]
+      - group [ref=e143]:
+        - generic "生成参数" [ref=e144] [cursor=pointer]
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - generic [ref=e147]: 随机性（Temperature）
+            - spinbutton "随机性（Temperature）" [ref=e148]
+          - generic [ref=e149]:
+            - generic [ref=e150]: 核采样（Top P）
+            - spinbutton "核采样（Top P）" [ref=e151]
+          - generic [ref=e152]:
+            - generic [ref=e153]: 最大 Token 数
+            - spinbutton "最大 Token 数" [ref=e154]
+          - generic [ref=e155]:
+            - checkbox "流式响应" [ref=e156]
+            - generic [ref=e157]: 流式响应
+        - generic [ref=e158]:
+          - generic [ref=e159]: 停止序列 每行一个
+          - textbox "停止序列 每行一个" [ref=e160]
+        - generic [ref=e161]:
+          - generic [ref=e162]: 附加参数 JSON
+          - textbox "附加参数 JSON" [ref=e163]: "{}"
+    - region [ref=e164]:
+      - generic [ref=e166]:
+        - generic [ref=e167]: "03"
+        - heading "检查" [level=2] [ref=e168]
+      - region [ref=e169]:
+        - generic [ref=e170]:
+          - heading "原始请求" [level=3] [ref=e175]
+          - generic [ref=e176]: 已同步
+        - generic [ref=e177]:
+          - generic [ref=e178]:
+            - generic [ref=e179]: 原始请求 JSON
+            - textbox "原始请求 JSON" [ref=e180]: "{ \"model\": \"deepseek-chat\", \"messages\": [ { \"role\": \"system\", \"content\": \"\" }, { \"role\": \"user\", \"content\": \"\" } ], \"stream\": false, \"stop\": [] }"
+          - generic [ref=e181]:
+            - button "应用到结构化编辑器" [ref=e182] [cursor=pointer]
+            - button "从结构化编辑器重建" [ref=e186] [cursor=pointer]
+          - button "发送原始 JSON"
+      - generic [ref=e192]:
+        - generic [ref=e193]: ›_
+        - strong [ref=e194]: 等待发送请求
+        - generic [ref=e195]: 响应文本、原始事件和诊断信息将显示在这里。

@@ -80,6 +80,18 @@
               <i class="fas fa-sync-alt"></i>
             </div>
           </div>
+          <div class="settings-item" @click="$router.push('/lab')">
+            <div class="settings-icon">
+              <i class="fas fa-terminal"></i>
+            </div>
+            <div class="settings-info">
+              <div class="settings-title">提示词调试台</div>
+              <div class="settings-desc">调试提示词与接口请求</div>
+            </div>
+            <div class="settings-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -385,7 +397,6 @@ onMounted(async () => {
   flex-grow: 1;
   overflow-y: auto;
   padding: 16px;
-  scrollbar-width: none;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
@@ -682,3 +693,4 @@ onMounted(async () => {
   }
 }
 </style>
+

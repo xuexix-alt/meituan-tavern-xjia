@@ -278,6 +278,7 @@
           v-model="orderRemark"
           placeholder="可输入特殊要求，如服装、场景、认知等..."
         ></textarea>
+        <div v-if="submissionError" class="submission-error" role="alert">{{ submissionError }}</div>
         <div class="modal-buttons">
           <button class="modal-btn-cancel" @click="closeModal">取消</button>
           <button class="modal-btn-confirm" @click="confirmOrder">再次下单</button>
@@ -313,8 +314,15 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { filterCompletedOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
 import { getNestedValue } from './utils';
+import { useStorySession } from './story/storyContext';
+import { buildRepeatOrderPrompt } from './story/orderPrompts';
+import { submitOrderToStory } from './story/orderSubmission';
+
+const router = useRouter();
+const storySession = useStorySession();
 
 // 格式化怀孕几率
 function formatPregnancyChance(value: any): string {
@@ -340,6 +348,7 @@ const currentView = ref('history');
 const showModal = ref(false);
 const orderRemark = ref('');
 const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
+const submissionError = ref('');
 
 // 状态样式
 function getStatusStyle(status: string) {
@@ -409,6 +418,7 @@ function reorder(item: any) {
 
 function showReorderModal() {
   orderRemark.value = '';
+  submissionError.value = '';
   showModal.value = true;
   nextTick(() => {
     try {
@@ -424,6 +434,7 @@ function showReorderModal() {
 function closeModal() {
   showModal.value = false;
   orderRemark.value = '';
+  submissionError.value = '';
 }
 
 function addFeatureToRemark(feature: string) {
@@ -435,7 +446,7 @@ function addFeatureToRemark(feature: string) {
   if (remarkTextarea.value) remarkTextarea.value.focus();
 }
 
-function confirmOrder() {
+async function confirmOrder() {
   if (!selectedOrder.value) return;
 
   const pkg = selectedOrder.value.package_name || '未知套餐';
@@ -447,36 +458,22 @@ function confirmOrder() {
   const finalPrice = originPrice ?? '-';
 
   const remark = orderRemark.value.trim() || '无';
-  const text = `再次下单：${girl}，${age}，${identity}，${pkg}，订单价格：¥${finalPrice}。备注：${remark}`;
-  const ok = sendToAI(`/send ${text}`);
-
+  const prompt = buildRepeatOrderPrompt({
+    girl,
+    age,
+    identity,
+    packageName: pkg,
+    price: finalPrice,
+    remark,
+  });
+  submissionError.value = '';
+  const result = await submitOrderToStory(storySession, router, prompt);
+  if (!result.accepted) {
+    submissionError.value = result.error || '无法开始正文，请稍后重试。';
+    return;
+  }
   closeModal();
   currentView.value = 'history';
-
-  if (!ok) {
-    try {
-      console.info('命令已复制到剪贴板');
-    } catch (_) {
-      // ignore
-    }
-  }
-}
-
-function sendToAI(message: string) {
-  console.log(`[发送至AI]: ${message}`);
-  const fullCommand = `${message} | /trigger await=true`;
-  if (typeof window.triggerSlash !== 'undefined') {
-    try {
-      window.triggerSlash(fullCommand);
-      return true;
-    } catch (e) {
-      console.error('执行triggerSlash时出错:', e);
-      return false;
-    }
-  } else {
-    console.log(`[模拟发送至AI - 完整指令]: ${fullCommand}`);
-    return false;
-  }
 }
 
 async function refreshHistory() {
@@ -556,7 +553,6 @@ onMounted(async () => {
   flex-grow: 1;
   overflow-y: auto;
   padding: 16px;
-  scrollbar-width: none;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
@@ -1364,5 +1360,14 @@ onMounted(async () => {
       }
     }
   }
+}
+.submission-error {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--status-danger) 40%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--status-danger) 8%, transparent);
+  color: var(--status-danger);
+  font-size: 13px;
 }
 </style>

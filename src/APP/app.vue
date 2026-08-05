@@ -1,5 +1,11 @@
 <template>
-  <div class="phone-frame" :data-theme="currentTheme">
+  <div
+    class="phone-frame"
+    :class="{ 'has-generation-status': hasGenerationStatus, 'is-story-reader': isStoryRoute }"
+    :data-theme="currentTheme"
+  >
+    <GenerationStatus />
+    <StoryEntry />
     <!-- 错误边界组件 -->
     <ErrorBoundary>
       <RouterView />
@@ -8,11 +14,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onErrorCaptured } from 'vue';
+import { computed, onBeforeUnmount, ref, onMounted, onErrorCaptured } from 'vue';
+import { useRoute } from 'vue-router';
 import ErrorBoundary from './components/ErrorBoundary.vue';
+import GenerationStatus from './components/GenerationStatus.vue';
+import StoryEntry from './components/StoryEntry.vue';
+import { generationTask } from './services/generationTaskSingleton';
+import { provideStorySession } from './story/storyContext';
+import { createDefaultStorySession } from './story/storyTavern';
 
 // 当前主题
 const currentTheme = ref<'light' | 'dark'>('light');
+const hasGenerationStatus = computed(() => generationTask.state.value.status !== 'idle');
+const route = useRoute();
+const isStoryRoute = computed(() => route.path === '/story');
+const storySession = createDefaultStorySession();
+provideStorySession(storySession);
 
 // 初始化主题
 function initTheme() {
@@ -32,7 +49,19 @@ function initTheme() {
 // 在组件挂载时初始化主题
 onMounted(() => {
   initTheme();
+  storySession.bind();
+  window.addEventListener('pagehide', disposeAppSessions);
 });
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pagehide', disposeAppSessions);
+  disposeAppSessions();
+});
+
+function disposeAppSessions() {
+  generationTask.dispose();
+  storySession.dispose();
+}
 
 // 监听主题切换事件
 window.addEventListener('theme-change', (event: any) => {
@@ -115,6 +144,7 @@ onErrorCaptured((err: Error) => {
 
 /* 全局字体优化 */
 body {
+  margin: 0;
   font-family:
     'PingFang SC',
     'Microsoft YaHei',
@@ -136,6 +166,38 @@ body {
   font-size: 16px; /* 基础字号调整 */
   line-height: 1.6; /* 增加行高 */
   color: var(--text-primary);
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  max-width: 100%;
+}
+
+#app {
+  display: block;
+}
+
+#app,
+#app * {
+  box-sizing: border-box;
+}
+
+#app img,
+#app video,
+#app canvas,
+#app svg {
+  max-width: 100%;
+}
+
+#app button,
+#app input,
+#app textarea,
+#app select {
+  font: inherit;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* 深色模式下字体渲染优化 */
@@ -214,24 +276,231 @@ body {
 
 <style lang="scss" scoped>
 .phone-frame {
-  width: 100%;
-  height: 1024px; // 增大高度，模拟平板竖屏
+  width: min(100%, 640px);
+  max-width: 100%;
+  min-height: min(720px, calc(100vw * 1.7));
+  height: auto;
+  max-height: 1024px;
+  aspect-ratio: 10 / 16;
   background: var(--bg-primary);
-  border: 12px solid #1a1a1a;
-  border-radius: 24px;
+  border: 1px solid var(--border-accent);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  margin: 0 auto;
+  container-type: inline-size;
   box-shadow:
-    0 25px 50px rgba(0, 0, 0, 0.25),
+    0 10px 24px rgba(0, 0, 0, 0.08),
     0 0 0 1px rgba(255, 255, 255, 0.15) inset,
     0 10px 20px rgba(255, 195, 0, 0.08);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   @media (max-width: 768px) {
-    border-width: 8px;
-    border-radius: 16px;
+    width: 100%;
+    min-height: min(680px, calc(100vw * 1.85));
+    border-radius: 12px;
   }
+
+  @media (max-width: 420px) {
+    min-height: min(640px, calc(100vw * 1.95));
+    border-radius: 10px;
+  }
+}
+
+.phone-frame.is-story-reader {
+  width: min(100%, 820px);
+  max-width: 820px;
+  min-height: min(1094px, calc(100vw * 1.3333));
+  max-height: 1094px;
+  aspect-ratio: 3 / 4;
+}
+
+@media (max-width: 768px) {
+  .phone-frame.is-story-reader {
+    width: 100%;
+    min-height: min(900px, calc(100vw * 1.55));
+    border-radius: 10px;
+  }
+}
+
+.phone-frame :deep(.app-view) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  transition: top 0.18s ease, height 0.18s ease;
+}
+
+.phone-frame.has-generation-status :deep(.app-view) {
+  top: 48px;
+  height: calc(100% - 48px);
+}
+
+.phone-frame :deep(.app-header) {
+  min-width: 0;
+  padding-top: clamp(14px, 5%, 28px);
+  padding-right: clamp(12px, 4%, 20px);
+  padding-bottom: 12px;
+  padding-left: clamp(12px, 4%, 20px);
+}
+
+.phone-frame :deep(.app-header .title) {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.phone-frame :deep(.app-content) {
+  min-width: 0;
+  padding: clamp(12px, 4%, 18px);
+  overscroll-behavior: contain;
+}
+
+.phone-frame :deep(.nav-bar) {
+  min-width: 0;
+  padding-inline: clamp(4px, 2%, 12px);
+}
+
+.phone-frame :deep(.nav-item) {
+  min-width: 0;
+  margin-inline: 1px;
+  text-align: center;
+}
+
+.phone-frame :deep(.nav-item span) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-frame :deep(.category-grid),
+.phone-frame :deep(.metrics-grid),
+.phone-frame :deep(.body-feature-grid .feature-row),
+.phone-frame :deep(.stats-grid),
+.phone-frame :deep(.clothing-grid),
+.phone-frame :deep(.order-info-grid),
+.phone-frame :deep(.section-grid),
+.phone-frame :deep(.key-metrics),
+.phone-frame :deep(.shop-list-items) {
+  grid-template-columns: repeat(auto-fit, minmax(min(138px, 100%), 1fr));
+}
+
+.phone-frame :deep(.settings-list) {
+  grid-template-columns: 1fr;
+}
+
+@container (min-width: 520px) {
+  .phone-frame :deep(.settings-list) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.phone-frame :deep(.category-grid) {
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: clamp(10px, 3%, 16px);
+}
+
+.phone-frame :deep(.slogan-content-wrapper) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.phone-frame :deep(.slogan-content) {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.phone-frame :deep(.slogan-title .title-line) {
+  font-size: clamp(1.45rem, 8cqw, 1.8rem);
+}
+
+@container (min-width: 600px) {
+  .phone-frame :deep(.slogan-content-wrapper) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .phone-frame :deep(.slogan-content) {
+    padding-right: 20px;
+    border-right: 1px solid rgba(255, 195, 0, 0.2);
+  }
+}
+
+.phone-frame :deep(.search-bar-container),
+.phone-frame :deep(.order-status-row),
+.phone-frame :deep(.bottom-section),
+.phone-frame :deep(.status-time),
+.phone-frame :deep(.rating-section),
+.phone-frame :deep(.tabs-container) {
+  flex-wrap: wrap;
+}
+
+.phone-frame :deep(.search-bar-container input) {
+  min-width: 120px;
+}
+
+.phone-frame :deep(.search-btn) {
+  flex-shrink: 0;
+}
+
+.phone-frame :deep(.shop-card),
+.phone-frame :deep(.settings-item),
+.phone-frame :deep(.feature-item),
+.phone-frame :deep(.stat-item),
+.phone-frame :deep(.clothing-item),
+.phone-frame :deep(.compact-row) {
+  min-width: 0;
+}
+
+.phone-frame :deep(.settings-icon) {
+  flex: 0 0 40px;
+}
+
+.phone-frame :deep(.settings-info) {
+  min-width: 0;
+}
+
+.phone-frame :deep(.settings-toggle),
+.phone-frame :deep(.settings-arrow) {
+  flex: 0 0 auto;
+}
+
+.phone-frame :deep(.notice-text),
+.phone-frame :deep(.instruction-text),
+.phone-frame :deep(.psychology-text),
+.phone-frame :deep(.desc-text),
+.phone-frame :deep(.section-content),
+.phone-frame :deep(.section-item-value),
+.phone-frame :deep(.info-value),
+.phone-frame :deep(.stat-value),
+.phone-frame :deep(.feature-value),
+.phone-frame :deep(.clothing-value),
+.phone-frame :deep(.identity-text),
+.phone-frame :deep(.package-name),
+.phone-frame :deep(.settings-title),
+.phone-frame :deep(.settings-desc) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.phone-frame :deep(.reorder-modal-overlay),
+.phone-frame :deep(.modal-overlay) {
+  position: absolute;
+}
+
+.phone-frame :deep(.reorder-modal-content) {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.phone-frame :deep(.modal-content) {
+  width: min(100%, 450px);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
 }
 </style>

@@ -3,11 +3,7 @@ import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import _ from 'lodash';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-<<<<<<< HEAD
 import { exec } from 'node:child_process';
-=======
-import { ChildProcess, exec, spawn } from 'node:child_process';
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -53,24 +49,18 @@ function common_path(lhs: string, rhs: string) {
 }
 
 function glob_script_files() {
-<<<<<<< HEAD
-  const files: string[] = fs
-    .globSync(`src/**/index.{ts,tsx,js,jsx}`)
-    .filter(
-      file => process.env.CI !== 'true' || !fs.readFileSync(path.join(import.meta.dirname, file)).includes('@no-ci'),
-    );
+  const only = process.env.ENTRY || process.env.ONLY || process.env.TARGET;
+  const files: string[] = fs.globSync(`src/**/index.{ts,tsx,js,jsx}`).filter(file => {
+    if (process.env.CI === 'true' && fs.readFileSync(path.join(import.meta.dirname, file)).includes('@no-ci')) {
+      return false;
+    }
+    if (!only) return true;
+    const normalized = file.replace(/\\/g, '/');
+    return normalized.includes(`/src/${only}/`) || normalized.endsWith(`/src/${only}/index.ts`);
+  });
 
   const results: string[] = [];
   const handle = (file: string) => {
-=======
-  const results: string[] = [];
-
-  fs.globSync(`{示例,src}/**/index.{ts,tsx,js,jsx}`)
-    .filter(
-      file => process.env.CI !== 'true' || !fs.readFileSync(path.join(import.meta.dirname, file)).includes('@no-ci'),
-    )
-    .forEach(file => {
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
     const file_dirname = path.dirname(file);
     for (const [index, result] of results.entries()) {
       const result_dirname = path.dirname(result);
@@ -84,13 +74,8 @@ function glob_script_files() {
       }
     }
     results.push(file);
-<<<<<<< HEAD
   };
   files.forEach(handle);
-=======
-    });
-
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
   return results;
 }
 
@@ -100,53 +85,29 @@ const config: Config = {
 };
 
 let io: Server;
-<<<<<<< HEAD
 function watch_it(compiler: webpack.Compiler) {
-=======
-function watch_tavern_helper(compiler: webpack.Compiler) {
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
   if (compiler.options.watch) {
     if (!io) {
       const port = config.port ?? 6621;
       io = new Server(port, { cors: { origin: '*' } });
-<<<<<<< HEAD
       console.info(`[Listener] 已启动酒馆监听服务, 正在监听: http://0.0.0.0:${port}`);
       io.on('connect', socket => {
         console.info(`[Listener] 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
         socket.on('disconnect', reason => {
           console.info(`[Listener] 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
-=======
-      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
-      io.on('connect', socket => {
-        console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
-        io.emit('iframe_updated');
-        socket.on('disconnect', reason => {
-          console.info(`\x1b[36m[tavern_helper]\x1b[0m 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
         });
       });
     }
 
-<<<<<<< HEAD
     compiler.hooks.done.tap('updater', () => {
       console.info('\n[Listener] 检测到完成编译, 推送更新事件...');
       io.emit('iframe_updated');
-=======
-    compiler.hooks.done.tap('watch_tavern_helper', () => {
-      console.info('\n\x1b[36m[tavern_helper]\x1b[0m 检测到完成编译, 推送更新事件...');
-      if (compiler.options.plugins.some(plugin => plugin instanceof HtmlWebpackPlugin)) {
-        io.emit('message_iframe_updated');
-      } else {
-        io.emit('script_iframe_updated');
-      }
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
     });
   }
 }
 
 let watcher: FSWatcher;
-<<<<<<< HEAD
 function dump_schema(compiler: webpack.Compiler) {
   const execute = () => {
     exec('pnpm dump', { cwd: import.meta.dirname });
@@ -155,90 +116,16 @@ function dump_schema(compiler: webpack.Compiler) {
   if (!compiler.options.watch) {
     execute();
   } else if (!watcher) {
-=======
-const dump = () => {
-  exec('pnpm dump', { cwd: import.meta.dirname });
-  console.info('\x1b[36m[schema_dump]\x1b[0m 已将所有 schema.ts 转换为 schema.json');
-};
-const dump_debounced = _.debounce(dump, 500, { leading: true, trailing: false });
-function schema_dump(compiler: webpack.Compiler) {
-  if (!compiler.options.watch) {
-    dump_debounced();
-    return;
-  }
-  if (!watcher) {
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
     watcher = watch('src', {
       awaitWriteFinish: true,
     }).on('all', (_event, path) => {
       if (path.endsWith('schema.ts')) {
-<<<<<<< HEAD
         execute_debounced();
-=======
-        dump_debounced();
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
       }
     });
   }
 }
 
-<<<<<<< HEAD
-=======
-let child_process: ChildProcess;
-const bundle = () => {
-  exec('pnpm sync bundle all', { cwd: import.meta.dirname });
-  console.info('\x1b[36m[tavern_sync]\x1b[0m 已打包所有配置了的角色卡/世界书/预设');
-};
-const bundle_debounced = _.debounce(bundle, 500, { leading: true, trailing: false });
-function tavern_sync(compiler: webpack.Compiler) {
-  if (!compiler.options.watch) {
-    bundle_debounced();
-    return;
-  }
-  compiler.hooks.watchRun.tap('watch_tavern_sync', () => {
-    if (!child_process) {
-      child_process = spawn('pnpm', ['sync', 'watch', 'all', '-f'], {
-        shell: true,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        cwd: import.meta.dirname,
-        env: { ...process.env, FORCE_COLOR: '1' },
-      });
-      child_process.stdout?.on('data', (data: Buffer) => {
-        console.info(
-          data
-            .toString()
-            .trimEnd()
-            .split('\n')
-            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
-            .join('\n'),
-        );
-      });
-      child_process.stderr?.on('data', (data: Buffer) => {
-        console.error(
-          data
-            .toString()
-            .trimEnd()
-            .split('\n')
-            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
-            .join('\n'),
-        );
-      });
-      child_process.on('error', error => {
-        console.error(`\x1b[31m[tavern_sync]\x1b[0m Error: ${error.message}`);
-      });
-    }
-  });
-  compiler.hooks.watchClose.tap('watch_tavern_sync', () => {
-    child_process?.kill();
-  });
-  ['SIGINT', 'SIGTERM'].forEach(signal => {
-    process.on(signal, () => {
-      child_process?.kill();
-    });
-  });
-}
-
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
 function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Configuration {
   const should_obfuscate = fs
     .readFileSync(path.join(import.meta.dirname, entry.script), 'utf-8')
@@ -249,11 +136,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     experiments: {
       outputModule: true,
     },
-<<<<<<< HEAD
     devtool: false, // argv.mode === 'production' ? 'source-map' : 'eval-source-map',
-=======
-    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },
@@ -275,25 +158,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       path: path.join(
         import.meta.dirname,
         'dist',
-<<<<<<< HEAD
         path.relative(path.join(import.meta.dirname, 'src'), script_filepath.dir),
-=======
-        path.relative(import.meta.dirname, script_filepath.dir).replace(/^[^\\/]+[\\/]/, ''),
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
       ),
       chunkFilename: `${script_filepath.name}.[contenthash].chunk.js`,
       asyncChunks: true,
       clean: true,
       publicPath: '',
-<<<<<<< HEAD
       // library: {
       //   type: 'module',
       // },
-=======
-      library: {
-        type: 'module',
-      },
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
     },
     module: {
       rules: [
@@ -362,13 +235,6 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             },
             {
               test: /\.css$/,
-<<<<<<< HEAD
-              use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'],
-            },
-            {
-              test: /\.css$/,
-=======
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
               use: ['postcss-loader'],
               resourceQuery: /url/,
               type: 'asset/inline',
@@ -413,19 +279,6 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 },
               ],
             },
-<<<<<<< HEAD
-=======
-            {
-              test: /\.ya?ml$/,
-              loader: 'yaml-loader',
-              options: { asStream: true },
-              resourceQuery: /stream/,
-            },
-            {
-              test: /\.ya?ml$/,
-              loader: 'yaml-loader',
-            },
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
           ].concat(
             entry.html === undefined
               ? ([
@@ -487,14 +340,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 ] as any[]),
           ),
         },
-<<<<<<< HEAD
         // 字体资源全部内联，避免被宿主页面的相对路径解析成 404（兼容 jQuery .load 场景）
         {
           test: /\.(woff2?|ttf|eot|otf)$/i,
           type: 'asset/inline',
         },
-=======
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
       ],
     },
     resolve: {
@@ -505,19 +355,18 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           configFile: path.join(import.meta.dirname, 'tsconfig.json'),
         }),
       ],
-      alias: {},
+      alias: {
+        // APP 后台版独立共享层
+        '@shared-admin': path.join(import.meta.dirname, 'src', 'APP后台版', 'shared'),
+      },
     },
     plugins: (entry.html === undefined
-      ? [new MiniCssExtractPlugin()]
+      ? [new MiniCssExtractPlugin()] // Re-add for non-html entries
       : [
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
             filename: path.parse(entry.html).base,
-<<<<<<< HEAD
             scriptLoading: 'blocking',
-=======
-            scriptLoading: 'module',
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
             cache: false,
           }),
           new HtmlInlineScriptWebpackPlugin(),
@@ -530,14 +379,8 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         ]
     )
       .concat(
-<<<<<<< HEAD
         { apply: watch_it },
         { apply: dump_schema },
-=======
-        { apply: watch_tavern_helper },
-        { apply: schema_dump },
-        { apply: tavern_sync },
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
         new VueLoaderPlugin(),
         unpluginAutoImport({
           dts: true,
@@ -550,10 +393,6 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             { from: 'klona', imports: ['klona'] },
             { from: 'vue-final-modal', imports: ['useModal'] },
             { from: 'zod', imports: ['z'] },
-<<<<<<< HEAD
-=======
-            { from: 'type-fest', imports: [['*', 'TypeFest']], type: true },
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
           ],
         }),
         unpluginVueComponents({
@@ -625,28 +464,24 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
-<<<<<<< HEAD
+      // 后台版共享层：本地打包，禁止 external
+      if (request.startsWith('@shared-admin')) {
+        return callback();
+      }
+
       // 不外部化样式资源，统一打包进产物，避免运行时再拉 CDN
       if (request.match(/\.(css|scss|sass|less)$/i)) {
         return callback();
       }
 
-=======
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
       if (
         request.startsWith('-') ||
         request.startsWith('.') ||
         request.startsWith('/') ||
         request.startsWith('!') ||
-<<<<<<< HEAD
         request.startsWith('data:') ||
         request.startsWith('http') ||
         request.startsWith('@/') ||
-=======
-        request.startsWith('http') ||
-        request.startsWith('@/') ||
-        request.startsWith('@util/') ||
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
         path.isAbsolute(request) ||
         fs.existsSync(path.join(context, request)) ||
         fs.existsSync(request)
@@ -654,7 +489,6 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
-<<<<<<< HEAD
       const builtin = ['vue3-pixi', 'vue-demi'];
       if (builtin.includes(request)) {
         return callback();
@@ -676,23 +510,6 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
-=======
-      if (
-        ['vue', 'vue-router'].every(key => request !== key) &&
-        ['pixi', 'react', 'vue'].some(key => request.includes(key))
-      ) {
-        return callback();
-      }
-      const global = {
-        jquery: '$',
-        lodash: '_',
-        showdown: 'showdown',
-        toastr: 'toastr',
-        vue: 'Vue',
-        'vue-router': 'VueRouter',
-        yaml: 'YAML',
-        zod: 'z',
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
@@ -700,23 +517,9 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
-<<<<<<< HEAD
       return callback(
         null,
         'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${request}/+esm`),
-=======
-      const package_json = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf-8')) as {
-        dependencies?: Record<string, string>;
-        devDependencies?: Record<string, string>;
-      };
-      const package_versions = { ...package_json.devDependencies, ...package_json.dependencies };
-      const version = package_versions[request]?.replace(/^[~^]/, '');
-      const versioned_request = /^[.\d]+$/.test(version) ? `${request}@${version}` : request;
-      return callback(
-        null,
-        'module-import ' +
-          (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${versioned_request}/+esm`),
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
       );
     },
   });

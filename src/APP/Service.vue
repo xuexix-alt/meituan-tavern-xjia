@@ -356,10 +356,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { getNestedValue } from './utils';
 import { filterActiveOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
-import toastr from 'toastr';
-import 'toastr/build/toastr.min.css';
+import { getNestedValue } from './utils';
 // 响应式数据
 const girlsData = ref<any[]>([]);
 const currentGirlIndex = ref(0);
@@ -646,7 +644,6 @@ onMounted(async () => {
   flex-grow: 1;
   overflow-y: auto;
   padding: 16px;
-  scrollbar-width: none;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {

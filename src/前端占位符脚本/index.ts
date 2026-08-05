@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { mergeShopsById, removeShopById } from '../shared/shopCache';
 
 // 脚本设置
 const ScriptSettings = z.object({
@@ -51,10 +52,8 @@ function buildShopId(s: any) {
 }
 
 function getStoreScope() {
-  // 根据开关决定是全局还是当前聊天作用域
-  if (settings.keep_cross_chat) return { type: 'global' as const };
-  const chatId = SillyTavern.getCurrentChatId?.();
-  return chatId ? ({ type: 'chat' as const, chat_id: chatId } satisfies any) : { type: 'global' as const };
+  // 店铺是 APP 级数据，固定使用全局作用域，确保切换角色或聊天后仍共享同一份发现数据。
+  return { type: 'global' as const };
 }
 
 function readShopStore(): StoredShop[] {
@@ -72,7 +71,10 @@ function readShopStore(): StoredShop[] {
 function writeShopStore(shops: StoredShop[]) {
   try {
     console.log('[ShopStore] 写入全局缓存:', shops);
-    replaceVariables({ [SHOP_STORE_KEY]: shops }, getStoreScope());
+    updateVariablesWith(
+      variables => ({ ...variables, [SHOP_STORE_KEY]: shops }),
+      getStoreScope(),
+    );
     emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: shops.length, op: 'write' });
   } catch (e) {
     console.warn('[ShopStore] 写入失败', e);
@@ -95,24 +97,24 @@ function normalizeShops(raw: any[]): StoredShop[] {
 }
 
 function saveShopsToStore(newShops: any[]) {
-  const existing = readShopStore();
   const incoming = normalizeShops(newShops);
-  if (incoming.length === 0) return existing;
+  if (incoming.length === 0) return readShopStore();
 
-  // 使用 Map 进行合并，支持更新现有 ID 的数据
-  const shopMap = new Map<string, StoredShop>();
-  existing.forEach(s => shopMap.set(s.id, s));
-  incoming.forEach(s => shopMap.set(s.id, s));
-
-  const merged = Array.from(shopMap.values());
-  writeShopStore(merged);
+  let merged: StoredShop[] = [];
+  updateVariablesWith(variables => {
+    merged = mergeShopsById(variables[SHOP_STORE_KEY], incoming) as StoredShop[];
+    return { ...variables, [SHOP_STORE_KEY]: merged };
+  }, getStoreScope());
+  emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: merged.length, op: 'write' });
   return merged;
 }
 
 function deleteShopFromStore(shopId: string) {
-  const existing = readShopStore();
-  const filtered = existing.filter(s => s.id !== shopId);
-  writeShopStore(filtered);
+  let filtered: StoredShop[] = [];
+  updateVariablesWith(variables => {
+    filtered = removeShopById(variables[SHOP_STORE_KEY], shopId) as StoredShop[];
+    return { ...variables, [SHOP_STORE_KEY]: filtered };
+  }, getStoreScope());
   emitShopEvent('shop:cache:updated', { scope: getStoreScope(), count: filtered.length, op: 'delete', id: shopId });
   return filtered;
 }
@@ -337,12 +339,14 @@ eventOn(getButtonEvent('导出店铺JSON'), () => {
 
 // 切换跨聊天共享开关
 eventOn(getButtonEvent('切换店铺跨聊天保留'), () => {
-  const newSetting = { ...settings, keep_cross_chat: !settings.keep_cross_chat };
-  replaceVariables(newSetting, { type: 'script', script_id: getScriptId() });
-  settings.keep_cross_chat = newSetting.keep_cross_chat;
-  // 清理当前存储，防止作用域切换时旧数据混入
-  writeShopStore([]);
-  toastr.success(`跨聊天保留店铺：${newSetting.keep_cross_chat ? '开启' : '关闭'}`, '店铺存储');
+  if (!settings.keep_cross_chat) {
+    settings.keep_cross_chat = true;
+    updateVariablesWith(
+      variables => ({ ...variables, keep_cross_chat: true }),
+      { type: 'script', script_id: getScriptId() },
+    );
+  }
+  toastr.info('店铺缓存已固定为跨聊天共享。', '店铺存储');
 });
 
 // 监听消息发送完成事件，在新消息产生后自动检查

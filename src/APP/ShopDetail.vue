@@ -192,7 +192,6 @@ function goItemDetail(pkg: any) {
   flex-grow: 1;
   overflow-y: auto;
   padding: 0;
-  scrollbar-width: none;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {

@@ -1,8 +1,7 @@
-<<<<<<< HEAD
 # 酒馆助手前端界面与脚本开发 - AGENTS规范
 
 > 本文档为AI编码助手提供完整的项目开发规范、技术路线和工具使用指南
- 
+
 ---
 
 ## 📋 目录
@@ -20,6 +19,7 @@
 11. [前端美化设计技能系统](#11-前端美化设计技能系统)
 12. [最佳实践](#12-最佳实践)
 13. [&#36827;&#38454;&#25216;&#24039;](#13-&#36827;&#38454;&#25216;&#24039;)
+14. [提示词模板系统](#14-提示词模板系统)
 
 ---
 
@@ -46,7 +46,6 @@
 - **样式方案**: SCSS + Vue SFC scoped styles
 - **构建工具**: Webpack 5（已配置完整loader和插件）
 
- 
 ### 1.4 设计与性能规范
 
 - **实现方式应尽量简洁**: 项目实现方式应保持结构简单、依赖精炼，避免堆叠不必要的动画与资源加载。
@@ -91,11 +90,13 @@ dist/                 # 构建输出目录（自动生成）
 项目使用pnpm作为包管理器，预装以下第三方库：
 
 **核心框架:**
+
 - `vue` - Vue 3 框架
 - `vue-router` - Vue路由
 - `pinia` - 状态管理
 
 **开发工具:**
+
 - `typescript` - TypeScript支持
 - `jquery` - DOM操作
 - `lodash` - 工具库
@@ -103,11 +104,19 @@ dist/                 # 构建输出目录（自动生成）
 - `toastr` - 消息提示
 
 **视觉与动画:**
+
 - `gsap` - 动画库
 - `pixi.js` - 2D渲染
 - `@pixi/react` - React集成
 
+**模板与文本处理:**
+
+- `ejs` - 模板引擎
+- `markdown-it` - Markdown解析
+- `pako` - 数据压缩
+
 **其他:**
+
 - `dedent` - 文本格式化
 - `jquery-ui` - UI组件
 - `yaml` - YAML解析
@@ -125,10 +134,12 @@ dist/                 # 构建输出目录（自动生成）
 项目提供免费的CDN服务支持，所有第三方库和GitHub文件都可以通过CDN访问。
 
 **国内访问优化**：
+
 - 使用 `https://testingcf.jsdelivr.net` 镜像确保国内网络环境可正常访问
 - 不推荐使用 `https://cdn.jsdelivr.net`（国内可能无法访问）
 
 **第三方库添加与管理**：
+
 - 为项目添加第三方库时，**推荐使用** `pnpm add 第三方库名` 来安装
 - 模板文件夹已配置webpack，会在打包时自动将第三方库转换为jsdelivr CDN链接
 - 这可以避免在多个脚本或界面中重复打包相同的第三方库，减少总体积
@@ -136,6 +147,7 @@ dist/                 # 构建输出目录（自动生成）
 
 **手动CDN引用**：
 如果您需要直接在脚本或界面中引用CDN资源，请使用以下格式：
+
 ```typescript
 // ✅ 正确：使用国内可访问的镜像
 importSomething from 'https://testingcf.jsdelivr.net/npm/package-name@version/+esm';
@@ -157,6 +169,7 @@ importSomething from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
 ### 4.2 @types目录结构
 
 **function/目录 - 核心功能函数:**
+
 - `variables.d.ts` - 变量操作：`getVariables`、`replaceVariables`、`klona`
 - `chat_message.d.ts` - 消息处理：`getChatMessages`、`sendMessage`、`getCurrentMessageId`
 - `slash.d.ts` - STScript命令：`triggerSlash`、`waitGlobalInitialized`
@@ -170,6 +183,7 @@ importSomething from 'https://cdn.jsdelivr.net/npm/package-name@version/+esm';
 - `util.d.ts` - 工具函数：`klona`
 
 **iframe/目录 - 框架和插件接口:**
+
 - `exported.sillytavern.d.ts` - 酒馆原生API
 - `exported.tavernhelper.d.ts` - 酒馆助手API
 - `exported.mvu.d.ts` - MVU变量框架：`Mvu.getMvuData`、`Mvu.parseMessage`
@@ -297,6 +311,7 @@ const settings = Settings.parse(getVariables({type: 'script', script_id: getScri
 ```
 
 **禁止事项:**
+
 - ❌ 禁止使用`<link>`导入样式
 - ❌ 禁止使用`<script>`引用本地脚本
 - ❌ 禁止使用`<img src="">`占位
@@ -304,10 +319,12 @@ const settings = Settings.parse(getVariables({type: 'script', script_id: getScri
 ### 7.3 样式规范
 
 **简单样式:**
+
 - 可在index.html中直接使用TailwindCSS
 - 需要新建`@import 'tailwindcss'`的CSS文件并导入
 
 **复杂样式:**
+
 - 优先使用Vue组件的`<style lang="scss">`标签
 - 或在TypeScript中`import './index.scss'`
 
@@ -441,18 +458,20 @@ eventOn(getButtonEvent('按钮名'), () => {
 
 ## 9. MVU变量框架
 
-### 9.1 概述
+### 9.1 概述与版本选择
 
-MVU变量框架是一个独立的酒馆助手脚本，作用于消息楼层变量。它允许：
-- 在世界书中设置消息楼层变量
-- 在世界书或聊天记录中初始化消息楼层变量
-- 用AI输出更新消息楼层变量
+MVU变量框架是一个独立的酒馆助手脚本，作用于消息楼层变量。它允许在世界书中设置、初始化和用AI更新消息楼层变量。
 
-### 9.2 接口文件
+项目目前支持两个版本的 MVU 框架，它们可以共存，请根据需求选择：
+
+- **MVU 经典版** (9.2 - 9.5)：适用于简单的变量管理，直接通过 JS 接口或简单的规则文本操作。
+- **MVU Zod 进阶版** (9.6)：适用于复杂的数据结构和严格的类型安全要求，基于 Zod Schema 和 JSON Patch。
+
+### 9.2 经典版：核心接口
 
 MVU的接口定义在`@types/iframe/exported.mvu.d.ts`中。当提及"MVU变量"时，优先使用MVU变量框架的接口。
 
-### 9.3 使用流程
+### 9.3 经典版：使用流程
 
 ```typescript
 // 1. 等待初始化
@@ -468,13 +487,13 @@ const result = Mvu.parseMessage(oldVars, messageString);
 Mvu.replaceMvuData(newData, {type: 'message', message_id: 5});
 ```
 
-### 9.4 数据存储
+### 9.4 经典版：数据存储
 
 - MVU将变量数据存储在`_.get(某楼层变量, 'stat_data')`中
 - 等价操作：`_.get(getVariables({type: 'message', message_id: 5}), 'stat_data')` = `Mvu.getMvuData({type: 'message', message_id: 5})`
 - 额外字段：`display_data`（可视化表示）和`delta_data`（变量变化）
 
-### 9.5 事件系统
+### 9.5 经典版：事件系统
 
 MVU提供事件监听功能，用于监听变量变化：
 
@@ -482,6 +501,46 @@ MVU提供事件监听功能，用于监听变量变化：
 // 监听变量变化事件
 Mvu.on('variableChanged', (data) => {
   // 处理变量变化
+});
+```
+
+### 9.6 MVU Zod 进阶版
+
+#### 9.6.1 概述
+
+MVU Zod 是 MVU 的进阶版本，引入了 **Zod Schema** 和 **JSON Patch (RFC 6902)** 标准。它解决了经典版中存在的类型安全、数值边界控制和复杂嵌套结构操作困难的问题。
+
+**核心优势**：
+
+- **类型安全**：所有变量更新都经过 Zod Schema 验证，防止类型错误（如将数字存为字符串）。
+- **边界控制**：通过 `z.transform` 强制限制数值范围，防止数值溢出。
+- **标准化操作**：使用 JSON Patch 标准（`replace`, `add`, `remove`），明确操作语义。
+- **幂等性**：支持增量更新，确保重复解析不会导致数据错误累积。
+
+#### 9.6.2 模块化工作流
+
+MVU Zod 采用模块化的配置方式，推荐使用 Cursor 的 `mvu_zod_workflow` 规则辅助生成：
+
+1. **模块1.0：变量结构 (Script)** - 使用 Zod 定义变量结构 (`变量结构.js`)。
+2. **模块1.1：变量初始化 (YAML)** - 基于 Schema 生成初始值 (`[initvar]变量初始化.yaml`)。
+3. **模块2：更新规则 (YAML)** - 定义变量的更新逻辑 (`[mvu_update]变量更新规则.yaml`)。
+4. **模块3：输出格式 (YAML)** - 定义 AI 输出 JSON Patch 的 Prompt (`[mvu_update]变量输出格式.yaml`)。
+
+#### 9.6.3 接口使用
+
+进阶版主要通过注册 Schema 来工作：
+
+```javascript
+import { registerMvuSchema } from 'https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js';
+import { z } from 'zod'; // 全局可用，无需 install
+
+export const Schema = z.object({
+  好感度: z.coerce.number().transform(v => _.clamp(v, 0, 100)),
+  物品栏: z.record(z.string(), z.object({ 数量: z.coerce.number() }))
+});
+
+$(() => {
+  registerMvuSchema(Schema);
 });
 ```
 
@@ -652,21 +711,25 @@ UI/
 #### 11.4.1 基础组件
 
 **UiCard - 基础卡片容器**
+
 - 支持悬停效果 (`hoverable`)
 - 支持点击反馈 (`clickable`)
 - 支持选中状态 (`selected`)
 
 **UiButton - 按钮组件**
+
 - 4种样式变体：filled、outline、ghost、link
 - 3种尺寸：sm、md、lg
 - 支持加载状态和图标
 
 **UiSearchBar - 搜索栏**
+
 - 内置搜索图标
 - 支持回车搜索和按钮搜索
 - 可自定义按钮文本
 
 **UiGrid - 网格布局**
+
 - 自定义列数（1-4列）
 - 响应式适配（自动调整）
 - 3种间距规格
@@ -674,21 +737,25 @@ UI/
 #### 11.4.2 复合组件
 
 **UiHeader - 页面头部**
+
 - 图标、标题、副标题
 - 右侧操作区插槽
 - 统一的页面头部样式
 
 **UiBadge - 徽章/标签**
+
 - 9种颜色变体（primary、success、warning、danger、info、hot、new、recommend、vip）
 - 3种尺寸
 - 支持点和图标模式
 
 **UiStarRating - 星级评分**
+
 - 可交互评分
 - 自定义最大星数
 - 悬停效果和文本显示
 
 **UiTab - 标签页**
+
 - 平滑切换动画
 - 响应式水平滚动
 - 标签切换事件
@@ -696,26 +763,31 @@ UI/
 #### 11.4.3 业务组件
 
 **UiInfoCard - 信息卡片**
+
 - 图标+标签+数值布局
 - 5种图标颜色
 - 插槽支持自定义内容
 
 **UiPackageCard - 套餐卡片**
+
 - 头像区域
 - 名称和描述
 - 标签列表展示
 
 **UiStatusPanel - 状态面板**
+
 - 卡片容器
 - 自定义头部
 - 适合状态展示页面
 
 **UiProfileHeader - 个人资料头**
+
 - 头像、名称、副标题
 - 背景渐变效果
 - 徽章插槽
 
 **UiListSection - 列表区块**
+
 - 标题和操作区
 - 内容区域插槽
 - 列表组织单元
@@ -933,6 +1005,7 @@ onMounted(async () => {
 #### 11.8.1 首页模板 (HomePage.vue)
 
 完整的首页布局，包含：
+
 - 页面头部
 - 分类网格
 - 搜索栏
@@ -942,6 +1015,7 @@ onMounted(async () => {
 #### 11.8.2 服务状态页面 (ServiceStatusPage.vue)
 
 完整的服务状态展示页面，包含：
+
 - 基础信息卡片网格
 - 标签页切换
 - 状态详情面板
@@ -982,11 +1056,13 @@ onMounted(async () => {
 ### 11.1 代码规范
 
 **优先使用TypeScript而非JavaScript**
+
 - ✅ 使用TypeScript提供更好的类型检查
 - ✅ 利用接口定义和类型推断
 - ❌ 避免使用any类型
 
 **优先使用酒馆助手提供的接口**
+
 - ✅ 使用`getChatMessages()`而非`SillyTavern.chat`
 - ✅ 使用`replaceWorldbook()`而非`triggerSlash('/setentryfield')`
 - ✅ 酒馆助手接口抽象层次更高，更符合TypeScript类型系统
@@ -1009,226 +1085,10 @@ export const useSettingsStore = defineStore('settings', () => {
     replaceVariables(klona(settings.value), {type: 'script', script_id: getScriptId()});
   });
 
-=======
-# 酒馆助手前端界面或脚本编写
-
-本项目主要用于编写酒馆助手 ([Tavern Helper](https://n0vi028.github.io/JS-Slash-Runner-Doc/guide/关于酒馆助手/介绍.html)) 所支持的前端界面或脚本. 它们在酒馆 (SillyTavern) 中以前台或后台的形式运行, 可以在代码中直接使用酒馆助手所提供的接口, 进而:
-
-- 为角色卡提供更好的 UI 显示, 如将消息楼层中原本只是代码块纯文本的状态栏美化为有动态效果、有交互的 html 状态栏
-- 实现非纯文本的游玩体验, 如监听现实时间或酒馆事件来实现 meta 游戏、播放多媒体文件、自制游玩界面并与酒馆交互
-- 优化酒馆使用体验, 如用 jQuery 为预设提示词条目新增复制按钮, 监听酒馆接收到消息事件并判断是否需要重新生成本楼层消息
-- 连接外部应用程序, 如通过 socket.io-client 连接外部服务器, 进而实现外部应用程序与酒馆的通信
-- 新增额外功能, 如每 20 楼在后台调用一次 LLM 来生成对之前剧情的总结
-- ...
-
-## 访问酒馆网页
-
-在编写时, 你应该用 chrome-devtools 连接我已经打开的浏览器, 从中读取或操纵连接到的酒馆网页 (其网址与 `.vscode/launch.json` 中配置的 `url` 一致), 来了解当前的界面、脚本情况, 如获取当前的 DOM 情况、实际显示情况、Console 情况、点击界面……
-
-连接到网页后, 你需要检查 `$('#extensions_settings')` 中的`酒馆助手-实时监听-允许监听`开关是否处于启用状态. 一旦启用, 则界面、脚本代码到酒馆网页的实时同步已经建立好了: 在代码变更后, 酒馆网页上将热重载新的脚本或界面代码, 因此你不需要刷新酒馆网页, 也不需要自己运行 `pnpm build` 来更新代码打包结果, 直接查看网页即可.
-
-## 项目结构
-
-### 核心机制: 前端界面或脚本
-
-每个前端界面或脚本, 都以 `src` 文件夹或 `示例` 文件夹中的一个独立文件夹形式存在. 具体是前端界面还是脚本, 由文件夹中的内容直接决定:
-
-- 如果文件夹中既有 `index.ts` 文件也有 `index.html` 文件, 则是前端界面项目. 例如, `示例/界面示例` 是一个前端界面项目.
-- 如果文件夹中仅有 `index.ts` 文件, 则是脚本项目. 例如, `示例/脚本示例`、`示例/流式楼层界面示例` 是一个脚本项目.
-
-你可以在 `初始模板/*/新建为src文件夹中的文件夹` 中找到前端界面和脚本项目的初始模板.
-
-### 流式楼层界面
-
-由于酒馆框架限制, 前端界面只能在它所基于的文本格式输出完毕后才能渲染, 也就是说前端界面的渲染不支持流式文本 (AI 逐渐输出文本供用户阅读).
-
-为了让前端界面支持流式, 本编写模板的[进阶技巧](https://stagedog.github.io/青空莉/工具经验/实时编写前端界面或脚本/进阶技巧/)中提出了两种方法, 简单地说: (具体需要查看进阶技巧文章)
-
-- 不再使用酒馆的输入框, 让玩家始终在一个渲染好的前端界面里游玩, 而在前端界面内使用酒馆助手提供的 `generate` 或 `generateRaw` 请求 AI 生成新的回复.
-- 继续使用酒馆的输入框, 但利用脚本可以使用 jquery 操纵酒馆网页的特性, 替换掉酒馆原本不支持流式前端界面渲染的楼层显示.
-
-流式楼层界面即使用了第二种方法. 在 `util/streaming.ts` 中, 项目提供了 `mountStreamingMessage` 函数来挂载流式楼层界面. 此外, 在 `示例/流式楼层界面示例` 中, 你可以找到一个流式楼层界面的示例.
-
-**流式楼层界面不过是调用了 `mountStreamingMessage` 的脚本, 因此所有脚本的编写规则依旧适用.**
-
-### MVU 角色卡
-
-如果我要求你制作一张基于 MVU 的角色卡, 你应该参考本项目提供在 `示例/角色卡示例` 中的额外支持:
-
-- `示例/角色卡示例/脚本/*/` 中是角色卡的所有脚本
-- `示例/角色卡示例/界面/*/` 中是角色卡的所有前端界面
-- `示例/角色卡示例/schema.ts` 中是用 zod 4 库书写的角色卡 MVU 变量结构定义
-  - 提供给脚本、前端界面导入使用
-  - 会在 `pnpm build` 或 `pnpm watch` 时生成对应的 json schema 文件 `示例/角色卡示例/schema.json`, 便于编写变量初始值文件 initvar.yaml `# yaml-language-server: $schema=schema文件路径`
-- `util/mvu.ts` 中提供了 `defineMvuDataStore` 函数, 它基于 pinia 实现了本项目推荐的前端界面获取、修改 MVU 变量方式, 支持与酒馆实际变量之间的双向同步; `示例/角色卡示例/界面/store.ts` 中的 `useDataStore` 就是用它获取和修改界面所在楼层变量的.
-
-你同样可以在 `初始模板/角色卡/新建为src文件夹中的文件夹` 中找到 MVU zod 角色卡的初始模板.
-
-## 项目参考文件
-
-### 可用的第三方库
-
-项目使用 pnpm 作为包管理器, 在 `package.json` 的 `dependencies` 部分定义了可用的第三方库 (dedent、gsap、jquery、jquery-ui、lodash、pinia、pixi.js、toastr、yaml、vue、vue-router、@vueuse/core、react、@pixi/react、async-wait-until、zod), 你也可以自己通过 `pnpm add` 添加更多第三方库, 如添加 (@vueuse/integrations 等).
-
-前端界面或脚本都是在浏览器中使用, 因此你不能使用 nodejs 库
-
-### 与酒馆交互的方式
-
-前端界面或脚本主要使用酒馆助手所提供的接口与酒馆进行交互. 这些接口定义在 `@types` 文件夹中, 如 `@types/function/worldbook.d.ts` 中描述了该如何操控世界书, `@types/function/variables.d.ts` 中描述了该如何操控酒馆变量.
-
-此外, `@types` 文件夹也为酒馆本身、其他插件、MVU 变量框架所提供的接口变量、函数进行了类型定义, 如 `@types/iframe/exported.mvu.d.ts` 中描述了 MVU 变量框架所提供的接口 `Mvu`.
-
-除了代码接口外, 酒馆自制了 STScript 命令. 要将这些命令转换为 Typescript 代码, 你需要使用 `@types/function/slash.d.ts` 内所定义的 `triggerSlash` 函数来调用它们. 具体的命令列表见于 `slash_command.txt` 文件.
-
-以上接口在代码中均可直接使用, 不需要导入或新定义它们, 也不需要检查是否可用.
-
-#### 酒馆助手接口
-
-`@types` 文件夹中定义了酒馆助手所提供的所有接口, [酒馆助手官方文档](https://n0vi028.github.io/JS-Slash-Runner-Doc/)中也对这些接口进行了类似的说明:
-
-其中, `@types/function` 中的接口将会导出到酒馆网页的 `window.TavernHelper`; 而 `@types/iframe` 依赖于 iframe 环境, 只在酒馆助手前端界面或脚本内可用. 由于本项目主要是制作酒馆助手前端界面或脚本, `@types/function` 和 `@types/iframe` 内的接口均可直接调用, 你无须在意 `@types/function` 和 `@types/iframe` 的区别.
-
-- `@types/function/audio.d.ts`: 音频播放器
-- `@types/function/builtin.d.ts`: 对 `@types/iframe/exported.sillytavern.d.ts` 的增补, 一些酒馆原生具有但没有导出的接口
-- `@types/function/chat_message.d.ts`: 操作目前酒馆玩家与 AI 的聊天楼层记录, 如获取某些楼层的消息、修改楼层消息内容、新建楼层、删除楼层、移动楼层等
-- `@types/function/displayed_message.d.ts`: 操作目前酒馆网页对楼层的显示, 如获取某一楼层的 JQuery 实例、将文本格式化为如果放在楼层中会如何显示的 html 文本等
-- `@types/iframe/event.d.ts`: 监听、发送酒馆事件, 如监听消息接收完毕、监听世界书发生更新等
-- `@types/iframe/exported.ejstemplate.d.ts`: 与提示词模板这一酒馆插件进行交互, 主要是调整提示词模板的设置. 除非我明确要求你做, 不要考虑
-- `@types/iframe/exported.mvu.d.ts`: 与 MVU 变量框架进行交互
-- `@types/iframe/exported.sillytavern.d.ts`: 酒馆原生导出的接口, 但抽象层次很低, 因此你应该优先使用 `@types` 中列出的其他酒馆助手接口而不是这个文件里的
-- `@types/function/extension.d.ts`: 操作酒馆第三方扩展的安装、卸载、更新等
-- `@types/function/generate.d.ts`: 请求酒馆 AI 生成回复. `generate` 是携带酒馆预设作为提示词的请求 AI 生成, 而 `generateRaw` 是不携带酒馆预设 (但依旧会发送酒馆世界书条目等内容) 直接请求 AI 生成
-- `@types/function/global.d.ts`: 支持不同前端界面、脚本间的接口共享
-- `@types/function/import_raw.d.ts`: 导入酒馆原生数据, 包括角色卡、聊天记录、世界书、预设等. 导入所用的数据格式应与玩家通过酒馆页面按钮导出的数据格式一致
-- `@types/function/inject.d.ts`: 为酒馆 AI 请求注入额外提示词
-- `@types/function/macro_like.d.ts`: 注册酒馆助手宏. 注册后, 酒馆 AI 提示词、酒馆楼层显示中出现这个宏时, 将会被替换为宏所定义的内容
-- `@types/function/preset.d.ts`: 操作酒馆预设, 可以切换使用别的预设, 也可以调整预设中的酒馆 AI 请求参数 (温度、流式传输等) 和提示词等
-- `@types/function/raw_character.d.ts`: 获取角色卡的一些信息
-- `@types/function/script.d.ts`: 获取或修改当前酒馆助手脚本的某些信息
-- `@types/iframe/script.d.ts`: 获取或修改当前酒馆助手脚本的某些信息
-- `@types/function/slash.d.ts`: 运行酒馆的 DSL 命令 (称为 "/STScript"), 可运行的命令在 `slash_command.txt` 中有列出, 但这些命令很难与代码结合使用,因此你应该优先使用 `@types` 中列出的其他酒馆助手接口而不是 "/STScript" 命令
-- `@types/function/tavern_regex.d.ts`: 操作酒馆正则. 酒馆在发送 AI 请求或显示楼层时, 会按酒馆正则将聊天记录中的内容替换成其他内容. 除非明确要求, 你只应该在有些时候使用这个文件里的 `formatAsTavernRegexedString` 函数
-- `@types/function/util.d.ts`: 一些工具函数, 如获取当前酒馆聊天的最新楼层号, 替换文本里的酒馆宏等
-- `@types/iframe/util.d.ts`: 一些工具函数, 如在前端界面里获取前端界面所在楼层号等
-- `@types/function/variables.d.ts`: 操作酒馆变量, 可以获取或修改变量值
-- `@types/iframe/varriables.d.ts`: 操作酒馆变量
-- `@types/function/version.d.ts`: 获取酒馆和酒馆助手的版本号
-- `@types/function/worldbook.d.ts`: 操作世界书, 可以删除创建世界书, 可以调整世界书启用情况, 也可以调整其中的条目等
-
-### 工具函数
-
-在 `util` 中定义了一些工具函数:
-
-- `util/script.ts`: 脚本可能使用的函数
-- `util/common.ts`: 前端界面或脚本可能使用的函数
-- `util/mvu.ts`: MVU 角色卡可能使用的函数
-
-## 酒馆变量
-
-酒馆变量可用于持久化地存储前端界面、脚本的数据, 可通过酒馆助手的 `getVariables`、`replaceVariables` 等接口读写.
-
-- 全局变量 (`{type: 'global'}`): 在酒馆中全局一致, 无论是否打开角色卡、哪张角色卡, 都共享同样的全局变量.
-- 角色卡变量 (`{type: 'character'}`): 绑定在角色卡上的变量.
-- 脚本变量 (`{type: 'script', script_id: string}`): 绑定在某个脚本上的变量.
-- 聊天变量 (`{type: 'chat'}`): 绑定在某角色卡的某个聊天文件上的变量. 当在酒馆中选择某张角色卡与 LLM 进行对话时, 都需要创建一个聊天文件.
-- 消息楼层变量 (`{type: 'message', message_id: 'latest'|number}`): 绑定在某角色卡、某聊天的某个楼层上. 当在酒馆中用某个聊天文件与 LLM 进行对话时, 可能会逐渐有很多用户输入和 AI 输出, 每个用户输入和 AI 输出都是单独的消息楼层.
-
-## 特殊导入方式
-
-### 导入文件内容
-
-项目支持用 `import string from './文件?raw'` 来将文件内容作为字符串导入.
-
-如果导入的文件是 typescript、scss, 则导入的将会是经过 webpack 打包后的纯 javascript、css 而不是原始内容, 因此能在 jquery 中直接使用.
-
-```typescript
-// 直接导入文件内容
-import html_content from './html.html?raw';
-import json_content from './json.json?raw';
-
-// 经过 webpack 打包后导入
-import javascript_content from './script.ts?raw';
-import css_content from './style.scss?raw';
-```
-
-### 导入 html
-
-除了以 `?raw` 直接导入 HTML 文件内容外, 项目还支持用 `import html from './文件.html'` 来通过 html-loader 将 html 文件内容最小化后作为字符串导入.
-
-### 导入 markdown
-
-项目还支持用 `import markdown from './文件.md'` 来通过 remark-loader 将 markdown 文件内容解析为 html 后作为字符串导入.
-
-### 导入 vue
-
-项目直接支持用 `import Component from './文件.vue'` 来导入 vue 组件, 如果要设计界面你应该优先使用 vue 组件 (含 pinia 和 vue-router).
-
-### 为前端界面导入样式
-
-前端界面支持在 typescript 中 `import './index.scss'` 来导入全局 scss 文件, 并自动将它们打包到最终的 `dist/**/index.html` 中的 `<head>` 部分.
-
-## 最佳实践
-
-通用于前端界面和脚本:
-
-### 使用 typescript 而非 javascript
-
-typescript 更容易写对, 你应该使用 typescript 而非 javascript
-
-### 尽量使用项目参考文件中的功能
-
-项目参考文件中的功能往往更为简单正确, 因此你应该尽量使用它们. 例如:
-
-- 尽量使用第三方库, 例如:
-  - 使用 jquery 而不是 javascript 内置的 DOM 操作
-  - 使用 jqueryui 实现拖动效果 (vue 中则使用 vueuse 等第三方库)
-  - 使用 zod 处理数据校验和纠错而不是 if else, 并用 `z.prettifyError()` 来格式化错误信息
-  - 使用 gsap 制作打字机等所有动画效果
-  - ...
-- 尽量使用酒馆助手给出的接口, 例如:
-  - 使用 `getIframeName()` 而不是 `(this.frameElement as Element).id`
-  - ...
-
-### 优先使用酒馆助手提供的接口
-
-**酒馆助手所提供的接口抽象层次更高, 你应该优先使用 `@types` 文件夹中其他文件定义的酒馆助手接口**, 而不是 `@types/iframe/exported.sillytavern.d.ts` 中定义的酒馆内置接口或 STScript 命令.
-
-- 使用 `@types/function/chat_message.d.ts` 中定义的 `getChatMessages()`、`setChatMessages()` 等来获取、修改消息楼层
-- 使用 `@types/function/worldbook.d.ts` 中定义的 `getWorldbook()`、`replaceWorldbook()` 等来获取、修改世界书条目
-- 使用 `@types/function/variables.d.ts` 中定义的 `getVariables()`、`replaceVariables()` 等来获取、修改酒馆变量
-- ……
-
-### 优先使用 vue 编写界面
-
-vue 相比于 jquery 或 DOM 操作更为简单, 因此你应该尽量使用 vue (可使用 pinia、vue-router 或自己添加其他第三方库) 来编写前端界面, 但要注意 vue-router 的 `createRouter()` 不能写在 `$(() => {})` 中, 必须在全局执行.
-
-当需要监听 vue 的响应式数据变化并存入酒馆数据时 (如酒馆变量、世界书……), 你应该先用 `klona()` 来去除 proxy 层, 以在脚本中编写 vue 并提供用户设置为例:
-
-```typescript
-const Settings = z.object({/*...*/}); // 用 zod 定义设置的类型和默认值
-const settings = ref(Settings.parse(getVariables({ type: 'script', script_id: getScriptId() })));
-watchEffect(() => replaceVariables(klona(settings.value), { type: 'script', script_id: getScriptId() }));
-```
-
-前端界面和脚本都是 iframe, 因此你在使用 vue-router 时, 应该使用 `history: createMemoryHistory()` 来创建路由, 否则将无法正常路由.
-
-### 优先使用 pinia、zod 管理数据状态
-
-当需要从酒馆读取配置/数据时, 你应该用 pinia 实现响应式读写:
-
-```typescript
-const Settings = z.object({ button_selected: z.boolean().default(false) }).prefault({});
-export const useSettingsStore = defineStore('settings', () => {
-  const settings = ref(Settings.parse(getVariables({ type: 'script', script_id: getScriptId() })));
-  watchEffect(() => {
-    replaceVariables(klona(settings.value), { type: 'script', script_id: getScriptId() });
-  });
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
   return { settings };
 });
 ```
 
-<<<<<<< HEAD
 **去除Proxy层**
 
 ```typescript
@@ -1241,6 +1101,7 @@ watchEffect(() => {
 ### 11.3 界面开发
 
 **优先使用Vue编写界面**
+
 - ✅ Vue比jQuery或DOM操作更简单
 - ✅ 可使用Pinia、VueRouter和其他第三方库
 - ❌ Vue Router的createRouter()不能写在`$(() => {})`中，必须在全局执行
@@ -1342,17 +1203,17 @@ document.addEventListener("DOMContentLoaded", fn);
 
 ---
 
-## 13. &#36827;&#38454;&#25216;&#24039;
+## 13. 进阶技巧
 
-- &#36164;&#28304;&#19982;CDN&#65306;&#39318;&#36873; `https://testingcf.jsdelivr.net` &#35775;&#38382; npm/GitHub &#36164;&#28304;&#65307;&#26032;&#22686;&#20381;&#36182;&#20248;&#20808;&#29992; `pnpm add` &#35753;&#27169;&#26495;&#33258;&#21160;&#36716; CDN&#12290;&#20813;&#36153;&#23383;&#20307;&#21487;&#29992; ZeoSeven Fonts&#65292;&#22270;&#26631;&#29992; FontAwesome&#12290;&#27880;&#24847;&#39068;&#33394;&#23545;&#27604;&#24230;&#65292;&#25512;&#33616; Adobe &#39068;&#33394;&#23545;&#27604;&#24230;&#26816;&#26597;&#22120;&#12290;
-- &#35268;&#21017;&#19982;&#27491;&#21017;&#65306;&#21069;&#31471;&#30028;&#38754;&#27491;&#21017;&#20165;&#36127;&#36131;&#23450;&#20301;&#25554;&#20837;&#20301;&#32622;&#65292;&#19981;&#35299;&#26512;&#25968;&#25454;&#65307;&#25968;&#25454;&#35299;&#26512;&#22312;&#20195;&#30721;&#20391;&#29992; `getChatMessages` &#31561;&#23436;&#25104;&#12290;&#21487;&#22312; `.cursor/rules` &#20013;&#36861;&#21152;&#33258;&#23450;&#20041;&#21161;&#25163;&#35268;&#21017;&#25193;&#23637;&#25552;&#31034;&#12290;
-- &#24615;&#33021;&#19982;&#21152;&#36733;&#65306;&#20026;&#20943;&#36731;&#37202;&#39302;&#28210;&#26579;&#21345;&#39039;&#65292;&#21487;&#25226;&#22823;&#22359; HTML &#25442;&#25104;&#22806;&#38142;&#21152;&#36733;&#65307;&#33509;&#38656;&#21457;&#24067;&#21487;&#33258;&#21160;&#26356;&#26032;&#30340;&#30028;&#38754;/&#33050;&#26412;&#65292;&#20351;&#29992; GitHub + jsdelivr &#38236;&#20687;&#22495;&#21517;&#12290;&#21363;&#20415;&#27169;&#26495;&#25552;&#21040;&#21024;&#38500; `LimitChunkCountPlugin` &#20197;&#20998;&#22359;&#65292;&#26412;&#20179;&#24211;&#20173;&#20445;&#25345;&#8220;&#19981;&#25913; webpack.config.ts&#8221;&#12290;
-- &#35774;&#35745;&#19982;&#21407;&#22411;&#65306;&#40723;&#21169;&#20808;&#29992; Figma &#20570;&#21407;&#22411;&#65288;&#21487;&#37197;&#21512; Figma MCP&#65289;&#65292;&#20877;&#25353;&#35774;&#35745;&#36824;&#21407;&#65307;&#20445;&#25345;&#31227;&#21160;&#31471;&#21451;&#22909;&#19982;&#39640;&#23545;&#27604;&#24230;&#21487;&#35835;&#24615;&#12290;
-- &#22806;&#37096;&#36890;&#20449;&#65306;&#21487;&#29992; `socket.io-client` &#31561;&#27983;&#35272;&#22120;&#24211;&#19982;&#22806;&#37096;&#24212;&#29992;&#36890;&#20449;&#65292;&#22823;&#20307;&#37327;&#25968;&#25454;&#27880;&#24847;&#26381;&#21153;&#22120; `maxHttpBufferSize`&#12290;
-- &#37202;&#39302;&#33021;&#21147;&#36895;&#26597;&#65306;@types &#21015;&#20986;&#20840;&#37096;&#21487;&#29992;&#25509;&#21475;&#65292;&#20808;&#26597;&#25991;&#26723;/&#31867;&#22411;&#20877;&#32534;&#30721;&#65292;&#36991;&#20813;&#37325;&#22797;&#36896;&#36718;&#23376;&#12290;
-- jQuery &#25805;&#20316;&#23487;&#20027;&#65306;&#33050;&#26412;&#21487;&#30452;&#25509;&#25913;&#37202;&#39302;&#39029;&#38754;&#20803;&#32032;&#65292;&#20063;&#21487;&#29992; `tavern_events.CHAT_COMPLETION_PROMPT_READY` &#31561;&#20107;&#20214;&#21407;&#22320;&#25913;&#25552;&#31034;&#35789;&#65307;&#25968;&#32452;&#38656;&#21407;&#22320;&#20462;&#25913;&#65288;&#22914; `splice`&#65289;&#65292;&#19981;&#35201;&#25972;&#20307;&#26367;&#25442;&#12290;
-- &#27969;&#24335;&#19982;&#21516;&#23618;&#30028;&#38754;&#65306;&#31616;&#21333;&#26041;&#26696;&#22312;&#21069;&#31471;&#30028;&#38754;&#20869;&#29992; `generate` + `iframe_events.STREAM_TOKEN_RECEIVED_*` &#20570;&#27969;&#24335;&#65307;&#36827;&#38454;&#21487;&#38544;&#34255;&#21407;&#27004;&#23618;&#65292;&#33258;&#24314;&#28210;&#26579;&#24182;&#30417;&#21548; `MESSAGE_SEND/STREAM_TOKEN_RECEIVED/MESSAGE_RECEIVED`&#12290;
-- &#25991;&#20214;&#19982;&#26500;&#24314;&#36873;&#39033;&#65306;&#21487;&#29992; `import './file?raw'` &#30452;&#25509;&#25343;&#26412;&#22320;&#25991;&#26412;&#65307;`// @obfuscate` &#35302;&#21457;&#28151;&#28102;&#65292;`// @no-ci` &#21487;&#35753;&#27169;&#26495; CI &#36339;&#36807;&#25171;&#21253;&#65288;&#37196;&#24773;&#20351;&#29992;&#65292;&#26412;&#20179;&#24211;&#20173;&#25353;&#38656;&#25191;&#34892;&#65289;&#12290;
+- **资源与CDN**: 首选 `https://testingcf.jsdelivr.net` 访问 npm/GitHub 资源；新增依赖优先用 `pnpm add` 让模板自动转 CDN。免翻字体可用 ZeoSeven Fonts，图标用 FontAwesome。注意颜色对比度，推崇 Adobe 颜色对比度检查器。
+- **规则与正则**: 前端界面正则仅负责定位插入位置，不解析数据；数据解析在代码侧用 `getChatMessages` 等完成。可在 `.cursor/rules` 中追加自定义助手规则扩展提示。
+- **性能与加载**: 为减轻配置页渲染卡顿，可把大块 HTML 换成外链加载；若需发布可自动更新的界面/脚本，使用 GitHub + jsdelivr 镜像域名。即便模板提到删除 `LimitChunkCountPlugin` 以分块，本仓库仍保持“不改 webpack.config.ts”。
+- **设计与原型**: 鼓励先用 Figma 做原型（可配合 Figma MCP），再按设计还原；保持移动端友好与高对比度可读性。
+- **外部通信**: 可用 `socket.io-client` 等连接器库与外部应用通信，大数据量注意服务器 `maxHttpBufferSize`。
+- **配置能力速查**: @types 列出全部可用接口，先查文档/类型再编码，避免重复造轮子。
+- **jQuery 操作宿主**: 脚本可直接改配置页面元素，也可用 `tavern_events.CHAT_COMPLETION_PROMPT_READY` 等事件原地改提示词；数组需原地修改（如 `splice`），不要整体替换。
+- **流式与同层界面**: 简单方案在前端界面内用 `generate` + `iframe_events.STREAM_TOKEN_RECEIVED_*` 做流式；进阶可隐藏原楼层，自建渲染并监听 `MESSAGE_SEND/STREAM_TOKEN_RECEIVED/MESSAGE_RECEIVED`。
+- **文件与构建选项**: 可用 `import './file?raw'` 直接拿本地文本；`// @obfuscate` 触发混淆，`// @no-ci` 可让模板 CI 跳过打包（详情使用，本仓库仍按需执行）。
 
 ---
 
@@ -1363,68 +1224,187 @@ document.addEventListener("DOMContentLoaded", fn);
 ---
 
 > 💡 **提示**: 本文档为AI助手专用开发规范，遵循此规范可以确保与酒馆助手的完美兼容性和最佳性能表现。
-=======
-### 优先使用 tailwindcss 和 `<style scoped>` 进行样式设计
 
-你可以直接在项目中使用 tailwindcss, 而无需导入任何 css 文件.
+---
 
-在设计样式时, 你应该优先使用 tailwindcss 直接在 vue 组件的 `<template>` 内书写, 对于无法这样做的情况则使用 `<style scoped>` 标签.
+## 14. 提示词模板系统
 
-### 尝试使用 @pixi/react 编写界面
+### 14.1 核心概念与处理流程
 
-当有很多多媒体资源时, 我们的前端界面更像是一个完整的游戏, 因此你应该使用 @pixi/react 在 .tsx 中编写界面, 并使用 pixi.js 来实现资源预先加载等逻辑.
+扩展 SillyTavern 的宏语法，基于 [EJS](https://ejs.co/) 实现，支持在提示词、角色卡、世界书、预设和消息中使用 JavaScript 逻辑。
 
-### 正确在加载、卸载前端界面或脚本时执行功能
+**处理流程**:
 
-你应该总是在加载时才执行代码, 而不该直接在全局作用域中执行代码.
+1. **生成前处理 (GENERATE)**: 处理 `<% ... %>` 块，替换为执行结果，发送给 LLM。
+2. **生成后处理 (RENDER)**: LLM 输出后，再次处理内容中的 EJS 语法，用于动态修改显示内容或变量。
 
-项目最终打包生成的 `dist/**/index.html` 或 `dist/**/index.js` 可能先上传到网上, 再以 `$('body').load(网络链接)` 或 `import '网络链接'` 的方式加载到酒馆中. `document.addEventListener("DOMContentLoaded", fn)` 在这个加载过程中不会被触发, 因此禁止使用 `DOMContentLoaded` 作为加载时的执行时机.
+### 14.2 语法与注入规范
 
-你应该使用 jquery 来在加载时执行功能:
+#### 14.2.1 基础语法
 
-```typescript
-$(() => {
-  toastr.success('加载成功');
-});
+- `<% code %>`: 执行 JavaScript 代码，无输出。
+- `<%= value %>`: 输出转义后的值 (HTML safe)。
+- `<%- value %>`: 输出原始值 (Unescaped)。
+- `<#escape-ejs> ... <#/escape-ejs>`: 范围转义，内部标签不被处理。
+
+#### 14.2.2 世界书/条目注入标签
+
+在世界书条目标题中使用以下前缀可控制注入位置：
+
+- `[GENERATE:BEFORE]` / `[GENERATE:AFTER]`: 注入到发送给 LLM 的提示词开头/结尾。
+- `[RENDER:BEFORE]` / `[RENDER:AFTER]`: 注入到渲染输出的开头/结尾（不发送给 LLM）。
+- `[GENERATE:{idx}:BEFORE]`: 注入到第 `{idx}` 条消息前。
+- `[InitialVariables]`: 初始化变量树 (JSON Object)。
+- `[GENERATE:REGEX:pattern]`: 正则匹配消息内容时注入。
+
+#### 14.2.3 Prompt 注入 (@INJECT)
+
+使用 `@INJECT` 将消息以 `{role, content}` 格式插入 Prompt 数组，支持绝对位置、相对目标和正则匹配。
+
+**语法**:
+
+- `pos`: 绝对位置。`@INJECT pos=0,role=system` (开头)
+- `target`: 相对目标。`@INJECT target=user,index=-1,at=after` (最后一条用户消息后)
+- `regex`: 正则匹配。`@INJECT regex=关键词,role=system`
+
+**重要**: 若需保证系统指令在最前，务必使用 `pos=0` 或最小 `order`。
+
+### 14.3 装饰器系统 (Decorators)
+
+在条目内容首行使用 `@@` 前缀控制条目行为：
+
+- `@@activate`: 强制激活条目。
+- `@@if condition`: 单行条件判断，为真时激活。
+- `@@preprocessing`: 预处理条目，实现原生递归 🟢 关键字激活。
+- `@@dont_activate`: 禁止激活。
+- `@@generate_before` / `@@render_after` 等: 等同于标题注入标签。
+
+### 14.4 核心 API 函数
+
+#### 14.4.1 提示词注入与管理
+
+- `injectPrompt(key, prompt)`: 注入提示词片段到指定键。
+- `getPromptsInjected(key)`: 获取指定键注入的提示词（常用于预设中 `<%- getPromptsInjected("CoT") %>`）。
+
+#### 14.4.2 世界书控制
+
+- `await getwi(nameOrUid)`: 直接获取并返回指定世界书条目的内容（无视激活条件）。
+- `await activewi(nameOrUid)`: 将条目加入酒馆待激活列表（遵循酒馆原生逻辑，如递归激活）。
+
+#### 14.4.3 正则处理器
+
+- `activateRegex(regex, replacement, options)`: 动态创建正则替换。
+  - `options`: `{ generate: true, message: true, html: true }`
+  - 支持传递函数作为 replacement。
+
+### 14.5 开发目录结构
+
+```
+src/
+├── templates/
+│   ├── base_prompt.ejs     # 基础提示词模板
+│   ├── character_card.md   # 角色卡模板
+│   └── modules/            # 模块化片段
+│       ├── formatting.ejs
+│       └── world_info.ejs
 ```
 
-同样地, 使用 jquery 及 `'pagehide'` 事件 (而不是 `'unload'`) 来在卸载时执行功能:
+### 14.6 最佳实践
 
-```typescript
-$(window).on('pagehide', () => {
-  toastr.success('卸载成功');
-});
+1. **逻辑分离**: 复杂的 JS 逻辑应封装在 `src/utils` 或 `src/scripts` 中，模板中只进行简单的调用。
+2. **System 优先**: 使用 `@INJECT pos=0` 确保核心指令（System Prompt）位于上下文最顶端，适配 Claude/Gemini 等模型。
+3. **正则慎用**: 楼层渲染时的正则替换 (`html: true`) 会永久修改 DOM，需小心操作；修改 `message` 内容会永久改变聊天记录。
+4. **变量管理**: 利用 `[InitialVariables]` 或 `@@initial_variables` 统一管理初始化状态。
+
+### 14.7 内置函数与变量参考
+
+#### 14.7.1 核心操作函数
+
+```javascript
+/**
+ * 设置变量
+ * @param {(string|null)} key - 变量名
+ * @param {any} value - 变量值
+ * @param {Object} [options={}] - 选项: { scope: 'global'|'local'|'message', flags: 'nx'|'xx' }
+ */
+function setvar(key, value, options = {});
+
+/**
+ * 读取变量
+ * @param {(string|null)} key - 变量名
+ * @returns {any} - 变量值
+ */
+function getvar(key, options = {});
+
+/**
+ * 增加/减少变量值
+ */
+function incvar(key, value = 1, options = {});
+function decvar(key, value = 1, options = {});
+
+/**
+ * 执行 SillyTavern 命令
+ */
+async function execute(cmd);
+
+/**
+ * 读取世界书条目
+ * @param {string} lorebook - 世界书名
+ * @param {string} title - 条目名
+ */
+async function getwi(lorebook, title, data = {});
+
+/**
+ * 读取角色卡定义
+ */
+async function getchar(name, template, data = {});
+
+/**
+ * 输出内容
+ */
+function print(...args);
+
+/**
+ * 激活世界书条目
+ */
+async function activewi(lorebook, title, force = false);
+
+/**
+ * 获取聊天消息
+ */
+function getChatMessage(idx, role);
+function getChatMessages(count);
+
+/**
+ * 正则处理
+ */
+function activateRegex(pattern, replace, opts = {});
+
+/**
+ * 提示词注入
+ */
+function injectPrompt(key, prompt, order, sticky, uid);
+function getPromptsInjected(key);
 ```
 
-### 使用 console、throw 和 errorCatched 合理记录日志和错误
+#### 14.7.2 内置对象与库
 
-你应该在代码的关键节点使用 `console.info` 简洁地记录日志, 并尽量保持日志与最新代码逻辑的一致性.
+- `variables`: 全局变量集合 (合并了消息、局部、全局变量)
+- `SillyTavern`: 酒馆上下文对象
+- `faker`: Faker.js 库 (生成随机数据)
+- `_`: Lodash 库
+- `$`: jQuery 库
+- `toastr`: Toastr 消息提示库
 
-对于可恢复的错误, 使用 `console.warn`、`console.error` 记录日志;
+#### 14.7.3 STScript 命令
 
-对于让前端界面、脚本无法继续使用的错误, 你应该使用 `throw Error`, 而用 errorCatched 转换顶部函数从而对其进行记录, 例如:
+- `/ejs [ctx={...}] code`: 执行 EJS 代码
+- `/ejs-refresh`: 重新加载世界书
 
-```typescript
-function init() { /*... */}
+#### 14.7.4 导出函数 (Global Scope)
 
-$(() => {
-  errorCatched(init)();
-})
-```
+可通过 `globalThis.EjsTemplate` 访问：
 
-### 重载前端界面或脚本
-
-如果有完全重载前端界面或脚本的需求, 你应该使用 `window.location.reload()`. 如聊天文件变更时重新载入前端界面或脚本, 你可以用 `util/script.ts` 中定义好了的工具函数:
-
-```ts
-export function reloadOnChatChange(): EventOnReturn {
-  let chat_id = SillyTavern.getCurrentChatId();
-  return eventOn(tavern_events.CHAT_CHANGED, new_chat_id => {
-    if (chat_id !== new_chat_id) {
-      chat_id = new_chat_id;
-      window.location.reload();
-    }
-  });
-}
-```
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74
+- `evalTemplate(code, context)`: 执行模板
+- `prepareContext(context)`: 创建执行上下文
+- `getSyntaxErrorInfo(code)`: 检查语法错误

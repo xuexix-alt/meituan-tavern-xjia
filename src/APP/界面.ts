@@ -11,6 +11,8 @@ const History = () => import('./History.vue');
 const Me = () => import('./Me.vue');
 const ShopDetail = () => import('./ShopDetail.vue');
 const ItemDetail = () => import('./ItemDetail.vue');
+const Lab = () => import('./调试台.vue');
+const Story = () => import('./Story.vue');
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -21,6 +23,8 @@ const router = createRouter({
     { path: '/service', component: Service, name: 'Service' },
     { path: '/history', component: History, name: 'History' },
     { path: '/me', component: Me, name: 'Me' },
+    { path: '/lab', component: Lab, name: 'Lab' },
+    { path: '/story', component: Story, name: 'Story' },
     { path: '/shop/:id', component: ShopDetail, name: 'ShopDetail', props: true },
     { path: '/item/:id', component: ItemDetail, name: 'ItemDetail', props: true },
   ],

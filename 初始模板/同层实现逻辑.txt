@@ -1,0 +1,17 @@
+前端页面里的操作，触发llm的交互的方法。
+很明显，如果我们直接使用酒馆内部的命令——比如send/trigger，这是一定会触发楼层的刷新的。
+也就是说，正常的流程是：
+1.玩家输入内容，点击发送
+2.创建user楼层
+3.llm对user楼层的文本+预设文本+世界书等所有的内容，构建一套完整提示词，并触发llm的交互。
+4.llm创建assistant楼层，并流式/非流式地显示llm返回的内容。
+
+但是因为这套正常流程会触发楼层的刷新和显示，所以我们只能通过酒馆助手的函数，来手工搭建一套不刷新楼层显示的创建楼层的方案：
+1.构建提示词
+2.使用createChatMessages函数，创建 user 消息，不触发生成，不触发刷新。
+3.调用 generate 生成 LLM 回复
+4.监听到llm返回的信息，验证并提取我们的格式文本，例如我们设计的 <content>、 <update>、  <update_analysis>、<json_patch>、<StatusPlaceHolderImpl/>
+标签
+5.解析 变量命令
+6.使用createChatMessages函数，创建  assistant 楼层消息，不触发生成，不触发刷新。
+7.刷新游戏显示

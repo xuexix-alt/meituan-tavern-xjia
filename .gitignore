@@ -11,7 +11,6 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
-<<<<<<< HEAD
 
 # Claude settings
 .claude/
@@ -20,5 +19,3 @@ components.d.ts
 
 # Kilocode settings
 .kilocode/mcp.json
-=======
->>>>>>> ffcef6e22b372e2f3dcc1048bf50073234505d74

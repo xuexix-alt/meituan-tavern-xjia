@@ -91,36 +91,36 @@
       </div>
 
       <!-- 分类网格 -->
-      <div class="category-grid">
-        <div class="category-item" @click="search('各类路人商品-2个店铺每个含3个套餐')">
+      <div class="category-grid" :class="{ 'is-generating': isGenerating }" :aria-busy="isGenerating">
+        <div class="category-item" @click="search('各类路人商品-2个店铺每个含3个套餐', '路人')">
           <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
           <span>路人</span>
         </div>
-        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')">
           <div class="icon-wrapper"><i class="fas fa-mask"></i></div>
           <span>偶遇</span>
         </div>
-        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')">
           <div class="icon-wrapper"><i class="fas fa-video"></i></div>
           <span>AV</span>
         </div>
-        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')">
           <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
           <span>街拍</span>
         </div>
-        <div class="category-item" @click="search('各类熟人商品-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')">
           <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
           <span>熟人</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')">
           <div class="icon-wrapper"><i class="fas fa-heart-broken"></i></div>
           <span>乱伦</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')">
           <div class="icon-wrapper"><i class="fas fa-briefcase"></i></div>
           <span>职场</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐')">
+        <div class="category-item" @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')">
           <div class="icon-wrapper"><i class="fas fa-users"></i></div>
           <span>友妻</span>
         </div>
@@ -130,7 +130,9 @@
       <div class="search-bar-container">
         <i class="fas fa-search"></i>
         <input v-model="searchKeyword" placeholder="要养成告诉AI“结束XX订单”的好习惯" @keyup.enter="doSearch" />
-        <button class="search-btn" @click="doSearch">搜索</button>
+        <button class="search-btn" :class="{ 'is-stopping': isGenerating }" @click="isGenerating ? cancelGeneration() : doSearch()">
+          {{ isGenerating ? '停止' : '搜索' }}
+        </button>
       </div>
 
       <!-- 特色玩法 -->
@@ -141,7 +143,7 @@
         <div class="feature-button-grid">
           <!-- DLC按钮 -->
           <div class="feature-button-item">
-            <button class="dlc-button" title="DLC需先挂载世界书" @click="generateDLCContent">
+            <button class="dlc-button" title="DLC需先挂载世界书" :disabled="isGenerating" @click="generateDLCContent">
               <div class="dlc-icon">
                 <i class="fas fa-history"></i>
               </div>
@@ -181,40 +183,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { generationTask } from './services/generationTaskSingleton';
 
 // 响应式数据
 const searchKeyword = ref('');
+const isGenerating = generationTask.isBusy;
 
 // 搜索功能
-function search(keyword: string) {
-  sendToAI(`/send 搜索：${keyword} `);
+function search(keyword: string, label: string) {
+  void generationTask.start(`搜索：${keyword}`, label);
 }
 
 function doSearch() {
   if (searchKeyword.value.trim()) {
-    search(searchKeyword.value.trim());
+    search(searchKeyword.value.trim(), '自定义搜索');
   }
 }
 
-function sendToAI(message: string) {
-  console.log(`[发送至AI]: ${message}`);
-  const fullCommand = `${message} | /trigger await=true`;
-  if (typeof window.triggerSlash !== 'undefined') {
-    try {
-      window.triggerSlash(fullCommand);
-    } catch (e) {
-      console.error('执行triggerSlash时出错:', e);
-    }
-  } else {
-    console.log(`[模拟发送至AI - 完整指令]: ${fullCommand}`);
-  }
+function cancelGeneration() {
+  generationTask.cancel();
 }
 
 // DLC内容生成功能
 function generateDLCContent() {
   const dlcMessage =
     '生成-首页-店铺列表：1个名为"组织部派来一个年轻人"。其中包含7个套餐，女孩名字分别是：1苏晴；2白慧；3丁小芹；4王春燕；5林婉仪；6秦舒澜；7藤原千惠。套餐内容严格按照设定。';
-  search(dlcMessage);
+  search(dlcMessage, '1995国企往事');
 }
 </script>
 
@@ -282,7 +276,6 @@ function generateDLCContent() {
   flex-grow: 1;
   overflow-y: auto;
   padding: 16px;
-  scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
 
@@ -311,6 +304,11 @@ function generateDLCContent() {
   @media (min-width: 1024px) {
     grid-template-columns: repeat(6, 1fr);
   }
+}
+
+.category-grid.is-generating .category-item {
+  pointer-events: none;
+  opacity: 0.55;
 }
 
 .category-item {

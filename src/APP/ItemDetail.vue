@@ -117,6 +117,8 @@
           placeholder="可尝试时空替换、NTR、NTL、露出、换装秀、反差婊等多样玩法..."
         ></textarea>
 
+        <div v-if="submissionError" class="submission-error" role="alert">{{ submissionError }}</div>
+
         <div class="modal-buttons">
           <button class="modal-btn-cancel" @click="closeRemarkModal">取消</button>
           <button class="modal-btn-confirm" @click="confirmOrder">确认下单</button>
@@ -128,16 +130,22 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { extractDataFromMessage } from './dataParser';
+import { useStorySession } from './story/storyContext';
+import { buildPackageOrderPrompt } from './story/orderPrompts';
+import { submitOrderToStory } from './story/orderSubmission';
 
 const route = useRoute();
+const router = useRouter();
+const storySession = useStorySession();
 const itemData = ref<any>(null);
 const activeTab = ref('content');
 const showModal = ref(false);
 const remarkText = ref('');
 const shopStoreApi = ref<any>(null);
 const fallbackLogPrinted = ref(false);
+const submissionError = ref('');
 
 function dedupePackages(list: any[]) {
   const map = new Map<string, any>();
@@ -151,6 +159,7 @@ function dedupePackages(list: any[]) {
 
 // 显示备注模态框
 function showRemarkModal() {
+  submissionError.value = '';
   showModal.value = true;
 }
 
@@ -158,6 +167,7 @@ function showRemarkModal() {
 function closeRemarkModal() {
   showModal.value = false;
   remarkText.value = '';
+  submissionError.value = '';
 }
 
 // 添加到备注
@@ -176,26 +186,18 @@ function handleFeatureClick(content: string) {
 }
 
 // 确认下单
-function confirmOrder() {
+async function confirmOrder() {
   const itemName = itemData.value?.name || '';
   const itemDescription = itemData.value?.description || '无详情';
   const remark = remarkText.value || '无';
-  sendToAI(`/send 我要下单：${itemName}，详情介绍：${itemDescription}。备注：${remark}`);
-  closeRemarkModal();
-}
-
-function sendToAI(message: string) {
-  console.log(`[发送至AI]: ${message}`);
-  const fullCommand = `${message} | /trigger await=true`;
-  if (typeof window.triggerSlash !== 'undefined') {
-    try {
-      window.triggerSlash(fullCommand);
-    } catch (e) {
-      console.error('执行triggerSlash时出错:', e);
-    }
-  } else {
-    console.log(`[模拟发送至AI - 完整指令]: ${fullCommand}`);
+  const prompt = buildPackageOrderPrompt({ itemName, itemDescription, remark });
+  submissionError.value = '';
+  const result = await submitOrderToStory(storySession, router, prompt);
+  if (!result.accepted) {
+    submissionError.value = result.error || '无法开始正文，请稍后重试。';
+    return;
   }
+  closeRemarkModal();
 }
 
 // 初始化
@@ -292,7 +294,6 @@ onMounted(async () => {
   flex-grow: 1;
   overflow-y: auto;
   padding: 0;
-  scrollbar-width: none;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
@@ -845,5 +846,14 @@ onMounted(async () => {
     transform: scale(4);
     opacity: 0;
   }
+}
+.submission-error {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--status-danger) 40%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--status-danger) 8%, transparent);
+  color: var(--status-danger);
+  font-size: 13px;
 }
 </style>
