@@ -1,26 +1,13 @@
 {
   "compilerOptions": {
-    "types": [
-      "jquery",
-      "jqueryui",
-      "lodash",
-      "toastr",
-      "type-fest",
-      "yaml",
-      "zod",
-      "vue",
-    ],
+    "types": ["jquery", "jqueryui", "lodash", "toastr", "type-fest", "yaml", "zod", "vue"],
     "target": "ESNext",
     "module": "ESNext",
     "outDir": "dist",
-    "baseUrl": "src",
+    "rootDir": "./src",
     "paths": {
-      "@shared-admin/*": [
-        "APP后台版/shared/*"
-      ],
-      "@shared-admin": [
-        "APP后台版/shared"
-      ]
+      "@shared-admin/*": ["./src/APP后台版/shared/*"],
+      "@shared-admin": ["./src/APP后台版/shared"]
     },
     "moduleDetection": "auto",
     "moduleResolution": "bundler",
@@ -39,13 +26,6 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "@types",
-    "src",
-    "*.d.ts",
-  ],
-  "exclude": [
-    "**/dist/**",
-    "**/node_modules/**",
-  ]
+  "include": ["@types", "src", "*.d.ts"],
+  "exclude": ["**/dist/**", "**/node_modules/**"]
 }
