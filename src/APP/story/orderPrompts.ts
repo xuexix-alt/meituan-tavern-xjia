@@ -5,6 +5,7 @@ interface PackageOrderPromptInput {
 }
 
 interface RepeatOrderPromptInput {
+  orderId: unknown;
   girl: unknown;
   age: unknown;
   identity: unknown;
@@ -23,5 +24,5 @@ export function buildPackageOrderPrompt(input: PackageOrderPromptInput): string 
 }
 
 export function buildRepeatOrderPrompt(input: RepeatOrderPromptInput): string {
-  return `再次下单：${text(input.girl, '未知')}，${text(input.age, '-')}，${text(input.identity, '未知')}，${text(input.packageName, '未知套餐')}，订单价格：¥${text(input.price, '-')}。备注：${text(input.remark, '无')}`;
+  return `再次下单：订单ID ${text(input.orderId, '未知订单')}，${text(input.girl, '未知')}，${text(input.age, '-')}，${text(input.identity, '未知')}，${text(input.packageName, '未知套餐')}，订单价格：¥${text(input.price, '-')}。备注：${text(input.remark, '无')}`;
 }

@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 // 安全获取嵌套对象属性的工具函数，替代 _.get
 function safeGet<T = any>(obj: any, path: string, defaultValue: T = undefined as any): T {
@@ -142,6 +142,7 @@ const isDarkMode = ref(false);
 const fullStatData = ref<any>(null);
 const username = ref<string>('玩家'); // 默认用户名
 const userAvatar = ref<string>(''); // 用户头像 URL
+let stopMvuUpdate: { stop: () => void } | null = null;
 
 // 统计数据
 const accountBalance = computed(() => {
@@ -160,15 +161,14 @@ const totalSpending = computed(() => {
   }
 
   // 降级：从服务中的订单计算累计消费
-  const orders = fullStatData.value?.['服务中的订单'] || fullStatData.value?.服务中的订单 || [];
-  if (Array.isArray(orders)) {
-    const total = orders.reduce((sum: number, order: any) => {
-      const price = order.套餐?.套餐价格 || order.套餐价格 || 0;
-      return sum + (typeof price === 'number' ? price : 0);
-    }, 0);
-    return total || 0;
-  }
-  return 0;
+  const orders = fullStatData.value?.['服务中的订单'] ?? fullStatData.value?.服务中的订单;
+  const orderList = Array.isArray(orders) ? orders : orders && typeof orders === 'object' ? Object.values(orders) : [];
+  const total = orderList.reduce((sum: number, order: any) => {
+    const price = order?.套餐?.折后价格 ?? order?.套餐?.套餐价格 ?? order?.套餐价格 ?? 0;
+    const numericPrice = Number(price);
+    return sum + (Number.isFinite(numericPrice) ? Math.abs(numericPrice) : 0);
+  }, 0);
+  return total;
 });
 
 // 发送AI指令
@@ -258,6 +258,9 @@ async function initDisplay() {
     try {
       const vars = getVariables({ type: 'message', message_id: 'latest' });
       statData = vars?.stat_data;
+      if (!statData && typeof Mvu !== 'undefined') {
+        statData = Mvu.getMvuData({ type: 'message', message_id: 'latest' })?.stat_data;
+      }
     } catch (e) {
       console.warn('获取变量失败，尝试从消息 data 中获取', e);
       // 降级：尝试从消息对象的 data 属性获取（如果是 MVU 注入的）
@@ -353,6 +356,17 @@ onMounted(async () => {
   await getUserAvatar();
 
   await initDisplay();
+
+  if (typeof eventOn === 'function' && typeof Mvu !== 'undefined') {
+    stopMvuUpdate = eventOn(Mvu.events.VARIABLE_UPDATE_ENDED, () => {
+      void initDisplay();
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  stopMvuUpdate?.stop();
+  stopMvuUpdate = null;
 });
 </script>
 

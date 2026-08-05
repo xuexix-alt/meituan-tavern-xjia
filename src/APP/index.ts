@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import { waitUntil } from 'async-wait-until';
 import $ from 'jquery';
 import _ from 'lodash';
 import router from './界面';
@@ -169,10 +170,29 @@ const waitForMvu = async (timeout = 5000) => {
   return Promise.race([
     waitGlobalInitialized('Mvu'),
     new Promise((_, reject) => setTimeout(() => reject(new Error('MVU初始化超时')), timeout)),
-  ]).catch(err => {
-    mvuLogger.warn('初始化失败，使用降级方案:', err);
-    return null; // 返回null表示降级
-  });
+  ]).then(
+    () => true,
+    err => {
+      mvuLogger.warn('初始化失败，使用降级方案:', err);
+      return false;
+    },
+  );
+};
+
+// MVU 框架完成初始化不等于消息楼层已经写入 stat_data，前端必须等待两者都成立。
+const waitForMessageStatData = async (timeout = 5000) => {
+  if (typeof (window as any).getVariables !== 'function') return false;
+
+  try {
+    await waitUntil(() => _.has(getVariables({ type: 'message' }), 'stat_data'), {
+      timeout,
+      intervalBetweenAttempts: 100,
+    });
+    return true;
+  } catch (err) {
+    mvuLogger.warn('消息级 stat_data 等待超时，页面将以空状态降级:', err);
+    return false;
+  }
 };
 
 // 初始化应用
@@ -187,6 +207,7 @@ const initApp = async () => {
 
     // 等待所有初始化任务完成
     const [mvuReady] = await initTasks;
+    const statDataReady = mvuReady ? await waitForMessageStatData() : false;
 
     // 启动Web Vitals性能监控
     initWebVitalsMonitoring();
@@ -198,10 +219,10 @@ const initApp = async () => {
     perfLogger.log(`应用初始化完成，耗时: ${initTime.toFixed(2)}ms`);
 
     // 根据MVU状态显示不同消息
-    if (mvuReady) {
+    if (mvuReady && statDataReady) {
       sysLogger.log(`界面加载成功！(${initTime.toFixed(0)}ms)`);
     } else {
-      sysLogger.warn('部分功能可能不可用 (MVU未就绪)');
+      sysLogger.warn('部分功能可能不可用 (MVU 或消息级 stat_data 未就绪)');
     }
 
     // 挂载Vue应用

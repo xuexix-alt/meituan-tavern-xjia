@@ -17,6 +17,7 @@ assertEqual(packagePrompt.includes('/send'), false, '套餐指令不含 send sla
 assertEqual(packagePrompt.includes('/trigger'), false, '套餐指令不含 trigger slash');
 
 const repeatPrompt = buildRepeatOrderPrompt({
+  orderId: 'ORDER_001',
   girl: '林雪',
   age: 24,
   identity: '邻居',
@@ -24,7 +25,11 @@ const repeatPrompt = buildRepeatOrderPrompt({
   price: 520,
   remark: '和上次一样',
 });
-assertEqual(repeatPrompt, '再次下单：林雪，24，邻居，雪夜陪伴，订单价格：¥520。备注：和上次一样', '再次下单指令');
+assertEqual(
+  repeatPrompt,
+  '再次下单：订单ID ORDER_001，林雪，24，邻居，雪夜陪伴，订单价格：¥520。备注：和上次一样',
+  '再次下单指令',
+);
 
 async function testNavigationAfterAcceptance() {
   const pushes: string[] = [];

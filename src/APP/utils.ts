@@ -105,15 +105,20 @@ export async function navigateToDefaultPage() {
     }
 
     // 检查订单数据
-    const orders = mvuData.stat_data?.['服务中的订单'] || mvuData['服务中的订单'];
+    const orders = mvuData.stat_data?.['服务中的订单'] ?? mvuData['服务中的订单'];
+    const orderList = Array.isArray(orders)
+      ? orders
+      : orders && typeof orders === 'object'
+        ? Object.values(orders)
+        : [];
 
-    if (!orders || !Array.isArray(orders) || orders.length === 0) {
+    if (orderList.length === 0) {
       return '/home';
     }
 
     // 过滤出服务中的订单（排除服务结束的）
-    const activeOrders = orders.filter((order: any) => {
-      const orderStatus = order.订单状态 || '';
+    const activeOrders = orderList.filter((order: any) => {
+      const orderStatus = order?.订单状态 ?? '';
       return !orderStatus.includes('服务结束');
     });
 

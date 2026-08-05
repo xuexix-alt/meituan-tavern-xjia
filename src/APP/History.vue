@@ -13,14 +13,14 @@
         <div class="card-title"><i class="fas fa-history"></i>历史订单</div>
         <div v-if="historyItems.length === 0" class="empty-state">暂无历史订单</div>
         <div v-else>
-          <div v-for="item in historyItems" :key="item.order_time" class="history-card" @click="reorder(item)">
+          <div v-for="item in historyItems" :key="item.order_id" class="history-card" @click="reorder(item)">
             <!-- 头部：姓名套餐和价格 -->
             <div class="history-header">
               <div class="title-section">
                 <h3 class="history-title">{{ item.girl_name || '-' }} - {{ item.package_name || '-' }}</h3>
               </div>
               <div class="price-section">
-                <div class="history-price">{{ item.price || '-' }}</div>
+                <div class="history-price">{{ item.price ?? '-' }}</div>
               </div>
             </div>
 
@@ -33,7 +33,7 @@
             <!-- 底部：时间和状态 + 按钮 -->
             <div class="bottom-section">
               <div class="status-time">
-                <span class="order-time">{{ item.order_time || '-' }}</span>
+                <span class="order-time">订单ID：{{ item.order_id || '-' }}</span>
                 <span :style="getStatusStyle(item.order_status)" class="status-badge">{{
                   item.order_status || '-'
                 }}</span>
@@ -79,7 +79,7 @@
               </div>
             </div>
             <div class="summary-price">
-              <span class="price-number">￥{{ selectedOrder.price || '-' }}</span>
+              <span class="price-number">￥{{ selectedOrder.price ?? '-' }}</span>
               <span class="price-tip">下单后立即生效</span>
             </div>
           </div>
@@ -120,14 +120,14 @@
             </div>
             <div class="info-box">
               <div class="info-label">订单价格</div>
-              <div class="info-value price">¥{{ selectedOrder.price || '-' }}</div>
+              <div class="info-value price">¥{{ selectedOrder.price ?? '-' }}</div>
             </div>
           </div>
 
           <div class="info-section">
             <div class="section-title"><i class="fas fa-info-circle"></i> 订单说明</div>
             <div class="section-content">
-              您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{ selectedOrder.price || '-' }}。
+              您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{ selectedOrder.price ?? '-' }}。
               当前好感度：{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}， 被下单次数：{{
                 getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-')
               }}， 怀孕几率：{{
@@ -313,7 +313,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { filterCompletedOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
 import { getNestedValue } from './utils';
@@ -349,6 +349,7 @@ const showModal = ref(false);
 const orderRemark = ref('');
 const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
 const submissionError = ref('');
+let stopMvuUpdate: { stop: () => void } | null = null;
 
 // 状态样式
 function getStatusStyle(status: string) {
@@ -459,6 +460,7 @@ async function confirmOrder() {
 
   const remark = orderRemark.value.trim() || '无';
   const prompt = buildRepeatOrderPrompt({
+    orderId: selectedOrder.value.order_id,
     girl,
     age,
     identity,
@@ -476,41 +478,46 @@ async function confirmOrder() {
   currentView.value = 'history';
 }
 
+function toHistoryItem(order: any) {
+  return {
+    order_id: order.id,
+    girl_name: order.基础信息?.姓名 ?? '未知',
+    identity: order.基础信息?.身份 ?? '未知',
+    package_name: order.套餐?.套餐名称 ?? '未知套餐',
+    order_status: order.status ?? '服务结束',
+    service_location: '未知',
+    price: order.套餐?.折后价格 ?? order.套餐?.套餐价格 ?? 0,
+    features: extractOrderFeatures(order.originalData),
+    originalData: order.originalData,
+  };
+}
+
 async function refreshHistory() {
   try {
     const orders = await loadOrdersFromMVU();
     const completed = filterCompletedOrders(orders);
-    historyItems.value = completed.map(order => ({
-      girl_name: order.基础信息?.姓名 || '未知',
-      identity: order.基础信息?.身份 || '未知',
-      package_name: order.套餐?.套餐名称 || '未知套餐',
-      order_time: '历史订单',
-      order_status: order.status || '服务结束',
-      service_location: '未知',
-      price: order.套餐?.折后价格 || order.套餐?.套餐价格 || 0,
-      features: extractOrderFeatures(order.originalData),
-      originalData: order.originalData,
-    }));
+    historyItems.value = completed.map(toHistoryItem);
   } catch (e) {
     console.error('[History] 获取订单失败，尝试缓存:', e);
     const cached = readCachedOrders();
     const completed = filterCompletedOrders(cached);
-    historyItems.value = completed.map(order => ({
-      girl_name: order.基础信息?.姓名 || '未知',
-      identity: order.基础信息?.身份 || '未知',
-      package_name: order.套餐?.套餐名称 || '未知套餐',
-      order_time: '历史订单',
-      order_status: order.status || '服务结束',
-      service_location: '未知',
-      price: order.套餐?.折后价格 || order.套餐?.套餐价格 || 0,
-      features: extractOrderFeatures(order.originalData),
-      originalData: order.originalData,
-    }));
+    historyItems.value = completed.map(toHistoryItem);
   }
 }
 
 onMounted(async () => {
   await refreshHistory();
+
+  if (typeof eventOn === 'function' && typeof Mvu !== 'undefined') {
+    stopMvuUpdate = eventOn(Mvu.events.VARIABLE_UPDATE_ENDED, () => {
+      void refreshHistory();
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  stopMvuUpdate?.stop();
+  stopMvuUpdate = null;
 });
 </script>
 

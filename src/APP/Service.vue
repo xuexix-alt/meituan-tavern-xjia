@@ -355,7 +355,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { filterActiveOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
 import { getNestedValue } from './utils';
 // 响应式数据
@@ -365,6 +365,7 @@ const showDetails = ref(true);
 const isLoading = ref(false);
 const isRefreshing = ref(false);
 const errorMessage = ref('');
+let stopMvuUpdate: { stop: () => void } | null = null;
 
 // 可折叠分组状态
 const showPsychology = ref(false);
@@ -394,7 +395,7 @@ function getGirlName(girl: any) {
 /**
  * 刷新数据
  */
-async function refreshData() {
+async function refreshData(notify = true) {
   isRefreshing.value = true;
   errorMessage.value = '';
 
@@ -407,7 +408,7 @@ async function refreshData() {
       errorMessage.value = '未找到服务中的订单';
       console.log('[服务状态] 暂无服务数据');
     } else {
-      toastr.success(`加载了 ${active.length} 位女孩的服务数据`, '服务状态');
+      if (notify) toastr.success(`加载了 ${active.length} 位女孩的服务数据`, '服务状态');
     }
   } catch (error: any) {
     console.error('[Service] 刷新数据失败，尝试使用缓存:', error);
@@ -417,7 +418,7 @@ async function refreshData() {
     const active = filterActiveOrders(cached);
     if (cached.length > 0) {
       girlsData.value = active;
-      toastr.info(`使用缓存数据，条目数 ${active.length}`, '服务状态');
+      if (notify) toastr.info(`使用缓存数据，条目数 ${active.length}`, '服务状态');
       errorMessage.value = '已回退到上次缓存的数据，请重新生成或刷新。';
     } else {
       errorMessage.value = error.message || '数据加载失败';
@@ -448,7 +449,7 @@ const packageInfo = computed(() => ({
 
 // 订单状态（添加映射）
 const orderStatus = computed(() => {
-  const status = getNestedValue(currentGirl.value, '服务统计.订单状态', '未知');
+  const status = currentGirl.value?.status ?? getNestedValue(currentGirl.value, '订单状态', '未知');
   if (status.includes('服务中')) return '服务中';
   if (status.includes('服务结束')) return '服务结束';
   // 其他状态直接展示，并提示需要人工处理
@@ -560,6 +561,17 @@ onMounted(async () => {
   isLoading.value = true;
   await refreshData();
   isLoading.value = false;
+
+  if (typeof eventOn === 'function' && typeof Mvu !== 'undefined') {
+    stopMvuUpdate = eventOn(Mvu.events.VARIABLE_UPDATE_ENDED, () => {
+      void refreshData(false);
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  stopMvuUpdate?.stop();
+  stopMvuUpdate = null;
 });
 </script>
 

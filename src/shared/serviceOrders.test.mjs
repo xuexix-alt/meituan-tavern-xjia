@@ -1,0 +1,39 @@
+import { loadOrdersFromMVU } from './serviceOrders.ts';
+
+function assertEqual(actual, expected, label) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`${label} 不一致。\n实际: ${JSON.stringify(actual)}\n期望: ${JSON.stringify(expected)}`);
+  }
+}
+
+const order = {
+  id: 'inner-id',
+  订单状态: '服务结束',
+  基础信息: { 姓名: '林雪', 身份: '邻居', 年龄: 0, 描述: '' },
+  服装: {},
+  套餐: { 套餐名称: '雪夜陪伴', 套餐价格: 520, 折后价格: 0, 玩法特色: [], 商品类型: '陪伴' },
+  心理状态: { 当前所想: '', 好感度: 0, 兴奋度: 0, 性格类型: '' },
+  身体特征: { 三围: { 描述: '', 罩杯: '' }, 乳房: { 形状: '' }, 姿势: '', 胸部: '', 私处: '' },
+  性经验: { 处女: '是', 性伴侣数量: 0, 初次性行为对象: '', 怀孕几率: 0, 下单次数: 0 },
+  服务统计: { 心跳: 60, 本次服务性交次数: 0, 内射次数: 0 },
+};
+
+const globalScope = globalThis;
+globalScope.waitGlobalInitialized = async () => undefined;
+globalScope.getCurrentMessageId = () => 0;
+globalScope.getScriptId = () => 'service-orders-test';
+globalScope.getVariables = () => ({});
+globalScope.replaceVariables = () => undefined;
+globalScope.Mvu = {
+  getMvuData: () => ({ stat_data: { 服务中的订单: { ORDER_001: order } } }),
+};
+
+const orders = await loadOrdersFromMVU();
+assertEqual(orders.length, 1, '记录型订单数量');
+assertEqual(orders[0].id, 'ORDER_001', '记录键必须作为真实订单 ID');
+assertEqual(orders[0].基础信息.年龄, 0, '年龄 0 必须保留');
+assertEqual(orders[0].性经验.性伴侣数量, 0, '性伴侣数量 0 必须保留');
+assertEqual(orders[0].服务统计.本次服务性交次数, 0, '服务性交次数 0 必须保留');
+assertEqual(orders[0].套餐.折后价格, 0, '折后价格 0 必须保留');
+
+console.log('service orders MVU record contract passed');
