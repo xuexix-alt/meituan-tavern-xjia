@@ -44,7 +44,7 @@ async function testKeepsZodCompatiblePatchBlock(): Promise<void> {
 }
 
 async function testDropsUnclosedBlock(): Promise<void> {
-  const result = await sanitizeMvuUpdateBlocks('<content>正文</content>\n<UpdateVariable>_.set(\'x\', 1);');
+  const result = await sanitizeMvuUpdateBlocks("<content>正文</content>\n<UpdateVariable>_.set('x', 1);");
 
   assertEqual(result.removedBlocks, 1, '删除未闭合更新块');
   assertEqual(result.text, '<content>正文</content>\n', '未闭合块不吞掉正文前内容');

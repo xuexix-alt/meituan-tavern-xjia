@@ -34,7 +34,11 @@ assertMatch(entry, />正文</, '正文入口文案');
 assertMatch(story, /StoryReader/, '正文阅读器');
 assertMatch(tavern, /TavernHelper/, '正文酒馆助手对象回退');
 assertMatch(tavern, /eventSource/, '正文顶层酒馆事件回退');
-assertMatch(tavern, /create\((?:safeMessages|messages\.map\()[\s\S]*?refresh:\s*'affected'/, '正文楼层写入后触发 MVU 刷新');
+assertMatch(
+  tavern,
+  /create\((?:safeMessages|messages\.map\()[\s\S]*?refresh:\s*'affected'/,
+  '正文楼层写入后触发 MVU 刷新',
+);
 assertMatch(tavern, /createAssistantTransportPlan/, '正文使用同楼层 MVU 传输计划');
 assertMatch(transport, /role:\s*'user'[\s\S]*?role:\s*'assistant'/, '正文先占位再改写同一楼层');
 assertMatch(tavern, /emitHostEvent\(receivedEvent,\s*message_id,\s*'extension'\)/, '正文保存后显式触发一次 MVU 接收链');
