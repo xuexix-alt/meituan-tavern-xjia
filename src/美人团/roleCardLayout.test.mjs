@@ -42,8 +42,19 @@ assert.match(statusEntry, /waitGlobalInitialized\(['"]Mvu['"]\)/, '状态栏必�
 assert.match(statusEntry, /stat_data/, '状态栏必须等待消息级 stat_data');
 
 const cardConfig = readFileSync(path.join(root, 'index.yaml'), 'utf8');
+const webpackConfig = readFileSync(path.resolve(root, '..', '..', 'webpack.config.ts'), 'utf8');
 assert.match(cardConfig, /dist\/美人团\/界面\/状态栏\/index\.html/, '角色卡状态栏 URL 必须指向美人团产物');
 assert.match(cardConfig, /dist\/美人团\/脚本\/变量结构\/index\.js/, '角色卡变量结构脚本 URL 必须指向美人团产物');
+assert.ok(
+  cardConfig.includes('https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/dist/美人团/界面/状态栏/index.html'),
+  '角色卡界面 URL 必须指向当前仓库产物',
+);
+assert.ok(
+  cardConfig.includes('https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/dist/美人团/脚本/变量结构/index.js'),
+  '角色卡变量结构脚本 URL 必须指向当前仓库产物',
+);
+assert.doesNotMatch(cardConfig, /StageDog\/tavern_helper_template\/dist\/美人团/, '角色卡不能继续引用旧仓库产物');
 assert.doesNotMatch(cardConfig, /角色卡名称/, '角色卡配置不能保留模板占位路径');
+assert.match(webpackConfig, /scriptLoading:\s*['"]module['"]/, '前端界面产物必须以 module 脚本加载，才能执行内联 import');
 
 console.log('美人团角色卡目录契约通过');

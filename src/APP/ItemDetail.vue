@@ -135,6 +135,7 @@ import { extractDataFromMessage } from './dataParser';
 import { useStorySession } from './story/storyContext';
 import { buildPackageOrderPrompt } from './story/orderPrompts';
 import { submitOrderToStory } from './story/orderSubmission';
+import { dedupePackages, findPackageByIdOrName } from './services/itemLookup';
 
 const route = useRoute();
 const router = useRouter();
@@ -146,16 +147,6 @@ const remarkText = ref('');
 const shopStoreApi = ref<any>(null);
 const fallbackLogPrinted = ref(false);
 const submissionError = ref('');
-
-function dedupePackages(list: any[]) {
-  const map = new Map<string, any>();
-  list.forEach(p => {
-    if (!p) return;
-    const id = p.id ? String(p.id) : '';
-    if (id && !map.has(id)) map.set(id, p);
-  });
-  return Array.from(map.values());
-}
 
 // 显示备注模态框
 function showRemarkModal() {
@@ -203,6 +194,8 @@ async function confirmOrder() {
 // 初始化
 onMounted(async () => {
   const itemId = route.params.id as string;
+  const shopId = route.params.shopId as string | undefined;
+  const fromQueryName = route.query?.name as string | undefined;
 
   // 1) 解析当前楼层
   const parsed = extractDataFromMessage().packages || [];
@@ -218,20 +211,22 @@ onMounted(async () => {
   }
 
   const combined = dedupePackages([...parsed, ...cached]);
-  itemData.value = combined.find(p => String(p.id) === String(itemId));
+  const scopedPackages = shopId
+    ? combined.filter(p => String(p.shop_id ?? p.shopId ?? '') === String(shopId))
+    : combined;
+  itemData.value = findPackageByIdOrName(scopedPackages, String(itemId), fromQueryName, !shopId);
 
   // 3) 若按 id 未命中，尝试按名称/价格最相近的套餐兜底
   if (!itemData.value) {
-    const fromQueryName = route.query?.name as string | undefined;
-    if (fromQueryName) {
-      itemData.value = combined.find(p => p.name === fromQueryName);
-    }
+    itemData.value = findPackageByIdOrName(combined, String(itemId), fromQueryName, true);
   }
-  if (!itemData.value && combined.length > 0) {
-    itemData.value = combined[0];
+  const fallbackCandidates = scopedPackages.length > 0 ? scopedPackages : combined;
+  if (!itemData.value && fallbackCandidates.length > 0) {
+    itemData.value = fallbackCandidates[0];
     if (!fallbackLogPrinted.value) {
       console.warn('[ItemDetail] 未匹配到相同 ID，已兜底使用首个套餐', {
         want: itemId,
+        shopId,
         candidates: combined.slice(0, 5).map(p => p.id),
       });
       fallbackLogPrinted.value = true;

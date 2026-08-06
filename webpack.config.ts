@@ -366,7 +366,8 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
             filename: path.parse(entry.html).base,
-            scriptLoading: 'blocking',
+            // 产物使用 ESM external（module-import），兼容酒馆中通过 jQuery .load() 注入的 HTML
+            scriptLoading: 'module',
             cache: false,
           }),
           new HtmlInlineScriptWebpackPlugin(),

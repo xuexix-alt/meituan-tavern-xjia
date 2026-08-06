@@ -142,7 +142,7 @@
         ```
         <body>
         <script>
-        $('body').load('https://testingcf.jsdelivr.net/gh/StageDog/tavern_helper_template/dist/美人团/界面/状态栏/index.html')
+        $('body').load('https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/dist/美人团/界面/状态栏/index.html')
         </script>
         </body>
         ```
@@ -167,4 +167,4 @@
         启用: true
         类型: 脚本
         内容: |-
-          import 'https://testingcf.jsdelivr.net/gh/StageDog/tavern_helper_template/dist/美人团/脚本/变量结构/index.js';
+          import 'https://testingcf.jsdelivr.net/gh/xuexix-alt/meituan-tavern-xjia/dist/美人团/脚本/变量结构/index.js';

@@ -26,6 +26,7 @@ const router = createRouter({
     { path: '/lab', component: Lab, name: 'Lab' },
     { path: '/story', component: Story, name: 'Story' },
     { path: '/shop/:id', component: ShopDetail, name: 'ShopDetail', props: true },
+    { path: '/shop/:shopId/item/:id', component: ItemDetail, name: 'ItemDetailByShop', props: true },
     { path: '/item/:id', component: ItemDetail, name: 'ItemDetail', props: true },
   ],
   // 路由性能优化

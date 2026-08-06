@@ -18,6 +18,8 @@ const order = {
   服务统计: { 心跳: 60, 本次服务性交次数: 0, 内射次数: 0 },
 };
 
+const staleOrder = { ...order, id: 'STALE_ORDER', 基础信息: { ...order.基础信息, 姓名: '旧楼层' } };
+
 const globalScope = globalThis;
 globalScope.waitGlobalInitialized = async () => undefined;
 globalScope.getCurrentMessageId = () => 0;
@@ -25,7 +27,10 @@ globalScope.getScriptId = () => 'service-orders-test';
 globalScope.getVariables = () => ({});
 globalScope.replaceVariables = () => undefined;
 globalScope.Mvu = {
-  getMvuData: () => ({ stat_data: { 服务中的订单: { ORDER_001: order } } }),
+  getMvuData: ({ message_id }) =>
+    message_id === 'latest'
+      ? { stat_data: { 服务中的订单: { ORDER_001: order } } }
+      : { stat_data: { 服务中的订单: { STALE_ORDER: staleOrder } } },
 };
 
 const orders = await loadOrdersFromMVU();
@@ -35,5 +40,14 @@ assertEqual(orders[0].基础信息.年龄, 0, '年龄 0 必须保留');
 assertEqual(orders[0].性经验.性伴侣数量, 0, '性伴侣数量 0 必须保留');
 assertEqual(orders[0].服务统计.本次服务性交次数, 0, '服务性交次数 0 必须保留');
 assertEqual(orders[0].套餐.折后价格, 0, '折后价格 0 必须保留');
+
+globalScope.Mvu = {
+  getMvuData: ({ message_id }) =>
+    message_id === 'latest'
+      ? { stat_data: { 服务中的订单: {} } }
+      : { stat_data: { 服务中的订单: { STALE_ORDER: staleOrder } } },
+};
+const emptyOrders = await loadOrdersFromMVU();
+assertEqual(emptyOrders, [], '最新楼层为空时不应回退到旧订单缓存');
 
 console.log('service orders MVU record contract passed');

@@ -136,7 +136,12 @@ onMounted(async () => {
 });
 
 function goItemDetail(pkg: any) {
-  router.push({ path: `/item/${pkg.id}`, query: { name: pkg.name } });
+  const shopId = pkg.shop_id || shopInfo.value?.id;
+  router.push({
+    name: 'ItemDetailByShop',
+    params: { shopId: String(shopId), id: String(pkg.id) },
+    query: { name: pkg.name },
+  });
 }
 </script>
 

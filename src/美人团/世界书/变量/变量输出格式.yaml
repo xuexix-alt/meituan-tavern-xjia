@@ -17,6 +17,7 @@
     - 订单结束时必须同时核对状态变更、服务统计重置、心跳重置、下单次数、折后价格、订单消费和怀孕结算，不能只更新订单状态。
     - '`服务中的订单/${ORDER_ID}/服务统计/心跳` 是唯一的新心跳路径，禁止写成订单根部的 `心跳`。'
     - 性伴侣数量只有在该女孩与 user 首次性交时增加；复购同一订单不得无条件增加。怀孕几率只有发生内射时增加。
+    - 新建订单的 `insert` 至少必须提供 `id`、`订单状态`、`基础信息.姓名`、`基础信息.年龄` 和 `基础信息.身份`；`基础信息.描述`、服装、套餐、心理状态、身体特征、性经验、服务统计可以按当前证据提供，缺失字段由 schema 回填空值或基础值。
   format: |-
     <UpdateVariable>
     <Analysis>$(IN ENGLISH, no more than 80 words; use one concise line per affected variable)
@@ -26,7 +27,7 @@
     - ${ending check: if the user ends service or the post-event sex count reaches 2, status becomes 服务结束; after settlement, sex count, ejaculation count, and 服务统计.心跳 are reset to 0, 0, and 60}
     - ${experience check: partner count only on first user intercourse; virginity and first partner only on first penetrative sex; pregnancy chance only per ejaculation}
     - ${settlement check: update 下单次数, calculate 折后价格, update 经济.订单消费, and perform the pregnancy roll when required}
-    - ${operation check: insert a complete schema-valid order at /服务中的订单/${ORDER_ID}; use delta for existing numeric paths, replace for existing fields, and insert only for missing dynamic keys}
+    - ${operation check: insert an order with the five required identity fields at /服务中的订单/${ORDER_ID}; include known optional fields, and let schema defaults fill omitted fields; use delta for existing numeric paths, replace for existing fields, and insert only for missing dynamic keys}
     - ${path check: use /服务中的订单/${ORDER_ID}/...; never use [index], root-level 心跳, or replace on a missing path}
     </Analysis>
     <JSONPatch>

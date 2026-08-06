@@ -123,9 +123,13 @@ function normalizeOrder(order: any, idx: number, recordId?: string): ServiceOrde
   };
 }
 
-function extractOrdersFromMvuData(mvuData: any): ServiceOrder[] {
+function readServiceOrdersContainer(mvuData: any): any {
   const stat = mvuData?.stat_data ?? mvuData;
-  const orders = stat?.['服务中的订单'] ?? stat?.服务中的订单;
+  return stat?.['服务中的订单'] ?? stat?.服务中的订单;
+}
+
+function extractOrdersFromMvuData(mvuData: any): ServiceOrder[] {
+  const orders = readServiceOrdersContainer(mvuData);
   if (!orders || typeof orders !== 'object') return [];
 
   const entries = Array.isArray(orders)
@@ -143,6 +147,12 @@ export async function loadOrdersFromMVU(): Promise<ServiceOrder[]> {
 
     const data = (() => {
       try {
+        // APP 可能挂在旧的承载楼层；先读 MVU 的 latest，避免把楼层 0 的快照当成当前状态。
+        const latest = Mvu.getMvuData({ type: 'message', message_id: 'latest' });
+        if (latest && readServiceOrdersContainer(latest) && typeof readServiceOrdersContainer(latest) === 'object') {
+          return latest;
+        }
+
         const currentId = getCurrentMessageId();
         if (typeof currentId === 'number' && currentId < 0) return null;
         for (let id = currentId; id >= 0; id--) {
@@ -158,7 +168,11 @@ export async function loadOrdersFromMVU(): Promise<ServiceOrder[]> {
     if (!data) throw new Error('MVU 数据为空');
 
     const orders = extractOrdersFromMvuData(data);
-    if (orders.length === 0) throw new Error('未找到服务订单');
+    if (orders.length === 0) {
+      // 空对象是当前状态，不应回退到旧缓存继续展示已经不存在的订单。
+      if (readServiceOrdersContainer(data) && typeof readServiceOrdersContainer(data) === 'object') return [];
+      throw new Error('未找到服务订单');
+    }
 
     writeCache(orders);
     return orders;

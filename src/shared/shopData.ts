@@ -332,7 +332,7 @@ function parseTextOnly(src: string, makeShopId: () => string, makePkgId: () => s
         .filter(Boolean);
       if (pkgLines.length === 0) return;
       const pkg: any = {
-        id: makePkgId(),
+        id: '',
         shop_id: shop.id,
         shop_name: shop.name,
         name: '',
@@ -412,6 +412,8 @@ function parseTextOnly(src: string, makeShopId: () => string, makePkgId: () => s
         pkg.name = `套餐${pkgNameCounter++}`;
       }
       if (pkg.name) {
+        // 文本解析可能跨多个店铺运行，不能使用全局递增 ID 作为套餐身份。
+        pkg.id = generatePkgId(pkg, String(shop.id), makePkgId);
         shop.packages.push(pkg);
         packages.push(pkg);
       }

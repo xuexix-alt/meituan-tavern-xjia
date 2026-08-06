@@ -91,6 +91,7 @@ export const Schema = z.object({
       z.string().describe('订单ID'),
       z
         .object({
+          // 新订单至少需要身份锚点；其余字段允许由 schema 回填空值，避免一次不完整 insert 丢掉整条订单。
           id: z.string(),
           订单状态: z.enum(['服务中', '服务结束']),
           基础信息: z
@@ -98,62 +99,60 @@ export const Schema = z.object({
               姓名: z.string(),
               年龄: z.coerce.number(),
               身份: z.string(),
-              描述: z.string(),
-            })
-            .strict(),
+              描述: z.string().prefault(''),
+            }),
           服装: z.record(z.string(), z.string()).prefault({}),
           套餐: z
             .object({
-              套餐名称: z.string(),
-              套餐价格: z.coerce.number(),
-              折后价格: z.coerce.number(),
-              玩法特色: z.array(z.string()),
-              商品类型: z.string(),
+              套餐名称: z.string().prefault(''),
+              套餐价格: z.coerce.number().prefault(0),
+              折后价格: z.coerce.number().prefault(0),
+              玩法特色: z.array(z.string()).prefault([]),
+              商品类型: z.string().prefault(''),
             })
-            .strict(),
+            .prefault({}),
           心理状态: z
             .object({
-              当前所想: z.string(),
-              好感度: z.coerce.number().transform(v => _.clamp(v, 0, 100)),
-              兴奋度: z.coerce.number().transform(v => _.clamp(v, 0, 100)),
-              性格类型: z.string(),
+              当前所想: z.string().prefault(''),
+              好感度: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(0),
+              兴奋度: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(0),
+              性格类型: z.string().prefault(''),
               // 兼容尚未迁移的 beta 订单；新输出不要再写此字段。
               心跳: z.coerce
                 .number()
                 .transform(v => _.clamp(v, 60, 200))
                 .optional(),
             })
-            .strict(),
+            .prefault({}),
           身体特征: z
             .object({
-              三围: z.object({ 描述: z.string(), 罩杯: z.string() }).strict(),
-              乳房: z.object({ 形状: z.string() }).strict(),
-              姿势: z.string(),
-              胸部: z.string(),
-              私处: z.string(),
+              三围: z.object({ 描述: z.string().prefault(''), 罩杯: z.string().prefault('') }).prefault({}),
+              乳房: z.object({ 形状: z.string().prefault('') }).prefault({}),
+              姿势: z.string().prefault(''),
+              胸部: z.string().prefault(''),
+              私处: z.string().prefault(''),
             })
-            .strict(),
+            .prefault({}),
           性经验: z
             .object({
-              处女: z.enum(['是', '否']),
-              性伴侣数量: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))),
-              初次性行为对象: z.string(),
-              怀孕几率: z.coerce.number().transform(v => _.clamp(v, 0, 100)),
-              下单次数: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))),
+              处女: z.enum(['是', '否', '']).prefault(''),
+              性伴侣数量: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))).prefault(0),
+              初次性行为对象: z.string().prefault(''),
+              怀孕几率: z.coerce.number().transform(v => _.clamp(v, 0, 100)).prefault(0),
+              下单次数: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))).prefault(0),
             })
-            .strict(),
+            .prefault({}),
           服务统计: z
             .object({
               心跳: z.coerce
                 .number()
                 .transform(v => _.clamp(v, 60, 200))
                 .prefault(60),
-              本次服务性交次数: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))),
-              内射次数: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))),
+              本次服务性交次数: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))).prefault(0),
+              内射次数: z.coerce.number().transform(v => Math.max(0, Math.trunc(v))).prefault(0),
             })
-            .strict(),
-        })
-        .strict(),
+            .prefault({}),
+        }),
     )
     .prefault({}),
 });

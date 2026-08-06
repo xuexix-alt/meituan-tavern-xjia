@@ -1,5 +1,8 @@
 node_modules
 
+# Playwright CLI page snapshots (debug artifacts)
+.playwright-cli/
+
 .DS_Store
 Thumbs.db
 
