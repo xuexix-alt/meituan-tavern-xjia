@@ -32,5 +32,5 @@ export function findPackageByIdOrName(
 ): PackageLike | undefined {
   const byId = packages.find(pkg => asText(pkg.id) === itemId);
   const byName = itemName ? packages.find(pkg => asText(pkg.name) === itemName) : undefined;
-  return preferName ? byName ?? byId : byId ?? byName;
+  return preferName ? (byName ?? byId) : (byId ?? byName);
 }
