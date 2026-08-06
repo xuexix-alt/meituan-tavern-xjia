@@ -386,9 +386,13 @@ body,
 .phone-frame :deep(.clothing-grid),
 .phone-frame :deep(.order-info-grid),
 .phone-frame :deep(.section-grid),
-.phone-frame :deep(.key-metrics),
-.phone-frame :deep(.shop-list-items) {
+.phone-frame :deep(.key-metrics) {
   grid-template-columns: repeat(auto-fit, minmax(min(138px, 100%), 1fr));
+}
+
+// 店铺卡片包含图标、文字和删除按钮，窄屏下至少保留可读宽度，避免三列挤压内容。
+.phone-frame :deep(.shop-list-items) {
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
 }
 
 .phone-frame :deep(.settings-list) {

@@ -478,7 +478,7 @@ function checksumPayload(str: string) {
 
     .slogan-text {
       flex: 1;
-      min-width: 100px;
+      min-width: 0;
       display: -webkit-box;
       -webkit-line-clamp: 1;
       line-clamp: 1;

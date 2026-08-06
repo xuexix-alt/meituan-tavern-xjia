@@ -73,65 +73,58 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { extractDataFromMessage } from './dataParser';
-import { useRouter } from 'vue-router';
+import { mergeShopsById, normalizeShopList } from '../shared/shopCache';
+import { createVariableShopStore, type ShopStoreApi } from './services/variableShopStore';
 
 const route = useRoute();
 const router = useRouter();
 const shopInfo = ref<any>(null);
 const shopPackages = ref<any[]>([]);
 
-type StoredShop = Record<string, any> & { id: string; packages?: any[]; __savedAt?: number };
-const SHOP_STORE_KEY = 'shop_store_cache';
-const shopStoreApi = ref<any>(null);
-
-function dedupe(list: StoredShop[]) {
-  const map = new Map<string, StoredShop>();
-  list.forEach(s => {
-    if (!s) return;
-    const id = s.id ? String(s.id) : '';
-    if (id && !map.has(id)) map.set(id, { ...s, id });
-  });
-  return Array.from(map.values());
-}
+const fallbackShopStore = createVariableShopStore();
+const shopStoreApi = ref<ShopStoreApi>(fallbackShopStore);
 
 // 初始化
 onMounted(async () => {
+  let injectedStore = (window as typeof window & { ShopStore?: ShopStoreApi }).ShopStore;
   try {
-    await waitGlobalInitialized('ShopStore');
-    shopStoreApi.value = (window as any).ShopStore;
+    if (!injectedStore) {
+      await waitGlobalInitialized('ShopStore');
+      injectedStore = (window as typeof window & { ShopStore?: ShopStoreApi }).ShopStore;
+    }
   } catch (e) {
     console.warn('[ShopDetail] ShopStore 未就绪，使用全局变量兜底', e);
   }
+  shopStoreApi.value = injectedStore ?? fallbackShopStore;
 
   const data = extractDataFromMessage();
   const shopIdParam = route.params.id as string;
-  const matcher = (s: any) => String(s.id) === String(shopIdParam);
 
   // 1. 读取解析数据和缓存数据
-  const parsedShops = dedupe((data.shops || []) as any);
-  const existingShops = shopStoreApi.value?.getShops?.() || [];
+  const parsedShops = normalizeShopList(data.shops || []);
+  const existingShops = normalizeShopList(shopStoreApi.value?.getShops?.() || []);
 
-  // 2. 合并去重
-  const combinedShops = dedupe([...parsedShops, ...existingShops]);
+  // 2. 统一按 shop_id 合并，兼容全局缓存中只有 shop_id 的旧数据
+  const combinedShops = mergeShopsById(existingShops, parsedShops);
 
   // 3. 更新缓存
-  shopStoreApi.value?.saveShops?.(combinedShops);
+  shopStoreApi.value.saveShops(combinedShops);
 
   // 4. 查找目标店铺
-  shopInfo.value = combinedShops.find(matcher) || null;
+  shopInfo.value = combinedShops.find(shop => shop.shop_id === String(shopIdParam)) || null;
 
   if (shopInfo.value) {
-    shopPackages.value = (shopInfo.value.packages || []).map((p: any) => ({
+    shopPackages.value = (shopInfo.value.packages || []).map((p: any, index: number) => ({
       ...p,
-      id: String(p.id),
-      shop_id: String(p.shop_id || shopInfo.value.id),
+      id: String(p.id ?? `${shopInfo.value.shop_id}::pkg_${index}`),
+      shop_id: String(p.shop_id ?? p.shopId ?? shopInfo.value.shop_id),
     }));
   } else {
     // 兜底：从所有套餐中查找
     const allPkgs = combinedShops.flatMap(s => s.packages || []);
-    shopPackages.value = allPkgs.filter((p: any) => String(p.shop_id) === String(shopIdParam));
+    shopPackages.value = allPkgs.filter((p: any) => String(p.shop_id ?? p.shopId ?? '') === String(shopIdParam));
   }
 });
 
