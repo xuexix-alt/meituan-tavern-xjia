@@ -289,6 +289,8 @@ onMounted(async () => {
   flex-grow: 1;
   overflow-y: auto;
   padding: 0;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
@@ -330,6 +332,7 @@ onMounted(async () => {
 
 .detail-tabs {
   display: flex;
+  touch-action: pan-y;
   background-color: var(--bg-card);
   padding: 0 12px;
   border-bottom: 1px solid var(--border-color);
@@ -340,6 +343,7 @@ onMounted(async () => {
   .tab-link {
     flex: 1;
     text-align: center;
+    touch-action: pan-y;
     padding: 14px 4px;
     cursor: pointer;
     border: none;
