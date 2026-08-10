@@ -320,7 +320,7 @@ body,
 @media (max-width: 768px) {
   .phone-frame.is-story-reader {
     width: 100%;
-    min-height: min(900px, calc(100vw * 1.55));
+    min-height: min(980px, calc(100vw * 1.85));
     border-radius: 10px;
   }
 }

@@ -27,6 +27,6 @@ test('流式正文的自动跟随受手动滚动开关保护', () => {
   assert.match(readerSource, /@wheel(?:\.passive)?="handleManualScrollIntent"/);
   assert.match(
     readerSource,
-    /if\s*\(shouldAutoFollow\.value\)[\s\S]*?scroller\.scrollTop\s*=\s*scroller\.scrollHeight/s,
+    /if\s*\(scroller\s*&&\s*shouldAutoFollow\.value\)[\s\S]*?scroller\.scrollTop\s*=\s*scroller\.scrollHeight/s,
   );
 });

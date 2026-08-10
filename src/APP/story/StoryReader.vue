@@ -1,7 +1,7 @@
 <template>
   <div class="story-reader">
     <header class="reader-header">
-      <button type="button" class="icon-button" aria-label="返回" @click="router.back()">
+      <button type="button" class="icon-button" aria-label="返回上一页" @click="router.back()">
         <i class="fas fa-arrow-left"></i>
       </button>
       <div class="reader-title">
@@ -13,7 +13,12 @@
       </button>
     </header>
 
-    <main ref="readerScroller" class="reader-scroll">
+    <main
+      ref="readerScroller"
+      class="reader-scroll"
+      @touchmove.passive="handleManualScrollIntent"
+      @wheel.passive="handleManualScrollIntent"
+    >
       <div class="reader-column">
         <article v-if="relatedUser" class="user-note" :class="{ expanded: userExpanded }">
           <button type="button" @click="userExpanded = !userExpanded">
@@ -99,6 +104,15 @@
     </main>
 
     <footer class="reader-composer">
+      <button
+        type="button"
+        class="reader-home-button"
+        aria-label="返回首页"
+        title="返回首页"
+        @click="router.replace('/home')"
+      >
+        <i class="fas fa-house"></i>
+      </button>
       <textarea
         v-model="session.composerText.value"
         rows="2"
@@ -134,6 +148,7 @@ const readerScroller = ref<HTMLElement | null>(null);
 const historyOpen = ref(false);
 const userExpanded = ref(false);
 const rollbackConfirmId = ref<number | null>(null);
+const shouldAutoFollow = ref(true);
 
 const latestAssistant = computed(
   () => [...session.items.value].reverse().find(item => item.role === 'assistant') ?? null,
@@ -171,6 +186,18 @@ async function confirmRollback(messageId: number) {
   rollbackConfirmId.value = null;
 }
 
+function handleManualScrollIntent(): void {
+  shouldAutoFollow.value = false;
+}
+
+async function scrollToLatest(): Promise<void> {
+  await nextTick();
+  const scroller = readerScroller.value;
+  if (scroller && shouldAutoFollow.value) {
+    scroller.scrollTop = scroller.scrollHeight;
+  }
+}
+
 watch(
   () => relatedUser.value?.messageId,
   () => {
@@ -179,11 +206,19 @@ watch(
 );
 
 watch(
+  () => session.status.value,
+  async (status, previousStatus) => {
+    if (status !== 'streaming' || previousStatus === 'streaming') return;
+    shouldAutoFollow.value = true;
+    await scrollToLatest();
+  },
+  { immediate: true },
+);
+
+watch(
   () => latestAssistant.value?.raw,
   async () => {
-    await nextTick();
-    const scroller = readerScroller.value;
-    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    await scrollToLatest();
   },
 );
 
@@ -409,7 +444,7 @@ defineExpose<{ session: typeof session }>({ session });
 
 .reader-composer {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 48px;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
   gap: 10px;
   padding: 12px clamp(14px, 4%, 24px) 16px;
   border-top: 1px solid var(--border-color);
@@ -431,6 +466,20 @@ defineExpose<{ session: typeof session }>({ session });
       border-color: var(--accent-primary);
       box-shadow: 0 0 0 3px rgba(255, 195, 0, 0.14);
     }
+  }
+}
+
+.reader-home-button {
+  width: 48px;
+  min-height: 48px;
+  align-self: end;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-card-light);
+  color: var(--text-primary);
+
+  &:active {
+    background: var(--bg-item-hover);
   }
 }
 
