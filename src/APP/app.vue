@@ -101,6 +101,13 @@ onErrorCaptured((err: Error) => {
   --accent-dark: #e6b000;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-panel: 18px;
+  --touch-target: 44px;
+  --space-page: clamp(12px, 4%, 18px);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.07);
+  --shadow-floating: 0 12px 28px rgba(0, 0, 0, 0.14);
   /* 状态颜色 */
   --status-success: #66bb6a;
   --status-info: #42a5f5;
@@ -132,6 +139,13 @@ onErrorCaptured((err: Error) => {
   --accent-dark: #e6b000;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-panel: 18px;
+  --touch-target: 44px;
+  --space-page: clamp(12px, 4%, 18px);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-floating: 0 12px 28px rgba(0, 0, 0, 0.46);
   /* 状态颜色 - 深色模式下调整亮度 */
   --status-success: #66bb6a;
   --status-info: #42a5f5;
@@ -198,6 +212,15 @@ body,
   font: inherit;
   min-width: 0;
   max-width: 100%;
+  touch-action: manipulation;
+}
+
+#app button:focus-visible,
+#app input:focus-visible,
+#app textarea:focus-visible,
+#app select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-primary) 70%, transparent);
+  outline-offset: 2px;
 }
 
 /* 深色模式下字体渲染优化 */
@@ -344,32 +367,108 @@ body,
 
 .phone-frame :deep(.app-header) {
   min-width: 0;
-  padding-top: clamp(14px, 5%, 28px);
-  padding-right: clamp(12px, 4%, 20px);
-  padding-bottom: 12px;
-  padding-left: clamp(12px, 4%, 20px);
+  min-height: 56px;
+  padding: 10px var(--space-page);
+  background: color-mix(in srgb, var(--bg-header) 94%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--border-color) 75%, transparent);
 }
 
 .phone-frame :deep(.app-header .title) {
   min-width: 0;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.phone-frame :deep(.app-header .title > span) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-frame :deep(.app-header button),
+.phone-frame :deep(.app-header .title > i) {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
 }
 
 .phone-frame :deep(.app-content) {
   min-width: 0;
-  padding: clamp(12px, 4%, 18px);
-  overscroll-behavior: contain;
+  padding: var(--space-page);
+  overscroll-behavior-y: contain;
 }
 
 .phone-frame :deep(.nav-bar) {
   min-width: 0;
-  padding-inline: clamp(4px, 2%, 12px);
+  min-height: 64px;
+  padding: 8px var(--space-page) max(8px, env(safe-area-inset-bottom));
+  gap: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+  background: color-mix(in srgb, var(--bg-header) 96%, transparent);
 }
 
 .phone-frame :deep(.nav-item) {
   min-width: 0;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
   margin-inline: 1px;
+  border-radius: 12px;
   text-align: center;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+.phone-frame :deep(.nav-item.active) {
+  background: var(--bg-item-hover);
+  color: var(--text-primary);
+}
+
+.phone-frame :deep(.nav-item.active i) {
+  color: var(--accent-dark);
+}
+
+.phone-frame :deep(.card),
+.phone-frame :deep(.shop-card),
+.phone-frame :deep(.package-card),
+.phone-frame :deep(.history-card),
+.phone-frame :deep(.status-card),
+.phone-frame :deep(.detail-info-card),
+.phone-frame :deep(.service-item),
+.phone-frame :deep(.review-item) {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.phone-frame :deep(.story-entry) {
+  bottom: max(72px, calc(68px + env(safe-area-inset-bottom)));
+  box-shadow:
+    var(--shadow-floating),
+    0 0 0 3px color-mix(in srgb, var(--bg-primary) 86%, transparent);
+}
+
+.phone-frame :deep(.modal-content),
+.phone-frame :deep(.reorder-modal-content) {
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-floating);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .phone-frame :deep(button:not(:disabled):active),
+  .phone-frame :deep(.nav-item:active),
+  .phone-frame :deep(.shop-card:active),
+  .phone-frame :deep(.package-card:active),
+  .phone-frame :deep(.history-card:active) {
+    transform: scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-frame :deep(.nav-item),
+  .phone-frame :deep(button) {
+    transition: none;
+  }
 }
 
 .phone-frame :deep(.nav-item span) {
@@ -508,5 +607,33 @@ body,
   width: min(100%, 450px);
   max-height: calc(100% - 32px);
   overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .phone-frame :deep(.detail-footer) {
+    padding: 10px var(--space-page) max(12px, env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .phone-frame :deep(.modal-overlay),
+  .phone-frame :deep(.reorder-modal-overlay) {
+    align-items: flex-end;
+    padding: 12px var(--space-page) max(12px, env(safe-area-inset-bottom));
+  }
+
+  .phone-frame :deep(.modal-content),
+  .phone-frame :deep(.reorder-modal-content) {
+    width: 100%;
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .phone-frame :deep(.search-bar-container) {
+    min-height: 52px;
+    gap: 8px;
+    padding: 6px 8px 6px 14px;
+    border-radius: var(--radius-panel);
+  }
 }
 </style>

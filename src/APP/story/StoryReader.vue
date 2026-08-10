@@ -243,7 +243,8 @@ defineExpose<{ session: typeof session }>({ session });
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
-  padding: 14px 18px;
+  min-height: 56px;
+  padding: 10px clamp(12px, 4vw, 18px);
   border-bottom: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--bg-header) 94%, transparent);
 }
@@ -254,7 +255,8 @@ defineExpose<{ session: typeof session }>({ session });
   justify-items: center;
 
   strong {
-    font-size: 19px;
+    font-size: clamp(18px, 5vw, 21px);
+    letter-spacing: -0.01em;
   }
   span {
     color: var(--text-secondary);
@@ -275,8 +277,8 @@ defineExpose<{ session: typeof session }>({ session });
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 24px clamp(14px, 4%, 28px) 34px;
+  overscroll-behavior-y: contain;
+  padding: 18px clamp(12px, 4vw, 28px) 30px;
 }
 
 .reader-column {
@@ -326,10 +328,10 @@ defineExpose<{ session: typeof session }>({ session });
 
 .story-paper {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   padding: clamp(20px, 5%, 32px);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 14px;
   background: var(--bg-item);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.09);
 
@@ -446,9 +448,10 @@ defineExpose<{ session: typeof session }>({ session });
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) 48px;
   gap: 10px;
-  padding: 12px clamp(14px, 4%, 24px) 16px;
+  padding: 10px clamp(12px, 4%, 24px) max(12px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border-color);
-  background: var(--bg-header);
+  background: color-mix(in srgb, var(--bg-header) 96%, transparent);
+  backdrop-filter: blur(12px);
 
   textarea {
     width: 100%;
@@ -477,8 +480,13 @@ defineExpose<{ session: typeof session }>({ session });
   border-radius: 50%;
   background: var(--bg-card-light);
   color: var(--text-primary);
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    filter 120ms ease;
 
   &:active {
+    transform: scale(0.96);
     background: var(--bg-item-hover);
   }
 }
@@ -491,6 +499,14 @@ defineExpose<{ session: typeof session }>({ session });
   border-radius: 50%;
   background: var(--accent-primary);
   color: #2c2500;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    filter 120ms ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
 
   &.cancel {
     background: var(--status-danger);
