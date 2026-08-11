@@ -63,23 +63,30 @@
         </div>
       </div>
 
-      <div class="tab-content" :class="{ active: activeTab === 'images' }">
-        <div class="image-item">
-          <h5>露脸图</h5>
-          <div class="image-placeholder" :style="{ borderStyle: itemData?.image1 ? 'solid' : 'dashed' }">
-            {{ itemData?.image1 || '暂未提供' }}
+      <div class="tab-content private-photo-panel" :class="{ active: activeTab === 'images' }">
+        <div
+          v-for="photo in [
+            { label: '露脸图', value: itemData?.image1 },
+            { label: '时装秀', value: itemData?.image2 },
+            { label: '私密拍', value: itemData?.image3 },
+          ]"
+          :key="photo.label"
+          class="image-item"
+        >
+          <div class="image-gallery-header">
+            <h5>{{ photo.label }}</h5>
+            <span class="image-gallery-status">
+              {{ isImageSource(photo.value) ? '已生成' : '待生成' }}
+            </span>
           </div>
-        </div>
-        <div class="image-item">
-          <h5>时装秀</h5>
-          <div class="image-placeholder" :style="{ borderStyle: itemData?.image2 ? 'solid' : 'dashed' }">
-            {{ itemData?.image2 || '暂未提供' }}
-          </div>
-        </div>
-        <div class="image-item">
-          <h5>私密拍</h5>
-          <div class="image-placeholder" :style="{ borderStyle: itemData?.image3 ? 'solid' : 'dashed' }">
-            {{ itemData?.image3 || '暂未提供' }}
+          <div class="image-gallery-card">
+            <div v-if="isImageSource(photo.value)" class="image-gallery-media">
+              <img :src="photo.value" :alt="photo.label" loading="lazy" />
+            </div>
+            <div v-else class="image-placeholder">
+              <i class="fas fa-camera-retro" aria-hidden="true"></i>
+              <span>{{ photo.value || '暂无生成提示词' }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -147,6 +154,12 @@ const remarkText = ref('');
 const shopStoreApi = ref<any>(null);
 const fallbackLogPrinted = ref(false);
 const submissionError = ref('');
+
+function isImageSource(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const source = value.trim();
+  return /^(?:https?:\/\/|data:image\/|blob:)/i.test(source);
+}
 
 // 显示备注模态框
 function showRemarkModal() {
@@ -287,6 +300,7 @@ onMounted(async () => {
 
 .app-content {
   flex-grow: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 0;
   touch-action: pan-y;
@@ -498,27 +512,89 @@ onMounted(async () => {
   }
 }
 
-.image-item {
-  margin-bottom: 15px;
+.private-photo-panel {
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding: 16px var(--space-page) 36px;
+}
 
-  h5 {
-    font-size: 0.9rem;
-    color: var(--text-placeholder);
-    margin-bottom: 8px;
-    font-weight: 600;
-  }
+.private-photo-panel.active {
+  display: grid;
+}
 
-  .image-placeholder {
-    background-color: var(--bg-primary);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-primary);
-    height: 180px;
-    width: 100%;
-    font-size: 1rem;
-    border: 1px dashed var(--border-color);
+.private-photo-panel .image-item {
+  min-width: 0;
+  margin: 0;
+}
+
+.image-gallery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.image-gallery-header h5 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.image-gallery-status {
+  color: var(--text-placeholder);
+  font-size: 0.75rem;
+}
+
+.image-gallery-card {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.image-gallery-media {
+  aspect-ratio: 4 / 5;
+  background: var(--bg-primary);
+}
+
+.image-gallery-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.private-photo-panel .image-placeholder {
+  display: flex;
+  min-height: 180px;
+  height: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 18px;
+  border: 0;
+  border-radius: 0;
+  background: var(--bg-card-light);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.private-photo-panel .image-placeholder i {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: var(--accent-primary);
+}
+
+@media (max-width: 380px) {
+  .private-photo-panel {
+    padding-inline: 12px;
   }
 }
 

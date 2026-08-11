@@ -1,0 +1,41 @@
+---
+变量输出格式:
+  rule:
+    - you must output the update analysis and the actual update commands at once in the end of the next reply
+    - the update commands works like the **JSON Patch (RFC 6902)** standard, must be a valid JSON array containing operation objects, but supports the following operations instead:
+      - replace: replace the value of existing paths
+      - delta: update the value of existing number paths by a delta value
+      - insert: insert new items into an object or array (using `-` as array index intends appending to the end)
+      - remove
+      - move
+    - don't update field names starts with `_` as they are readonly, such as `_变量`
+    - 美人团的 `服务中的订单` 是以订单 ID 为键的对象，不是数组；严禁使用 `服务中的订单[3]`、数组索引或模糊的 `index`，必须先识别真实的 `ORDER_ID`。
+    - 每个受影响订单都必须在 `<Analysis>` 中逐项核对订单状态、心理状态、服装、身体特征、服务统计、性经验和套餐；没有证据变化的字段必须明确标记为 No update。
+    - 订单结束时必须同时核对状态变更、服务统计重置、心跳重置、下单次数、折后价格、订单消费和怀孕结算，不能只更新订单状态。
+    - '`服务中的订单/${ORDER_ID}/服务统计/心跳` 是唯一的新心跳路径，禁止写成订单根部的 `心跳`。'
+    - 性伴侣数量只有在该女孩与 user 首次性交时增加；复购同一订单不得无条件增加。怀孕几率只有发生内射时增加。
+  format: |-
+    <UpdateVariable>
+    <Analysis>$(IN ENGLISH, no more than 80 words; use one concise line per affected variable)
+    - ${state: classify every simultaneous state as search, new order, repurchase, in service, or ending}
+    - ${order audit: list every affected real ORDER_ID, current status, current service-sex count, ejaculation count, and the event evidence from the current reply}
+    - ${field audit for each ORDER_ID: status; 心理状态; 服装; 身体特征; 服务统计; 性经验; 套餐 — mark Update or No update with a reason}
+    - ${ending check: if the user ends service or the post-event sex count reaches 2, status becomes 服务结束; after settlement, sex count, ejaculation count, and 服务统计.心跳 are reset to 0, 0, and 60}
+    - ${experience check: partner count only on first user intercourse; virginity and first partner only on first penetrative sex; pregnancy chance only per ejaculation}
+    - ${settlement check: update 下单次数, calculate 折后价格, update 经济.订单消费, and perform the pregnancy roll when required}
+    - ${operation check: insert a complete schema-valid order at /服务中的订单/${ORDER_ID}; use delta for existing numeric paths, replace for existing fields, and insert only for missing dynamic keys}
+    - ${path check: use /服务中的订单/${ORDER_ID}/...; never use [index], root-level 心跳, or replace on a missing path}
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "replace", "path": "${/path/to/variable}", "value": "${new_value}" },
+      { "op": "delta", "path": "${/path/to/number/variable}", "value": "${positive_or_negative_delta}" },
+      { "op": "insert", "path": "${/path/to/object/new_key}", "value": "${new_value}" },
+      { "op": "insert", "path": "${/path/to/array/-}", "value": "${new_value}" },
+      { "op": "remove", "path": "${/path/to/object/key}" },
+      { "op": "remove", "path": "${/path/to/array/0}" },
+      { "op": "move", "from": "${/path/to/variable}", "to": "${/path/to/another/path}" },
+      ...
+    ]
+    </JSONPatch>
+    </UpdateVariable>

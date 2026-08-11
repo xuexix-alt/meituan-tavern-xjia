@@ -349,6 +349,8 @@ body,
 }
 
 .phone-frame :deep(.app-view) {
+  display: flex;
+  flex-direction: column;
   position: absolute;
   inset: 0;
   width: 100%;
@@ -393,8 +395,13 @@ body,
 }
 
 .phone-frame :deep(.app-content) {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--space-page);
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }
 

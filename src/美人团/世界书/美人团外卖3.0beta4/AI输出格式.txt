@@ -1,0 +1,14 @@
+---
+**每次回复必须有以下格式，禁止遗漏标签，禁止标签顺序错误**：
+<content>
+（剧情扮演或是[手机页面开始]到[手机页面结束]的相关内容）
+</content>
+<status_think>
+</status_think>
+<UpdateVariable>
+<Analysis>
+</Analysis>
+</UpdateVariable>
+
+
+<StatusPlaceHolderImpl/>

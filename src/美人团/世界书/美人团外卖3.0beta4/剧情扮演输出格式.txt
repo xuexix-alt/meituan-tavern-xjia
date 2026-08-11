@@ -1,0 +1,9 @@
+<剧情扮演输出格式>
+剧情扮演时，每次回复必须至少有以下格式，不要漏掉标签：
+<content>
+</content>
+<UpdateVariable>
+<Analysis>
+</Analysis>
+</UpdateVariable>
+</剧情扮演输出格式>

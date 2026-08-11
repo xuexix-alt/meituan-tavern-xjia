@@ -7,7 +7,7 @@ const source = fs.readFileSync(new URL('./ItemDetail.vue', import.meta.url), 'ut
 test('套餐详情滚动区和 tab 控件声明移动端纵向触摸策略', () => {
   assert.match(
     source,
-    /\.app-content\s*\{[^}]*touch-action:\s*pan-y;[^}]*-webkit-overflow-scrolling:\s*touch;/s,
+    /\.app-content\s*\{[^}]*min-height:\s*0;[^}]*touch-action:\s*pan-y;[^}]*-webkit-overflow-scrolling:\s*touch;/s,
   );
   assert.match(source, /\.detail-tabs\s*\{[^}]*touch-action:\s*pan-y;/s);
   assert.match(source, /\.tab-link\s*\{[^}]*touch-action:\s*pan-y;/s);
