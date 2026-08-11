@@ -12,8 +12,13 @@
     </div>
 
     <div class="app-content">
+      <div v-if="displayMode === 'recent'" class="recent-order-notice" role="status">
+        <i class="fas fa-history"></i>
+        <span>当前无服务中的订单，展示最近一次服务记录</span>
+      </div>
+
       <!-- 空状态 -->
-      <div v-if="girlsData.length === 0 && !isLoading" class="empty-state">
+      <div v-if="displayMode === 'empty' && !isLoading" class="empty-state">
         <i class="fas fa-inbox"></i>
         <p>{{ errorMessage || '暂无服务中的订单' }}</p>
         <button class="retry-btn" @click="refreshData">
@@ -30,14 +35,15 @@
 
       <!-- 标签页（仅多订单时显示） -->
       <div v-if="girlsData.length > 1" class="tabs-container">
-        <div
+        <button
           v-for="(girl, index) in girlsData"
-          :key="index"
+          :key="girl.id"
+          type="button"
           :class="['tab-item', { active: currentGirlIndex === index }]"
           @click="currentGirlIndex = index"
         >
           {{ getGirlName(girl) }}
-        </div>
+        </button>
       </div>
 
       <!-- 当前女孩的核心状态卡片 -->
@@ -53,7 +59,7 @@
             </div>
           </div>
           <div class="badges">
-            <span class="badge badge-hot">HOT</span>
+            <span v-if="displayMode === 'recent'" class="badge badge-recent">最近服务</span>
             <span v-if="packageInfo.type" class="badge badge-type">{{ packageInfo.type }}</span>
           </div>
         </div>
@@ -118,14 +124,19 @@
       <!-- 详情折叠面板 -->
       <div v-if="currentGirl" class="detail-section">
         <div class="detail-card accordion">
-          <div class="accordion-header" :class="{ active: showDetails }" @click="showDetails = !showDetails">
+          <button
+            type="button"
+            class="accordion-header"
+            :class="{ active: showDetails }"
+            @click="showDetails = !showDetails"
+          >
             <span>
               <i class="fas fa-info-circle accordion-icon"></i>
               详细信息
             </span>
             <i class="fas fa-chevron-down accordion-arrow" :class="{ active: showDetails }"></i>
-          </div>
-          <div class="accordion-content" :class="{ show: showDetails }">
+          </button>
+          <div v-if="showDetails" class="accordion-content show">
             <div class="accordion-body">
               <!-- 着装信息 -->
               <div class="detail-group">
@@ -145,14 +156,14 @@
 
               <!-- 心理状态信息（可折叠） -->
               <div class="detail-group collapsible-group">
-                <div class="collapsible-header" @click="showPsychology = !showPsychology">
-                  <h4 class="group-title">
+                <button type="button" class="collapsible-header" @click="showPsychology = !showPsychology">
+                  <span class="group-title">
                     <i class="fas fa-heart"></i>
                     心理状态
-                  </h4>
+                  </span>
                   <i :class="['fas fa-chevron-down accordion-arrow', { active: showPsychology }]"></i>
-                </div>
-                <div v-show="showPsychology" class="collapsible-content">
+                </button>
+                <div v-if="showPsychology" class="collapsible-content">
                   <div class="psychology-content">
                     <div class="psychology-item">
                       <div class="psychology-label">
@@ -169,14 +180,14 @@
 
               <!-- 身体特征信息（可折叠） -->
               <div class="detail-group collapsible-group">
-                <div class="collapsible-header" @click="showBody = !showBody">
-                  <h4 class="group-title">
+                <button type="button" class="collapsible-header" @click="showBody = !showBody">
+                  <span class="group-title">
                     <i class="fas fa-female"></i>
                     身体特征
-                  </h4>
+                  </span>
                   <i :class="['fas fa-chevron-down accordion-arrow', { active: showBody }]"></i>
-                </div>
-                <div v-show="showBody" class="collapsible-content">
+                </button>
+                <div v-if="showBody" class="collapsible-content">
                   <div class="body-feature-grid">
                     <div class="feature-row">
                       <div class="feature-item">
@@ -227,14 +238,14 @@
 
               <!-- 性经验与服务统计（可折叠） -->
               <div class="detail-group collapsible-group">
-                <div class="collapsible-header" @click="showExperience = !showExperience">
-                  <h4 class="group-title">
+                <button type="button" class="collapsible-header" @click="showExperience = !showExperience">
+                  <span class="group-title">
                     <i class="fas fa-chart-bar"></i>
                     性经验与服务统计
-                  </h4>
+                  </span>
                   <i :class="['fas fa-chevron-down accordion-arrow', { active: showExperience }]"></i>
-                </div>
-                <div v-show="showExperience" class="collapsible-content">
+                </button>
+                <div v-if="showExperience" class="collapsible-content">
                   <div class="experience-stats">
                     <div class="stats-section">
                       <div class="section-title">
@@ -356,15 +367,22 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { filterActiveOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
+import {
+  loadOrdersFromMVU,
+  readCachedOrders,
+  selectActiveOrLatestOrders,
+  type ServiceOrder,
+  type ServiceOrderDisplayMode,
+} from '../shared/serviceOrders';
 import { getNestedValue } from './utils';
 // 响应式数据
 const girlsData = ref<any[]>([]);
 const currentGirlIndex = ref(0);
-const showDetails = ref(true);
+const showDetails = ref(false);
 const isLoading = ref(false);
 const isRefreshing = ref(false);
 const errorMessage = ref('');
+const displayMode = ref<ServiceOrderDisplayMode>('empty');
 let stopMvuUpdate: { stop: () => void } | null = null;
 
 // 可折叠分组状态
@@ -374,7 +392,7 @@ const showExperience = ref(false);
 
 // 监听女孩切换，重置折叠状态
 watch(currentGirlIndex, () => {
-  showDetails.value = true;
+  showDetails.value = false;
   showPsychology.value = false;
   showBody.value = false;
   showExperience.value = false;
@@ -392,6 +410,14 @@ function getGirlName(girl: any) {
   return getNestedValue(girl, '基础信息.姓名') || `女孩 ${girlsData.value.indexOf(girl) + 1}`;
 }
 
+function applyDisplayOrders(orders: ServiceOrder[]) {
+  const display = selectActiveOrLatestOrders(orders);
+  girlsData.value = display.orders;
+  displayMode.value = display.mode;
+  currentGirlIndex.value = Math.min(currentGirlIndex.value, Math.max(display.orders.length - 1, 0));
+  return display;
+}
+
 /**
  * 刷新数据
  */
@@ -401,29 +427,29 @@ async function refreshData(notify = true) {
 
   try {
     const orders = await loadOrdersFromMVU();
-    const active = filterActiveOrders(orders);
-    girlsData.value = active;
+    const display = applyDisplayOrders(orders);
 
-    if (active.length === 0) {
+    if (display.mode === 'empty') {
       errorMessage.value = '未找到服务中的订单';
       console.log('[服务状态] 暂无服务数据');
-    } else {
-      if (notify) toastr.success(`加载了 ${active.length} 位女孩的服务数据`, '服务状态');
+    } else if (notify && display.mode === 'recent') {
+      toastr.info('当前无服务中的订单，展示最近一次服务记录', '服务状态');
+    } else if (notify) {
+      toastr.success(`加载了 ${display.orders.length} 位女孩的服务数据`, '服务状态');
     }
   } catch (error: any) {
     console.error('[Service] 刷新数据失败，尝试使用缓存:', error);
 
     // 降级：脚本变量缓存
     const cached = readCachedOrders();
-    const active = filterActiveOrders(cached);
     if (cached.length > 0) {
-      girlsData.value = active;
-      if (notify) toastr.info(`使用缓存数据，条目数 ${active.length}`, '服务状态');
+      const display = applyDisplayOrders(cached);
+      if (notify) toastr.info(`使用缓存数据，条目数 ${display.orders.length}`, '服务状态');
       errorMessage.value = '已回退到上次缓存的数据，请重新生成或刷新。';
     } else {
       errorMessage.value = error.message || '数据加载失败';
       console.log('[服务状态] 数据加载失败，请重试');
-      girlsData.value = [];
+      applyDisplayOrders([]);
     }
   } finally {
     isRefreshing.value = false;
@@ -664,6 +690,26 @@ onBeforeUnmount(() => {
 }
 
 // 空状态
+.recent-order-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-control);
+  background: var(--bg-badge);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+
+  i {
+    flex: 0 0 auto;
+    color: var(--accent-dark);
+    line-height: 1.45;
+  }
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -765,13 +811,13 @@ onBeforeUnmount(() => {
 .status-card {
   background: var(--bg-card);
   border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: clamp(12px, 3.5vw, 16px);
+  margin-bottom: 10px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-accent);
 
   .status-header {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 
     .basic-info {
       .girl-name {
@@ -810,6 +856,11 @@ onBeforeUnmount(() => {
           color: white;
         }
 
+        &.badge-recent {
+          background: var(--badge-info-gradient);
+          color: white;
+        }
+
         &.badge-type {
           background: var(--badge-info-gradient);
           color: white;
@@ -820,9 +871,10 @@ onBeforeUnmount(() => {
 
   .order-status-row {
     display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-    padding: 12px;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px 10px;
     background: var(--bg-card);
     border-radius: 12px;
 
@@ -893,41 +945,56 @@ onBeforeUnmount(() => {
   }
 
   .price-section {
-    text-align: center;
-    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label value'
+      'name value'
+      'features features';
+    align-items: center;
+    gap: 4px 10px;
+    padding: 10px 12px;
     background: var(--bg-badge);
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    text-align: left;
 
     .price-label {
+      grid-area: label;
       font-size: 12px;
       color: var(--text-placeholder);
-      margin-bottom: 8px;
+      margin: 0;
     }
 
     .price-value {
-      font-size: 32px;
+      grid-area: value;
+      font-size: 24px;
       font-weight: 900;
       background: var(--badge-danger-gradient);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       line-height: 1;
-      margin-bottom: 8px;
+      margin: 0;
     }
 
     .package-name {
+      grid-area: name;
+      min-width: 0;
       font-size: 14px;
       color: var(--text-secondary);
       font-weight: 600;
-      margin-bottom: 12px;
+      margin: 0;
+      overflow-wrap: anywhere;
     }
 
     .features-tags {
+      grid-area: features;
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      justify-content: center;
+      justify-content: flex-start;
+      margin-top: 4px;
 
       .feature-tag {
         padding: 4px 12px;
@@ -943,8 +1010,8 @@ onBeforeUnmount(() => {
 
   .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
 
     /* 平板端：4列 */
     @media (min-width: 481px) {
@@ -952,8 +1019,9 @@ onBeforeUnmount(() => {
     }
 
     .metric-card {
+      min-width: 0;
       text-align: center;
-      padding: 16px;
+      padding: 10px;
       background: var(--bg-card);
       border-radius: 12px;
       transition: all 0.3s;
@@ -964,17 +1032,17 @@ onBeforeUnmount(() => {
       }
 
       .metric-label {
-        font-size: 13px;
+        font-size: 12px;
         color: var(--text-secondary);
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         font-weight: 600;
       }
 
       .metric-value {
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 900;
         color: var(--text-primary);
-        margin-bottom: 8px;
+        margin-bottom: 5px;
 
         .metric-unit {
           font-size: 14px;
@@ -1013,7 +1081,9 @@ onBeforeUnmount(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      width: 100%;
       padding: 16px 20px;
+      border: 0;
       cursor: pointer;
       background: var(--bg-card);
       transition: all 0.3s;
@@ -1105,7 +1175,9 @@ onBeforeUnmount(() => {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
         padding: 16px 20px;
+        border: 0;
         cursor: pointer;
         background: var(--bg-card);
         transition: all 0.3s;
@@ -1243,7 +1315,7 @@ onBeforeUnmount(() => {
       .body-feature-grid {
         .feature-row {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 12px;
           margin-bottom: 16px;
 
@@ -1370,7 +1442,7 @@ onBeforeUnmount(() => {
 
           .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
 
             /* 平板端：3列 */
@@ -1442,7 +1514,7 @@ onBeforeUnmount(() => {
 
     .clothing-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
 
       /* 平板端：3列 */
@@ -1517,6 +1589,45 @@ onBeforeUnmount(() => {
       color: var(--text-placeholder);
       padding: 20px;
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-section {
+    .detail-card,
+    .collapsible-group {
+      min-width: 0;
+    }
+
+    .accordion-body,
+    .collapsible-content {
+      padding-inline: 12px;
+    }
+
+    .clothing-grid,
+    .body-feature-grid .feature-row,
+    .experience-stats .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .clothing-item,
+    .feature-item,
+    .stat-item,
+    .desc-item,
+    .psychology-item {
+      min-width: 0;
+      padding: 9px;
+    }
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .status-card .metric-card:hover,
+  .detail-section .feature-item:hover,
+  .detail-section .stat-item:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
 

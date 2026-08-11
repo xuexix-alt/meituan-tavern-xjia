@@ -188,6 +188,33 @@ export function filterActiveOrders(orders: ServiceOrder[]) {
   return orders.filter(o => !String(o.status).includes('服务结束'));
 }
 
+export type ServiceOrderDisplayMode = 'active' | 'recent' | 'empty';
+
+export interface ServiceOrderDisplay {
+  orders: ServiceOrder[];
+  mode: ServiceOrderDisplayMode;
+}
+
+function getLatestOrder(orders: ServiceOrder[]) {
+  const cachedOrders = orders.filter(order => Number.isFinite(order.__cachedAt));
+  if (cachedOrders.length > 0) {
+    return cachedOrders.reduce((latest, order) =>
+      (order.__cachedAt ?? 0) > (latest.__cachedAt ?? 0) ? order : latest,
+    );
+  }
+
+  return orders[orders.length - 1];
+}
+
+export function selectActiveOrLatestOrders(orders: ServiceOrder[]): ServiceOrderDisplay {
+  const active = filterActiveOrders(orders);
+  if (active.length > 0) return { orders: active, mode: 'active' };
+  if (orders.length === 0) return { orders: [], mode: 'empty' };
+
+  const latest = getLatestOrder(orders);
+  return latest ? { orders: [latest], mode: 'recent' } : { orders: [], mode: 'empty' };
+}
+
 export function filterCompletedOrders(orders: ServiceOrder[]) {
   return orders.filter(o => String(o.status).includes('服务结束'));
 }

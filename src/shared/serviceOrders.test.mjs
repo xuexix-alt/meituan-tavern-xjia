@@ -1,4 +1,4 @@
-import { loadOrdersFromMVU } from './serviceOrders.ts';
+import { loadOrdersFromMVU, selectActiveOrLatestOrders } from './serviceOrders.ts';
 
 function assertEqual(actual, expected, label) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
@@ -40,6 +40,39 @@ assertEqual(orders[0].基础信息.年龄, 0, '年龄 0 必须保留');
 assertEqual(orders[0].性经验.性伴侣数量, 0, '性伴侣数量 0 必须保留');
 assertEqual(orders[0].服务统计.本次服务性交次数, 0, '服务性交次数 0 必须保留');
 assertEqual(orders[0].套餐.折后价格, 0, '折后价格 0 必须保留');
+
+const finishedOld = { ...orders[0], id: 'ORDER_OLD' };
+const finishedLatest = { ...orders[0], id: 'ORDER_LATEST' };
+const active = { ...orders[0], id: 'ORDER_ACTIVE', status: '服务中' };
+
+const activeDisplay = selectActiveOrLatestOrders([finishedOld, active, finishedLatest]);
+assertEqual(activeDisplay.mode, 'active', '活动订单显示模式');
+assertEqual(
+  activeDisplay.orders.map(order => order.id),
+  ['ORDER_ACTIVE'],
+  '活动订单优先',
+);
+
+const recentDisplay = selectActiveOrLatestOrders([finishedOld, finishedLatest]);
+assertEqual(recentDisplay.mode, 'recent', '最近订单显示模式');
+assertEqual(
+  recentDisplay.orders.map(order => order.id),
+  ['ORDER_LATEST'],
+  '原始 record 最后一项为最近订单',
+);
+
+const cachedDisplay = selectActiveOrLatestOrders([
+  { ...finishedOld, __cachedAt: 10 },
+  { ...finishedLatest, __cachedAt: 30 },
+  { ...active, status: '服务结束', __cachedAt: 20 },
+]);
+assertEqual(
+  cachedDisplay.orders.map(order => order.id),
+  ['ORDER_LATEST'],
+  '缓存按 __cachedAt 取最新订单',
+);
+
+assertEqual(selectActiveOrLatestOrders([]), { orders: [], mode: 'empty' }, '空订单集合保持空状态');
 
 globalScope.Mvu = {
   getMvuData: ({ message_id }) =>
