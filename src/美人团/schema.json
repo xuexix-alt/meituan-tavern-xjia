@@ -275,8 +275,8 @@
       "default": {},
       "type": "object",
       "propertyNames": {
-        "description": "订单ID",
-        "type": "string"
+        "type": "string",
+        "description": "订单ID"
       },
       "additionalProperties": {
         "type": "object",
@@ -304,6 +304,7 @@
                 "type": "string"
               },
               "描述": {
+                "default": "",
                 "type": "string"
               }
             },
@@ -328,12 +329,15 @@
             "type": "object",
             "properties": {
               "套餐名称": {
+                "default": "",
                 "type": "string"
               },
               "套餐价格": {
+                "default": 0,
                 "type": "number"
               },
               "折后价格": {
+                "default": 0,
                 "type": "number"
               },
               "玩法特色": {
@@ -344,6 +348,7 @@
                 }
               },
               "商品类型": {
+                "default": "",
                 "type": "string"
               }
             }
@@ -353,15 +358,19 @@
             "type": "object",
             "properties": {
               "当前所想": {
+                "default": "",
                 "type": "string"
               },
               "好感度": {
+                "default": 0,
                 "type": "number"
               },
               "兴奋度": {
+                "default": 0,
                 "type": "number"
               },
               "性格类型": {
+                "default": "",
                 "type": "string"
               },
               "心跳": {
@@ -378,9 +387,11 @@
                 "type": "object",
                 "properties": {
                   "描述": {
+                    "default": "",
                     "type": "string"
                   },
                   "罩杯": {
+                    "default": "",
                     "type": "string"
                   }
                 }
@@ -390,17 +401,21 @@
                 "type": "object",
                 "properties": {
                   "形状": {
+                    "default": "",
                     "type": "string"
                   }
                 }
               },
               "姿势": {
+                "default": "",
                 "type": "string"
               },
               "胸部": {
+                "default": "",
                 "type": "string"
               },
               "私处": {
+                "default": "",
                 "type": "string"
               }
             }
@@ -410,6 +425,7 @@
             "type": "object",
             "properties": {
               "处女": {
+                "default": "",
                 "type": "string",
                 "enum": [
                   "是",
@@ -418,15 +434,19 @@
                 ]
               },
               "性伴侣数量": {
+                "default": 0,
                 "type": "number"
               },
               "初次性行为对象": {
+                "default": "",
                 "type": "string"
               },
               "怀孕几率": {
+                "default": 0,
                 "type": "number"
               },
               "下单次数": {
+                "default": 0,
                 "type": "number"
               }
             }
@@ -440,9 +460,11 @@
                 "type": "number"
               },
               "本次服务性交次数": {
+                "default": 0,
                 "type": "number"
               },
               "内射次数": {
+                "default": 0,
                 "type": "number"
               }
             }
