@@ -2,19 +2,42 @@
   <div class="app-view active">
     <div class="app-header">
       <div class="title">
-        <span>🧭 发现</span>
-        <button class="import-btn" @click="triggerImport">导入JSON</button>
+        <div class="title-icon">
+          <i class="fas fa-compass"></i>
+        </div>
+        <div class="title-text">
+          <span class="title-main">发现</span>
+          <span class="title-sub">{{ shops.length > 0 ? `${shops.length} 个店铺` : '暂无店铺' }}</span>
+        </div>
       </div>
+      <button class="import-btn" type="button" @click="triggerImport">
+        <i class="fas fa-file-import"></i>
+        <span>导入 JSON</span>
+      </button>
     </div>
 
     <div class="app-content">
       <div class="shop-list">
         <div v-if="shops.length === 0" class="empty-state">
-          <i class="fas fa-search"></i>
+          <i class="fas fa-compass"></i>
           <p>暂无发现，请先让AI生成内容</p>
+          <button class="empty-import-btn" type="button" @click="triggerImport">
+            <i class="fas fa-file-import"></i>
+            <span>导入 JSON</span>
+          </button>
         </div>
         <div v-else class="shop-list-items">
-          <div v-for="shop in shops" :key="shop.id" class="shop-card" @click="$router.push(`/shop/${shop.id}`)">
+          <div
+            v-for="(shop, index) in shops"
+            :key="shop.id"
+            class="shop-card"
+            role="button"
+            tabindex="0"
+            :style="{ '--stagger': Math.min(index, 12) }"
+            @click="$router.push(`/shop/${shop.id}`)"
+            @keydown.enter.prevent="$router.push(`/shop/${shop.id}`)"
+            @keydown.space.prevent="$router.push(`/shop/${shop.id}`)"
+          >
             <div class="avatar-text">
               <i
                 v-if="(shop.packages || []).find((p: any) => p.icon)"
@@ -23,16 +46,23 @@
               <i v-else class="fas fa-store"></i>
             </div>
             <div class="info">
-              <div class="name">{{ shop.name }}</div>
-              <div class="desc">
-                <span class="slogan-text">{{ shop.slogan }}</span>
+              <div class="name-row">
+                <div class="name">{{ shop.name }}</div>
                 <span v-if="shop.packages && shop.packages.length > 0" class="package-count">
                   <i class="fas fa-layer-group"></i>
                   {{ shop.packages.length }} 个套餐
                 </span>
               </div>
+              <div class="desc">
+                <span class="slogan-text">{{ shop.slogan || '暂无简介' }}</span>
+              </div>
             </div>
-            <button class="delete-btn" @click.stop="deleteShop(shop.id)">
+            <button
+              class="delete-btn"
+              type="button"
+              :aria-label="`删除 ${shop.name}`"
+              @click.stop="deleteShop(shop.id)"
+            >
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -234,57 +264,102 @@ function checksumPayload(str: string) {
 
 .app-header {
   background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
-  padding: 20px 20px 16px 20px;
-  padding-top: max(20px, env(safe-area-inset-top));
+  padding: 14px var(--space-page) 12px;
+  padding-top: max(14px, env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
-  }
 
   .title {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: var(--text-primary);
-    letter-spacing: 1px;
-    text-shadow: 0 2px 4px rgba(255, 195, 0, 0.15);
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
 
-    span {
-      color: var(--text-primary);
+    .title-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(255, 195, 0, 0.28);
     }
 
-    .import-btn {
-      padding: 8px 12px;
-      border: 1px solid var(--border-accent);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      border-radius: 10px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: var(--shadow-sm);
+    .title-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
 
+      .title-main {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+      }
+
+      .title-sub {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .import-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--border-accent);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+    transition:
+      background-color 0.2s ease,
+      transform 0.15s ease,
+      box-shadow 0.2s ease;
+
+    i {
+      font-size: 0.78rem;
+      color: var(--accent-primary);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
       &:hover {
         background: var(--accent-light);
         transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
       }
+    }
+
+    &:active {
+      transform: scale(0.96);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
     }
   }
 }
@@ -292,7 +367,7 @@ function checksumPayload(str: string) {
 .app-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: var(--space-page);
   -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
@@ -301,18 +376,18 @@ function checksumPayload(str: string) {
 }
 
 .shop-list {
-  padding-bottom: 20px;
+  padding-bottom: 8px;
 }
 
 .shop-list-items {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 10px;
 
   /* 平板端：2列 */
-  @media (min-width: 481px) {
+  @media (min-width: 560px) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px;
   }
 
   /* 大屏端：3列 */
@@ -323,127 +398,125 @@ function checksumPayload(str: string) {
 
 .shop-card {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: var(--radius-card);
+  padding: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow:
-    var(--shadow-sm),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   border: 1px solid var(--border-accent);
   position: relative;
-  overflow: hidden;
-  gap: 14px;
+  animation: card-enter 0.35s ease both;
+  animation-delay: calc(var(--stagger, 0) * 35ms);
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.08), rgba(255, 215, 64, 0.12), transparent);
-    transition: left 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60px;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.03));
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
   }
 
   .delete-btn {
-    margin-left: auto;
+    position: absolute;
+    top: 6px;
+    right: 6px;
     border: none;
-    background: var(--badge-danger-gradient);
-    color: #fff;
+    background: transparent;
+    color: var(--text-placeholder);
     border-radius: 50%;
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    min-height: 34px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     padding: 0;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(239, 83, 80, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
     transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-    z-index: 1;
+      opacity 0.2s ease,
+      color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.15s ease;
 
-    &:hover {
-      transform: translateY(-1px) scale(0.97);
-      box-shadow: 0 5px 12px rgba(239, 83, 80, 0.35);
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        color: #fff;
+        background: var(--badge-danger-gradient);
+        box-shadow: 0 4px 10px rgba(239, 83, 80, 0.3);
+      }
+    }
+
+    &:active {
+      transform: scale(0.88);
+    }
+
+    &:focus-visible {
+      opacity: 1;
+      outline: 2px solid var(--status-danger);
+      outline-offset: 2px;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      opacity: 1;
+      top: 2px;
+      right: 2px;
+      width: var(--touch-target);
+      height: var(--touch-target);
+      min-width: var(--touch-target);
+      min-height: var(--touch-target);
+      color: var(--status-danger);
     }
 
     i {
-      font-size: 12px;
+      font-size: 0.8rem;
     }
   }
 
-  &:hover {
-    transform: translateY(-8px) scale(1.03);
-    box-shadow:
-      0 12px 35px rgba(255, 195, 0, 0.25),
-      var(--shadow-md),
-      0 0 0 2px var(--border-accent) inset;
-    border-color: var(--accent-primary);
-
-    &::before {
-      left: 100%;
-    }
-
-    &::after {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover .delete-btn,
+    &:focus-within .delete-btn {
       opacity: 1;
     }
+  }
 
-    .avatar-text {
-      transform: rotate(5deg) scale(1.1);
-      box-shadow:
-        0 6px 16px rgba(255, 195, 0, 0.35),
-        0 0 0 3px var(--border-accent) inset;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-card);
+      border-color: var(--accent-primary);
+
+      .avatar-text {
+        transform: scale(1.05);
+      }
     }
   }
 
   &:active {
-    transform: translateY(-3px) scale(1.015);
-    box-shadow:
-      0 6px 20px rgba(255, 195, 0, 0.2),
-      var(--shadow-sm);
+    transform: scale(0.98);
+    box-shadow: var(--shadow-sm);
   }
 
   .avatar-text {
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
     border-radius: 12px;
     background: var(--bg-badge);
-    border: 2px solid var(--border-accent);
-    box-shadow:
-      0 4px 12px rgba(255, 195, 0, 0.25),
-      0 0 0 2px var(--bg-card) inset,
-      0 -2px 4px rgba(255, 255, 255, 0.8) inset;
+    border: 1px solid var(--border-accent);
     display: flex;
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.25s ease;
 
     i {
-      font-size: 1.4rem;
+      font-size: 1.25rem;
       color: var(--accent-primary);
-      text-shadow:
-        0 2px 8px rgba(255, 195, 0, 0.5),
-        0 0 12px rgba(255, 215, 64, 0.4);
-      filter: drop-shadow(0 2px 4px rgba(255, 195, 0, 0.5));
-      transition: all 0.3s ease;
     }
   }
 
@@ -452,7 +525,15 @@ function checksumPayload(str: string) {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    padding-right: 30px;
+  }
+
+  .name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
   }
 
   .name {
@@ -461,20 +542,36 @@ function checksumPayload(str: string) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 1.15rem;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    font-size: 1rem;
+    line-height: 1.35;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .package-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(255, 195, 0, 0.14);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    i {
+      font-size: 0.65rem;
+    }
   }
 
   .desc {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    line-height: 1.5;
-    font-weight: 400;
+    line-height: 1.45;
 
     .slogan-text {
       flex: 1;
@@ -486,26 +583,25 @@ function checksumPayload(str: string) {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+  }
+}
 
-    .package-count {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
-      color: rgba(255, 255, 255, 0.95);
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(255, 195, 0, 0.3);
-      transition: all 0.3s ease;
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-      i {
-        font-size: 0.7rem;
-        opacity: 0.9;
-      }
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-card {
+    animation: none;
+    transition: none;
   }
 }
 
@@ -611,20 +707,60 @@ function checksumPayload(str: string) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 64px 20px;
   color: var(--text-secondary);
   text-align: center;
 
-  i {
-    font-size: 3rem;
-    margin-bottom: 16px;
+  > i {
+    font-size: 2.6rem;
+    margin-bottom: 12px;
     opacity: 0.3;
   }
 
   p {
-    margin: 0;
-    font-size: 0.95rem;
+    margin: 0 0 16px;
+    font-size: 0.92rem;
     opacity: 0.8;
+  }
+
+  .empty-import-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--border-accent);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition:
+      background-color 0.2s ease,
+      transform 0.15s ease;
+
+    i {
+      font-size: 0.8rem;
+      color: var(--accent-primary);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: var(--accent-light);
+        transform: translateY(-1px);
+      }
+    }
+
+    &:active {
+      transform: scale(0.96);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
   }
 }
 

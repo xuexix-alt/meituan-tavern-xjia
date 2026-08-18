@@ -2,7 +2,9 @@
   <div class="app-view active">
     <div class="app-header">
       <div class="title">
-        <i class="fas fa-arrow-left" @click="$router.back()"></i>
+        <button class="back-btn" type="button" aria-label="返回" @click="$router.back()">
+          <i class="fas fa-arrow-left"></i>
+        </button>
         <span>店铺详情</span>
       </div>
     </div>
@@ -13,8 +15,10 @@
           <i v-if="shopPackages.find(p => p.icon)" :class="shopPackages.find(p => p.icon).icon"></i>
           <i v-else class="fas fa-store"></i>
         </div>
-        <div class="shop-name">{{ shopInfo?.name || '未命名店铺' }}</div>
-        <div class="shop-slogan">{{ shopInfo?.slogan || '优质服务' }}</div>
+        <div class="shop-header-info">
+          <div class="shop-name">{{ shopInfo?.name || '未命名店铺' }}</div>
+          <div class="shop-slogan">{{ shopInfo?.slogan || '优质服务' }}</div>
+        </div>
       </div>
 
       <div class="restore-tip">
@@ -25,6 +29,7 @@
       <div class="list-section">
         <div class="section-header">
           <h3>精选套餐</h3>
+          <span v-if="shopPackages.length > 0" class="section-count">{{ shopPackages.length }} 个</span>
         </div>
         <div class="package-list">
           <div v-if="shopPackages.length === 0" class="empty-state">
@@ -32,11 +37,16 @@
             <p>该店铺暂无套餐</p>
           </div>
           <div
-            v-for="pkg in shopPackages"
+            v-for="(pkg, index) in shopPackages"
             :key="pkg.id"
             class="package-card"
             :data-id="pkg.id"
+            role="button"
+            tabindex="0"
+            :style="{ '--stagger': Math.min(index, 12) }"
             @click="goItemDetail(pkg)"
+            @keydown.enter.prevent="goItemDetail(pkg)"
+            @keydown.space.prevent="goItemDetail(pkg)"
           >
             <div class="avatar-text">
               <i v-if="pkg.icon" :class="pkg.icon"></i>
@@ -53,6 +63,7 @@
                 </span>
               </div>
             </div>
+            <i class="fas fa-chevron-right card-arrow"></i>
           </div>
         </div>
       </div>
@@ -152,35 +163,71 @@ function goItemDetail(pkg: any) {
 
 .app-header {
   background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
-  padding: 16px;
-  padding-top: max(16px, env(safe-area-inset-top));
+  padding: 14px var(--space-page) 12px;
+  padding-top: max(14px, env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+  border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  position: relative;
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
 
   .title {
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     color: var(--text-primary);
+    min-width: 0;
 
-    i {
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .back-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border-accent);
+      border-radius: 50%;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      padding: 4px;
-      border-radius: 6px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+      transition:
+        background-color 0.2s ease,
+        transform 0.15s ease;
 
-      &:hover {
-        background-color: var(--accent-light);
-        transform: scale(1.1) rotate(-5deg);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      i {
+        font-size: 0.85rem;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: var(--accent-light);
+        }
+      }
+
+      &:active {
+        transform: scale(0.9);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        width: var(--touch-target);
+        height: var(--touch-target);
       }
     }
   }
@@ -199,179 +246,130 @@ function goItemDetail(pkg: any) {
 
 .shop-header-card {
   background: var(--bg-card);
-  border-radius: 20px;
-  padding: 24px 20px;
-  margin: 16px;
-  text-align: center;
-  box-shadow:
-    0 6px 20px rgba(255, 195, 0, 0.15),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
-  border: 1px solid rgba(255, 195, 0, 0.2);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 195, 0, 0.08) 0, rgba(255, 215, 64, 0.05) 30%, transparent 70%);
-    animation: pulse 6s ease-in-out infinite;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.4), transparent);
-  }
-
-  &:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow:
-      0 12px 35px rgba(255, 195, 0, 0.25),
-      0 6px 20px rgba(0, 0, 0, 0.12);
-  }
+  border-radius: var(--radius-card);
+  padding: 16px;
+  margin: var(--space-page) var(--space-page) 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-accent);
+  animation: card-enter 0.35s ease both;
 
   .shop-avatar-text {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto 12px;
-    border: 4px solid var(--accent-primary);
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: 1.5rem;
+    font-weight: 700;
     background: var(--bg-badge);
-    color: var(--text-primary);
-    box-shadow:
-      0 6px 20px rgba(255, 195, 0, 0.35),
-      0 0 0 3px var(--bg-card) inset,
-      0 -3px 6px rgba(255, 255, 255, 0.8) inset;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    z-index: 1;
+    color: var(--accent-primary);
+    border: 1px solid var(--border-accent);
+  }
 
-    &::before {
-      content: '';
-      position: absolute;
-      inset: -6px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 195, 0, 0.3);
-      animation: rotate 10s linear infinite;
-    }
-
-    i {
-      filter: drop-shadow(0 2px 4px rgba(255, 195, 0, 0.5));
-    }
+  .shop-header-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .shop-name {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
-    margin-bottom: 8px;
     color: var(--text-primary);
-    text-shadow: 0 2px 4px rgba(255, 195, 0, 0.2);
-    position: relative;
-    z-index: 1;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
   }
 
   .shop-slogan {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     color: var(--text-secondary);
-    margin-top: 4px;
-    line-height: 1.6;
-    font-weight: 500;
-    position: relative;
-    z-index: 1;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes rotate {
+@keyframes card-enter {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(10px);
   }
+
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .restore-tip {
-  margin: 0 16px 12px 16px;
-  padding: 10px 12px;
-  border: 1px dashed var(--accent-primary);
-  border-radius: 12px;
+  margin: 0 var(--space-page) 12px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-accent);
+  border-radius: var(--radius-control);
   background: var(--bg-badge);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.92rem;
+  font-size: 0.78rem;
   line-height: 1.5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 
   i {
     color: var(--accent-primary);
-    font-size: 1rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
   }
 }
 
 .list-section {
   background: var(--bg-card);
-  padding: 16px;
-  border-radius: 16px;
-  margin: 0 16px 16px 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 14px;
+  border-radius: var(--radius-card);
+  margin: 0 var(--space-page) var(--space-page);
+  box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-accent);
-  position: relative;
-  overflow: hidden;
 
   .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    padding: 0 2px;
 
     h3 {
       margin: 0;
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       color: var(--text-primary);
-      font-weight: 700;
+      font-weight: 800;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
 
       &::before {
         content: '';
         display: block;
         width: 4px;
-        height: 18px;
-        background: linear-gradient(135deg, var(--accent-primary) 0, #ff6b35 100%);
+        height: 16px;
+        background: linear-gradient(135deg, var(--accent-primary) 0, var(--accent-light) 100%);
         border-radius: 6px;
       }
+    }
+
+    .section-count {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent-dark);
+      background: rgba(255, 195, 0, 0.14);
+      border-radius: 999px;
+      padding: 2px 8px;
+      white-space: nowrap;
     }
   }
 }
@@ -379,148 +377,123 @@ function goItemDetail(pkg: any) {
 .package-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 .package-card {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: var(--radius-card);
+  padding: 12px;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  align-items: center;
+  gap: 12px;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   border: 1px solid var(--border-accent);
   position: relative;
-  overflow: hidden;
+  animation: card-enter 0.35s ease both;
+  animation-delay: calc(var(--stagger, 0) * 35ms);
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.05), transparent);
-    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
   }
 
-  &:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow:
-      0 8px 25px rgba(0, 0, 0, 0.12),
-      0 0 0 1px var(--accent-light) inset;
-    border-color: var(--accent-primary);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-card);
+      border-color: var(--accent-primary);
 
-    &::before {
-      left: 100%;
+      .avatar-text {
+        transform: scale(1.05);
+      }
+
+      .card-arrow {
+        color: var(--accent-primary);
+        transform: translateX(2px);
+      }
     }
   }
 
   &:active {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transform: scale(0.98);
+    box-shadow: var(--shadow-sm);
   }
 
   .avatar-text {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
     flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--accent-primary);
     background: var(--bg-badge);
     text-align: center;
     line-height: 1.2;
-    box-shadow:
-      0 4px 6px rgba(0, 0, 0, 0.07),
-      0 0 0 3px var(--bg-card) inset;
-    border: 2px solid var(--accent-light);
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255, 195, 0, 0.1) 0, transparent 70%);
-      transform: scale(0);
-      transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    &:hover::before {
-      transform: scale(1);
-    }
+    border: 1px solid var(--border-accent);
+    transition: transform 0.25s ease;
   }
 
   .info {
     flex-grow: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .name {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 6px;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: 0.3px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .desc {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 4px;
-    min-height: 34px;
+    gap: 6px;
     align-items: center;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
   }
 
   .package-tag {
-    background: var(--bg-badge);
-    color: var(--text-primary);
-    font-size: 0.75rem;
-    padding: 5px 12px;
-    border-radius: 50px;
-    border: 1px solid var(--accent-primary);
+    background: rgba(255, 195, 0, 0.14);
+    color: var(--accent-dark);
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
     font-weight: 600;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(217, 134, 0, 0.15);
+    white-space: nowrap;
+  }
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(217, 134, 0, 0.1), transparent);
-      transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
+  .card-arrow {
+    flex-shrink: 0;
+    color: var(--text-placeholder);
+    font-size: 0.75rem;
+    transition:
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+}
 
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      border-color: var(--accent-primary);
-
-      &::before {
-        left: 100%;
-      }
-    }
+@media (prefers-reduced-motion: reduce) {
+  .shop-header-card,
+  .package-card {
+    animation: none;
+    transition: none;
   }
 }
 
@@ -601,15 +574,4 @@ function goItemDetail(pkg: any) {
   }
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
 </style>

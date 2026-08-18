@@ -2,7 +2,9 @@
   <div class="app-view active">
     <div class="app-header">
       <div class="title">
-        <i class="fas fa-arrow-left" @click="$router.back()"></i>
+        <button class="back-btn" type="button" aria-label="返回" @click="$router.back()">
+          <i class="fas fa-arrow-left"></i>
+        </button>
         <span id="detail-header-title">{{ itemData?.name || '商品详情' }}</span>
       </div>
     </div>
@@ -39,7 +41,11 @@
             v-for="content in itemData.content"
             :key="content"
             class="service-item clickable"
+            role="button"
+            tabindex="0"
             @click="handleFeatureClick(content)"
+            @keydown.enter.prevent="handleFeatureClick(content)"
+            @keydown.space.prevent="handleFeatureClick(content)"
           >
             <p>{{ content }}</p>
           </div>
@@ -264,35 +270,71 @@ onMounted(async () => {
 
 .app-header {
   background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
-  padding: 16px;
-  padding-top: max(16px, env(safe-area-inset-top));
+  padding: 14px var(--space-page) 12px;
+  padding-top: max(14px, env(safe-area-inset-top));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+  border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  position: relative;
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
 
   .title {
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     color: var(--text-primary);
+    min-width: 0;
 
-    i {
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .back-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border-accent);
+      border-radius: 50%;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      padding: 4px;
-      border-radius: 6px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+      transition:
+        background-color 0.2s ease,
+        transform 0.15s ease;
 
-      &:hover {
-        background-color: #fff3cc;
-        transform: scale(1.1) rotate(-5deg);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      i {
+        font-size: 0.85rem;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: var(--accent-light);
+        }
+      }
+
+      &:active {
+        transform: scale(0.9);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        width: var(--touch-target);
+        height: var(--touch-target);
       }
     }
   }
@@ -314,33 +356,36 @@ onMounted(async () => {
 
 .detail-info-card {
   background: var(--bg-card);
-  padding: 20px 20px 24px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 16px var(--space-page) 18px;
+  border-bottom: 1px solid var(--border-accent);
   margin-bottom: 0;
   position: relative;
 }
 
 .detail-name {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   font-weight: 800;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--text-primary);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .detail-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 0;
 
   .tag {
-    background-color: var(--bg-badge);
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    padding: 4px 10px;
-    border-radius: 15px;
+    background: rgba(255, 195, 0, 0.14);
+    color: var(--accent-dark);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
   }
 }
 
@@ -348,8 +393,8 @@ onMounted(async () => {
   display: flex;
   touch-action: pan-y;
   background-color: var(--bg-card);
-  padding: 0 12px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 0 var(--space-page);
+  border-bottom: 1px solid var(--border-accent);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -358,19 +403,32 @@ onMounted(async () => {
     flex: 1;
     text-align: center;
     touch-action: pan-y;
-    padding: 14px 4px;
+    padding: 12px 4px;
+    min-height: var(--touch-target);
     cursor: pointer;
     border: none;
     background: transparent;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-secondary);
     position: relative;
-    transition: all 0.3s ease;
+    transition: color 0.2s ease;
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(.active) {
+        color: var(--text-primary);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: -2px;
+      border-radius: 6px;
+    }
 
     &.active {
-      color: var(--text-primary);
-      font-size: 1.05rem;
+      color: var(--accent-dark);
+      font-weight: 700;
 
       &::after {
         content: '';
@@ -378,9 +436,9 @@ onMounted(async () => {
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 40%;
+        width: 28px;
         height: 3px;
-        background-color: var(--accent-primary);
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-light));
         border-radius: 2px;
       }
     }
@@ -389,7 +447,7 @@ onMounted(async () => {
 
 .tab-content {
   display: none;
-  padding: 18px;
+  padding: var(--space-page);
   animation: fadeIn 0.3s;
 
   &.active {
@@ -400,13 +458,14 @@ onMounted(async () => {
 .review-item,
 .service-item {
   background: var(--bg-card);
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 14px;
+  border-radius: var(--radius-card);
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-accent);
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .service-item::before {
@@ -416,53 +475,46 @@ onMounted(async () => {
   color: var(--accent-primary);
   background-color: var(--bg-badge);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  font-size: 0.8rem;
-  transition: all 0.25s ease;
+  font-size: 0.7rem;
+  margin-top: 1px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .service-item.clickable {
   cursor: pointer;
-  transition: all 0.25s ease;
-  position: relative;
-  overflow: hidden;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.25s ease,
+    border-color 0.2s ease;
 
-  &:hover {
-    transform: translateX(8px);
-    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
-    border-left: 4px solid var(--accent-primary);
-  }
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-card);
+      border-color: var(--accent-primary);
 
-  &:hover::before {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
-    color: white;
-    transform: scale(1.1);
-    box-shadow: 0 2px 8px rgba(255, 195, 0, 0.4);
+      &::before {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-light));
+        color: #fff;
+      }
+    }
   }
 
   &:active {
-    transform: translateX(12px) scale(0.98);
-    transition: all 0.1s ease;
+    transform: scale(0.99);
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.1), transparent);
-    transition: left 0.5s ease;
-  }
-
-  &:hover::after {
-    left: 100%;
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
   }
 }
 
@@ -620,44 +672,34 @@ onMounted(async () => {
     background: linear-gradient(135deg, var(--accent-primary) 0, var(--accent-light) 100%);
     color: #ffffff;
     border: none;
-    padding: 12px 24px;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 0 28px;
+    min-height: var(--touch-target);
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-    position: relative;
-    overflow: hidden;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.2s ease,
+      filter 0.2s ease;
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    &:hover {
-      background: linear-gradient(135deg, var(--accent-light) 0, var(--accent-dark) 100%);
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    &:active::before {
-      width: 100px;
-      height: 100px;
-      animation: ripple 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(255, 195, 0, 0.4);
+        filter: brightness(1.03);
+      }
     }
 
     &:active {
-      transform: translateY(0) scale(1.02);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+      transform: scale(0.96);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-dark);
+      outline-offset: 2px;
     }
   }
 }
@@ -689,7 +731,7 @@ onMounted(async () => {
   border: 1px solid var(--border-accent);
   position: relative;
   overflow: hidden;
-  animation: slideInRight 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: modal-up 0.22s ease;
 
   &::before {
     content: '';
@@ -731,42 +773,32 @@ onMounted(async () => {
 .content-tag-btn {
   background: var(--bg-card-light);
   color: var(--text-primary);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   padding: 8px 12px;
-  border-radius: 50px;
+  border-radius: 999px;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
   white-space: nowrap;
-  position: relative;
-  overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.2), transparent);
-    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  &:hover {
-    background: var(--bg-badge);
-    border-color: var(--accent-primary);
-    color: var(--text-primary);
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-
-    &::before {
-      left: 100%;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: var(--bg-badge);
+      border-color: var(--accent-primary);
+      transform: translateY(-1px);
     }
   }
 
   &:active {
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transform: scale(0.96);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
   }
 }
 
@@ -800,57 +832,51 @@ onMounted(async () => {
   button {
     flex: 1;
     padding: 12px 16px;
-    border-radius: 8px;
+    min-height: var(--touch-target);
+    border-radius: var(--radius-control);
     border: none;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    position: relative;
-    overflow: hidden;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease,
+      filter 0.2s ease;
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    &:active {
+      transform: scale(0.97);
     }
 
-    &:active::before {
-      width: 100px;
-      height: 100px;
-      animation: ripple 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    &:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
     }
   }
 
   .modal-btn-confirm {
     background: linear-gradient(135deg, var(--accent-primary) 0, var(--accent-light) 100%);
     color: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(255, 195, 0, 0.3);
 
-    &:hover {
-      background: linear-gradient(135deg, var(--accent-light) 0, var(--accent-dark) 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.03);
+      }
     }
   }
 
   .modal-btn-cancel {
     background: var(--bg-card-light);
     color: var(--text-secondary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
-    &:hover {
-      background: var(--bg-badge);
-      color: var(--text-primary);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: var(--bg-badge);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+      }
     }
   }
 }
@@ -901,25 +927,14 @@ onMounted(async () => {
   }
 }
 
-@keyframes slideInRight {
+@keyframes modal-up {
   from {
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
+    transform: translateY(0);
   }
 }
 .submission-error {
