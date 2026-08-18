@@ -21,8 +21,8 @@ const html = computed(() =>
   min-width: 0;
   max-width: 100%;
   color: var(--text-primary);
-  font-size: 17px;
-  line-height: 1.82;
+  font-size: var(--reader-font-size, 15px);
+  line-height: var(--reader-line-height, 1.6);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -64,13 +64,6 @@ const html = computed(() =>
     height: auto;
     margin: 1em auto;
     text-indent: 0;
-  }
-}
-
-@media (max-width: 520px) {
-  .story-message-body {
-    font-size: 16px;
-    line-height: 1.76;
   }
 }
 </style>

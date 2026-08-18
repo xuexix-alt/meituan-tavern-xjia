@@ -22,6 +22,7 @@ import StoryEntry from './components/StoryEntry.vue';
 import { generationTask } from './services/generationTaskSingleton';
 import { provideStorySession } from './story/storyContext';
 import { createDefaultStorySession } from './story/storyTavern';
+import { applyReaderTypography, loadReaderTypography } from './story/readerTypography';
 
 // 当前主题
 const currentTheme = ref<'light' | 'dark'>('light');
@@ -49,6 +50,7 @@ function initTheme() {
 // 在组件挂载时初始化主题
 onMounted(() => {
   initTheme();
+  applyReaderTypography(loadReaderTypography(localStorage));
   storySession.bind();
   window.addEventListener('pagehide', disposeAppSessions);
 });

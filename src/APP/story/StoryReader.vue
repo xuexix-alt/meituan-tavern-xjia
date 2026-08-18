@@ -8,10 +8,67 @@
         <strong>正文</strong>
         <span>{{ statusText }}</span>
       </div>
-      <button type="button" class="icon-button" aria-label="查看正文历史" @click="historyOpen = true">
-        <i class="fas fa-clock-rotate-left"></i>
-      </button>
+      <div class="reader-actions">
+        <button
+          type="button"
+          class="icon-button"
+          :aria-pressed="settingsOpen"
+          aria-label="调节阅读排版"
+          @click="settingsOpen = !settingsOpen"
+        >
+          <i class="fas fa-text-height"></i>
+        </button>
+        <button type="button" class="icon-button" aria-label="查看正文历史" @click="historyOpen = true">
+          <i class="fas fa-clock-rotate-left"></i>
+        </button>
+      </div>
     </header>
+
+    <div v-if="settingsOpen" class="settings-panel">
+      <div class="settings-row">
+        <span class="settings-label">字号</span>
+        <div class="settings-control">
+          <button type="button" class="step-btn" aria-label="减小字号" @click="step('fontSize', -1)">
+            <i class="fas fa-minus"></i>
+          </button>
+          <input
+            type="range"
+            class="settings-range"
+            :min="FONT_SIZE_RANGE.min"
+            :max="FONT_SIZE_RANGE.max"
+            :step="FONT_SIZE_RANGE.step"
+            v-model.number="settings.fontSize"
+            @input="onTypographyChange"
+          />
+          <button type="button" class="step-btn" aria-label="增大字号" @click="step('fontSize', 1)">
+            <i class="fas fa-plus"></i>
+          </button>
+          <span class="settings-value">{{ settings.fontSize }}px</span>
+        </div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">行距</span>
+        <div class="settings-control">
+          <button type="button" class="step-btn" aria-label="减小行距" @click="step('lineHeight', -0.1)">
+            <i class="fas fa-minus"></i>
+          </button>
+          <input
+            type="range"
+            class="settings-range"
+            :min="LINE_HEIGHT_RANGE.min"
+            :max="LINE_HEIGHT_RANGE.max"
+            :step="LINE_HEIGHT_RANGE.step"
+            v-model.number="settings.lineHeight"
+            @input="onTypographyChange"
+          />
+          <button type="button" class="step-btn" aria-label="增大行距" @click="step('lineHeight', 0.1)">
+            <i class="fas fa-plus"></i>
+          </button>
+          <span class="settings-value">{{ settings.lineHeight.toFixed(1) }}</span>
+        </div>
+      </div>
+      <button type="button" class="reset-button" @click="resetTypography">恢复默认</button>
+    </div>
 
     <main
       ref="readerScroller"
@@ -141,6 +198,16 @@ import { useRouter } from 'vue-router';
 import { useStorySession } from './storyContext';
 import StoryHistoryOverlay from './StoryHistoryOverlay.vue';
 import StoryMessageBody from './StoryMessageBody.vue';
+import type { ReaderTypographySettings } from './readerTypography';
+import {
+  DEFAULT_READER_TYPOGRAPHY,
+  FONT_SIZE_RANGE,
+  LINE_HEIGHT_RANGE,
+  applyReaderTypography,
+  clamp,
+  loadReaderTypography,
+  saveReaderTypography,
+} from './readerTypography';
 
 const router = useRouter();
 const session = useStorySession();
@@ -149,6 +216,25 @@ const historyOpen = ref(false);
 const userExpanded = ref(false);
 const rollbackConfirmId = ref<number | null>(null);
 const shouldAutoFollow = ref(true);
+const settingsOpen = ref(false);
+const settings = ref<ReaderTypographySettings>(loadReaderTypography(localStorage));
+
+function onTypographyChange(): void {
+  applyReaderTypography(settings.value);
+  saveReaderTypography(settings.value, localStorage);
+}
+
+function resetTypography(): void {
+  settings.value = { ...DEFAULT_READER_TYPOGRAPHY };
+  onTypographyChange();
+}
+
+function step(field: 'fontSize' | 'lineHeight', delta: number): void {
+  const config = field === 'fontSize' ? FONT_SIZE_RANGE : LINE_HEIGHT_RANGE;
+  const next = clamp(Math.round((settings.value[field] + delta) * 10) / 10, config.min, config.max);
+  settings.value = { ...settings.value, [field]: next };
+  onTypographyChange();
+}
 
 const latestAssistant = computed(
   () => [...session.items.value].reverse().find(item => item.role === 'assistant') ?? null,
@@ -240,13 +326,83 @@ defineExpose<{ session: typeof session }>({ session });
 .reader-header {
   z-index: 4;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr) 96px;
   align-items: center;
   gap: 10px;
   min-height: 56px;
   padding: 10px clamp(12px, 4vw, 18px);
   border-bottom: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--bg-header) 94%, transparent);
+}
+
+.reader-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 44px);
+  gap: 8px;
+}
+
+.settings-panel {
+  position: absolute;
+  z-index: 5;
+  top: 64px;
+  right: clamp(12px, 4vw, 18px);
+  display: grid;
+  width: min(300px, calc(100% - 24px));
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-header);
+  box-shadow: var(--shadow-floating);
+}
+
+.settings-row {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-control {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-btn {
+  width: 36px;
+  min-height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card-light);
+  color: var(--text-primary);
+}
+
+.settings-range {
+  width: 100%;
+  accent-color: var(--accent-primary);
+}
+
+.settings-value {
+  min-width: 40px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.reset-button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bg-card-light);
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .reader-title {
