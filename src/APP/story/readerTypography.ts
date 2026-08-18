@@ -42,10 +42,7 @@ export function loadReaderTypography(store: Pick<Storage, 'getItem'>): ReaderTyp
 }
 
 /** 写入存储；值先 clamp 到范围并规范化，保证前后一致。 */
-export function saveReaderTypography(
-  settings: ReaderTypographySettings,
-  store: Pick<Storage, 'setItem'>,
-): void {
+export function saveReaderTypography(settings: ReaderTypographySettings, store: Pick<Storage, 'setItem'>): void {
   store.setItem(
     READER_FONT_SIZE_KEY,
     String(clamp(Math.round(settings.fontSize), FONT_SIZE_RANGE.min, FONT_SIZE_RANGE.max)),
