@@ -573,5 +573,4 @@ function goItemDetail(pkg: any) {
     font-size: 0.9rem;
   }
 }
-
 </style>
