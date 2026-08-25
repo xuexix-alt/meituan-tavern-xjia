@@ -26,22 +26,35 @@
     "autoprefixer": "^10.5.4",
     "chokidar": "^4.0.3",
     "css-loader": "^7.1.4",
+<<<<<<< HEAD
     "eslint": "^9.39.5",
+=======
+    "eslint": "^10.9.1",
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-better-tailwindcss": "^3.8.0",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-pinia": "^0.4.2",
     "eslint-plugin-vue": "^10.10.0",
+<<<<<<< HEAD
     "eslint-webpack-plugin": "^5.0.3",
     "globals": "^16.5.0",
+=======
+    "eslint-webpack-plugin": "^6.0.0",
+    "globals": "^17.11.0",
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
     "html-inline-css-loader": "^0.2.1",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-inline-script-webpack-plugin": "^3.2.1",
     "html-loader": "^5.1.0",
     "html-webpack-inline-svg-plugin": "^2.3.0",
     "html-webpack-plugin": "^5.6.8",
+<<<<<<< HEAD
     "javascript-obfuscator": "^4.2.2",
+=======
+    "javascript-obfuscator": "^5.6.0",
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
     "mini-css-extract-plugin": "^2.10.2",
     "postcss": "^8.5.26",
     "postcss-cli": "^11.0.1",
@@ -53,7 +66,11 @@
     "remark-html": "^16.0.1",
     "remark-loader": "^6.0.0",
     "sass": "^1.103.1",
+<<<<<<< HEAD
     "sass-loader": "^16.0.8",
+=======
+    "sass-loader": "^17.0.0",
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
     "socket.io": "^4.8.3",
     "style-loader": "^4.0.0",
     "tailwindcss": "^4.3.3",
@@ -62,11 +79,19 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "tslib": "^2.8.1",
+<<<<<<< HEAD
     "type-fest": "^4.41.0",
     "typescript": "6.0.0-dev.20250807",
     "typescript-eslint": "^8.68.0",
     "unplugin-auto-import": "^20.3.0",
     "unplugin-vue-components": "^29.2.0",
+=======
+    "type-fest": "^5.8.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.68.0",
+    "unplugin-auto-import": "^21.1.0",
+    "unplugin-vue-components": "^32.1.0",
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
     "vue-eslint-parser": "^10.4.1",
     "vue-loader": "^17.4.2",
     "vue-style-loader": "^4.1.3",
