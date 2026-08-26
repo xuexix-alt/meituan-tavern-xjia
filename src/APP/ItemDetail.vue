@@ -17,19 +17,40 @@
         </div>
       </div>
 
-      <div class="detail-tabs">
-        <button class="tab-link" :class="{ active: activeTab === 'content' }" @click="activeTab = 'content'">
+      <div class="detail-tabs" role="tablist" aria-label="商品详情">
+        <button
+          type="button"
+          class="tab-link"
+          role="tab"
+          :aria-selected="activeTab === 'content'"
+          :class="{ active: activeTab === 'content' }"
+          @click="activeTab = 'content'"
+        >
           特色玩法
         </button>
-        <button class="tab-link" :class="{ active: activeTab === 'reviews' }" @click="activeTab = 'reviews'">
+        <button
+          type="button"
+          class="tab-link"
+          role="tab"
+          :aria-selected="activeTab === 'reviews'"
+          :class="{ active: activeTab === 'reviews' }"
+          @click="activeTab = 'reviews'"
+        >
           顾客评价
         </button>
-        <button class="tab-link" :class="{ active: activeTab === 'images' }" @click="activeTab = 'images'">
+        <button
+          type="button"
+          class="tab-link"
+          role="tab"
+          :aria-selected="activeTab === 'images'"
+          :class="{ active: activeTab === 'images' }"
+          @click="activeTab = 'images'"
+        >
           私密写真
         </button>
       </div>
 
-      <div class="tab-content" :class="{ active: activeTab === 'content' }">
+      <div class="tab-content" role="tabpanel" :class="{ active: activeTab === 'content' }">
         <div v-if="itemData?.description" class="service-item description-item">
           <div>
             <p class="title">详情介绍</p>
@@ -57,7 +78,7 @@
         </div>
       </div>
 
-      <div class="tab-content" :class="{ active: activeTab === 'reviews' }">
+      <div class="tab-content" role="tabpanel" :class="{ active: activeTab === 'reviews' }">
         <div v-if="itemData?.reviews && itemData.reviews.length > 0">
           <div v-for="review in itemData.reviews" :key="review" class="review-item">
             <p>{{ review }}</p>
@@ -69,7 +90,7 @@
         </div>
       </div>
 
-      <div class="tab-content private-photo-panel" :class="{ active: activeTab === 'images' }">
+      <div class="tab-content private-photo-panel" role="tabpanel" :class="{ active: activeTab === 'images' }">
         <div
           v-for="photo in [
             { label: '露脸图', value: itemData?.image1 },
@@ -106,7 +127,14 @@
     </div>
 
     <!-- 备注模态框 -->
-    <div id="remark-modal" class="modal-overlay" :style="{ display: showModal ? 'flex' : 'none' }">
+    <div
+      v-if="showModal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="玩法和备注"
+      @click.self="closeRemarkModal"
+    >
       <div class="modal-content">
         <h3>玩法和备注</h3>
 
@@ -125,7 +153,7 @@
         </div>
 
         <textarea
-          id="remark-textarea"
+          ref="remarkTextareaRef"
           v-model="remarkText"
           placeholder="可尝试时空替换、NTR、NTL、露出、换装秀、反差婊等多样玩法..."
         ></textarea>
@@ -142,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { extractDataFromMessage } from './dataParser';
 import { useStorySession } from './story/storyContext';
@@ -157,6 +185,7 @@ const itemData = ref<any>(null);
 const activeTab = ref('content');
 const showModal = ref(false);
 const remarkText = ref('');
+const remarkTextareaRef = ref<HTMLTextAreaElement | null>(null);
 const shopStoreApi = ref<any>(null);
 const fallbackLogPrinted = ref(false);
 const submissionError = ref('');
@@ -179,6 +208,24 @@ function closeRemarkModal() {
   remarkText.value = '';
   submissionError.value = '';
 }
+
+// 模态框打开时聚焦输入框，支持 Escape 关闭
+function onModalKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') closeRemarkModal();
+}
+
+watch(showModal, open => {
+  if (open) {
+    window.addEventListener('keydown', onModalKeydown);
+    nextTick(() => remarkTextareaRef.value?.focus());
+  } else {
+    window.removeEventListener('keydown', onModalKeydown);
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onModalKeydown);
+});
 
 // 添加到备注
 function addToRemark(content: string) {
@@ -257,6 +304,13 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: cubic-bezier(0.25, 0.46, 0.45, 0.94)) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -278,8 +332,6 @@ onMounted(async () => {
   gap: 12px;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
 
   .title {
     font-size: 1.15rem;
@@ -711,10 +763,9 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   z-index: 2000;
-  display: none;
+  /* 由 v-if 控制挂载，无需 display 切换 */
+  display: flex;
   justify-content: center;
   align-items: center;
   animation: fadeIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -812,7 +863,7 @@ onMounted(async () => {
   font-size: 0.9rem;
   resize: none;
   outline: none;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
   background: var(--bg-card);
   color: var(--text-primary);
   font-family: inherit;

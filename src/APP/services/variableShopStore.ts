@@ -13,7 +13,11 @@ export interface ShopStoreApi {
 }
 
 export function createVariableShopStore(
-  readVariables: ReadVariables = () => (getVariables({ type: 'global' }) || {}) as Variables,
+  readVariables: ReadVariables = () => {
+    // 非酒馆环境（如本地预览）没有全局 getVariables，降级为空数据而不是抛错
+    if (typeof getVariables !== 'function') return {};
+    return (getVariables({ type: 'global' }) || {}) as Variables;
+  },
   updateVariables: UpdateVariables = updater => updateVariablesWith(updater, { type: 'global' }),
 ): ShopStoreApi {
   const getShops = () => normalizeShopList(readVariables()[SHOP_STORE_KEY]);

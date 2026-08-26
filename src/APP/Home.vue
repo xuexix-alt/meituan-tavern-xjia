@@ -92,35 +92,91 @@
 
       <!-- 分类网格 -->
       <div class="category-grid" :class="{ 'is-generating': isGenerating }" :aria-busy="isGenerating">
-        <div class="category-item" @click="search('各类路人商品-2个店铺每个含3个套餐', '路人')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
+          @keydown.enter.prevent="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
+          @keydown.space.prevent="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
+        >
           <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
           <span>路人</span>
         </div>
-        <div class="category-item" @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
+          @keydown.enter.prevent="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
+          @keydown.space.prevent="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
+        >
           <div class="icon-wrapper"><i class="fas fa-mask"></i></div>
           <span>偶遇</span>
         </div>
-        <div class="category-item" @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
+          @keydown.enter.prevent="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
+          @keydown.space.prevent="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
+        >
           <div class="icon-wrapper"><i class="fas fa-video"></i></div>
           <span>AV</span>
         </div>
-        <div class="category-item" @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
+          @keydown.enter.prevent="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
+          @keydown.space.prevent="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
+        >
           <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
           <span>街拍</span>
         </div>
-        <div class="category-item" @click="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
+          @keydown.enter.prevent="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
+          @keydown.space.prevent="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
+        >
           <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
           <span>熟人</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
+          @keydown.enter.prevent="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
+          @keydown.space.prevent="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
+        >
           <div class="icon-wrapper"><i class="fas fa-heart-broken"></i></div>
           <span>乱伦</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
+          @keydown.enter.prevent="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
+          @keydown.space.prevent="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
+        >
           <div class="icon-wrapper"><i class="fas fa-briefcase"></i></div>
           <span>职场</span>
         </div>
-        <div class="category-item" @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')">
+        <div
+          class="category-item"
+          role="button"
+          tabindex="0"
+          @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
+          @keydown.enter.prevent="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
+          @keydown.space.prevent="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
+        >
           <div class="icon-wrapper"><i class="fas fa-users"></i></div>
           <span>友妻</span>
         </div>
@@ -160,28 +216,28 @@
     </div>
 
     <!-- 底部导航 -->
-    <div class="nav-bar">
-      <div class="nav-item active" @click="$router.push('/home')">
+    <nav class="nav-bar">
+      <button type="button" class="nav-item active" aria-current="page" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/discover')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/discover')">
         <i class="fas fa-compass"></i>
         <span>发现</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/service')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/service')">
         <i class="fas fa-concierge-bell"></i>
         <span>服务</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/history')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/history')">
         <i class="fas fa-history"></i>
         <span>历史</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/me')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/me')">
         <i class="fas fa-user"></i>
         <span>我的</span>
-      </div>
-    </div>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -217,6 +273,13 @@ function generateDLCContent() {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: cubic-bezier(0.25, 0.46, 0.45, 0.94)) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity, filter;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -226,7 +289,7 @@ function generateDLCContent() {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
 }
 
 .app-header {
@@ -237,8 +300,6 @@ function generateDLCContent() {
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   position: relative;
 
   &::after {
@@ -258,12 +319,12 @@ function generateDLCContent() {
     align-items: center;
     gap: 8px;
     color: var(--text-primary);
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
 
     i {
       color: var(--accent-primary);
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
       padding: 4px;
       border-radius: 6px;
 
@@ -290,24 +351,9 @@ function generateDLCContent() {
 
 .category-grid {
   display: grid;
+  /* 列数由 app.vue 的容器查询规则统一控制（.phone-frame :deep(.category-grid)） */
   gap: 16px;
   margin-bottom: 16px;
-  grid-template-columns: repeat(4, 1fr); /* 默认值 */
-
-  /* 手机端：3列 (Pad模式下手机也显示宽一点) */
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* 平板端：4列 */
-  @media (min-width: 481px) and (max-width: 768px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  /* 大屏端：6列 */
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(6, 1fr);
-  }
 }
 
 .category-grid.is-generating .category-item {
@@ -323,26 +369,31 @@ function generateDLCContent() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
   position: relative;
+
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--accent-primary) 70%, transparent);
+    outline-offset: 3px;
+    border-radius: 12px;
+  }
 
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
+    width: 80px;
+    height: 80px;
+    margin-left: -40px;
     background: radial-gradient(circle, rgba(255, 195, 0, 0.3), transparent);
     border-radius: 50%;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: scale(0);
+    opacity: 0;
     z-index: -1;
   }
 
   &:active::before {
-    width: 80px;
-    height: 80px;
     animation: ripple 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
@@ -358,7 +409,7 @@ function generateDLCContent() {
     font-size: 1.5rem;
     color: var(--accent-primary);
     box-shadow: var(--shadow-sm);
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
     position: relative;
     overflow: hidden;
     border: 2px solid transparent;
@@ -367,15 +418,16 @@ function generateDLCContent() {
       content: '';
       position: absolute;
       top: 0;
-      left: -100%;
+      left: 0;
       width: 100%;
       height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-      transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform: translateX(-100%);
+      transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
     &:hover::before {
-      left: 100%;
+      transform: translateX(100%);
     }
   }
 
@@ -401,7 +453,7 @@ function generateDLCContent() {
   margin-bottom: 16px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-accent);
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
   position: relative;
   overflow: hidden;
 
@@ -409,11 +461,12 @@ function generateDLCContent() {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.1), transparent);
-    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   &:focus-within {
@@ -424,7 +477,7 @@ function generateDLCContent() {
     transform: translateY(-1px);
 
     &::before {
-      left: 100%;
+      transform: translateX(100%);
     }
 
     i {
@@ -445,7 +498,7 @@ function generateDLCContent() {
     padding: 8px 12px;
     font-size: 0.9rem;
     color: var(--text-primary);
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
 
     &::placeholder {
       color: var(--text-secondary);
@@ -459,13 +512,13 @@ function generateDLCContent() {
 
   .search-btn {
     background: linear-gradient(135deg, var(--accent-primary) 0, var(--accent-dark) 100%);
-    color: #ffffff;
+    color: var(--on-accent);
     border: none;
     border-radius: 50px;
-    padding: 8px 16px;
+    padding: 9px 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
     position: relative;
     overflow: hidden;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -475,12 +528,13 @@ function generateDLCContent() {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 0;
-      height: 0;
+      width: 100px;
+      height: 100px;
+      margin: -50px 0 0 -50px;
       background: rgba(255, 255, 255, 0.3);
       border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform: scale(0);
+      opacity: 0;
     }
 
     &:hover {
@@ -490,8 +544,6 @@ function generateDLCContent() {
     }
 
     &:active::before {
-      width: 100px;
-      height: 100px;
       animation: ripple 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
@@ -524,7 +576,7 @@ function generateDLCContent() {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 195, 0, 0.3);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
 
   &:hover {
     transform: translateY(-4px);
@@ -544,7 +596,8 @@ function generateDLCContent() {
       position: absolute;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(255, 195, 0, 0.1) 0%, transparent 70%);
-      animation: float 6s ease-in-out infinite;
+      /* 装饰动画仅播放一次，避免移动端持续占用合成资源 */
+      animation: float 6s ease-in-out;
 
       &.circle-1 {
         width: 120px;
@@ -622,11 +675,11 @@ function generateDLCContent() {
         }
 
         .text-gradient {
-          background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-dark) 100%);
+          /* 品牌渐变文字令牌：浅色主题深金 / 深色主题亮金，保证对比度 */
+          background: var(--brand-text-gradient);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          text-shadow: 0 2px 8px rgba(255, 195, 0, 0.3);
           position: relative;
 
           &::after {
@@ -637,7 +690,7 @@ function generateDLCContent() {
             width: 100%;
             height: 2px;
             background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-            animation: shimmer 2s ease-in-out infinite;
+            animation: shimmer 2s ease-in-out;
           }
         }
       }
@@ -664,7 +717,8 @@ function generateDLCContent() {
 
       .subtitle-text {
         opacity: 0.95;
-        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-dark) 100%);
+        /* 渐变终点用可读金色令牌，避免浅色模式下金色尾段对比度不足 */
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-text) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -695,7 +749,7 @@ function generateDLCContent() {
         gap: 8px;
         font-size: 0.9rem;
         font-weight: 600;
-        color: var(--accent-dark);
+        color: var(--accent-text);
         background: rgba(255, 195, 0, 0.1);
         padding: 8px 16px;
         border-radius: 20px;
@@ -703,7 +757,7 @@ function generateDLCContent() {
 
         i {
           color: var(--accent-primary);
-          animation: heartbeat 2s ease-in-out infinite;
+          animation: heartbeat 2s ease-in-out;
 
           &:last-child {
             animation-delay: 1s;
@@ -715,7 +769,8 @@ function generateDLCContent() {
 
   .announcement-panel {
     flex: 1;
-    background: rgba(255, 255, 255, 0.5);
+    /* 主题感知的面板底色，修复深色模式下的白色残留 */
+    background: color-mix(in srgb, var(--bg-card-light) 88%, transparent);
     border-radius: 16px;
     padding: 16px;
     border: 1px solid var(--border-accent);
@@ -727,7 +782,7 @@ function generateDLCContent() {
       gap: 8px;
       font-size: 0.95rem;
       font-weight: 700;
-      color: var(--accent-dark);
+      color: var(--accent-text);
       margin-bottom: 10px;
 
       &.mt-3 {
@@ -752,10 +807,10 @@ function generateDLCContent() {
 
         .notice-tag {
           background: var(--accent-primary);
-          color: white;
+          color: var(--on-accent);
           padding: 2px 6px;
           border-radius: 4px;
-          font-size: 0.7rem;
+          font-size: 0.75rem;
           font-weight: 600;
           flex-shrink: 0;
           margin-top: 2px; /* 微调对齐 */
@@ -793,17 +848,6 @@ function generateDLCContent() {
   from {
     opacity: 0;
     transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
   }
   to {
     opacity: 1;
@@ -861,10 +905,14 @@ function generateDLCContent() {
   }
 }
 
+/* 涟漪只用 transform/opacity，避免触发布局 */
 @keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
   to {
-    width: 300px;
-    height: 300px;
+    transform: scale(3);
     opacity: 0;
   }
 }
@@ -878,21 +926,22 @@ function generateDLCContent() {
   border: 1px solid var(--border-accent);
   position: relative;
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
 
   &::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.03), transparent);
-    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   &:hover::before {
-    left: 100%;
+    transform: translateX(100%);
   }
 
   .section-header {
@@ -909,7 +958,7 @@ function generateDLCContent() {
       display: flex;
       align-items: center;
       gap: 12px;
-      transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      @include transition-props(0.25s);
 
       &::before {
         content: '';
@@ -918,7 +967,7 @@ function generateDLCContent() {
         height: 18px;
         background: linear-gradient(135deg, var(--accent-primary) 0, #ff6b35 100%);
         border-radius: 6px;
-        transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        @include transition-props(0.25s);
       }
     }
   }
@@ -952,7 +1001,7 @@ function generateDLCContent() {
   width: 100%; /* 宽度撑满 */
   text-align: left;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  @include transition-props(0.25s);
   box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
   position: relative;
   overflow: hidden;
@@ -967,11 +1016,12 @@ function generateDLCContent() {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   &:hover {
@@ -981,7 +1031,7 @@ function generateDLCContent() {
     border-color: rgba(255, 255, 255, 0.2);
 
     &::before {
-      left: 100%;
+      transform: translateX(100%);
     }
   }
 
@@ -998,7 +1048,7 @@ function generateDLCContent() {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
     flex-shrink: 0;
 
     i {
@@ -1022,7 +1072,8 @@ function generateDLCContent() {
   }
 
   .dlc-badge {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    /* 加深底色保证白字 ≥4.5:1 */
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
     color: #ffffff;
     font-size: 0.75rem;
     font-weight: 700;
@@ -1030,8 +1081,8 @@ function generateDLCContent() {
     border-radius: 20px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(238, 90, 36, 0.3);
-    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 2px 4px rgba(169, 50, 38, 0.3);
+    animation: pulse 2s ease-in-out;
     flex-shrink: 0;
   }
 }
@@ -1042,8 +1093,6 @@ function generateDLCContent() {
   background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
   padding: 8px 0;
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   position: relative;
 
   &::before {
@@ -1065,7 +1114,7 @@ function generateDLCContent() {
     font-size: 0.8rem;
     padding: 4px 0;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
     position: relative;
     border-radius: 8px;
     margin: 0 4px;
@@ -1087,7 +1136,7 @@ function generateDLCContent() {
     i {
       font-size: 1.25rem;
       margin-bottom: 4px;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
     }
   }
 }
@@ -1099,58 +1148,7 @@ function generateDLCContent() {
   line-height: 1.6;
 }
 
-// 动画
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes bounce {
-  0%,
-  100%,
-  20%,
-  53%,
-  80% {
-    transform: translate3d(0, 0, 0);
-  }
-  40%,
-  43% {
-    transform: translate3d(0, -8px, 0);
-  }
-  70% {
-    transform: translate3d(0, -4px, 0);
-  }
-  90% {
-    transform: translate3d(0, -2px, 0);
-  }
-}
-
+// 动画（pulse 供 DLC 徽章使用；其余重复/未使用的 keyframes 已清理）
 @keyframes pulse {
   0%,
   100% {
@@ -1163,14 +1161,17 @@ function generateDLCContent() {
   }
 }
 
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
+@media (prefers-reduced-motion: reduce) {
+  .slogan-section,
+  .title-line,
+  .slogan-subtitle,
+  .slogan-signature,
+  .announcement-panel,
+  .decoration-circle,
+  .text-gradient::after,
+  .signature-text i,
+  .dlc-badge {
+    animation: none;
   }
 }
 </style>

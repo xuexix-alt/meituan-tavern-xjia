@@ -13,7 +13,16 @@
         <div class="card-title"><i class="fas fa-history"></i>历史订单</div>
         <div v-if="historyItems.length === 0" class="empty-state">暂无历史订单</div>
         <div v-else>
-          <div v-for="item in historyItems" :key="item.order_id" class="history-card" @click="reorder(item)">
+          <div
+            v-for="item in historyItems"
+            :key="item.order_id"
+            class="history-card"
+            role="button"
+            tabindex="0"
+            @click="reorder(item)"
+            @keydown.enter.prevent="reorder(item)"
+            @keydown.space.prevent="reorder(item)"
+          >
             <!-- 头部：姓名套餐和价格 -->
             <div class="history-header">
               <div class="title-section">
@@ -34,11 +43,9 @@
             <div class="bottom-section">
               <div class="status-time">
                 <span class="order-time">订单ID：{{ item.order_id || '-' }}</span>
-                <span :style="getStatusStyle(item.order_status)" class="status-badge">{{
-                  item.order_status || '-'
-                }}</span>
+                <span :class="['status-badge', statusClass(item.order_status)]">{{ item.order_status || '-' }}</span>
               </div>
-              <div class="quick-reorder-btn">
+              <div class="quick-reorder-btn" aria-hidden="true">
                 <i class="fas fa-redo"></i>
                 <span>再次下单</span>
               </div>
@@ -52,9 +59,12 @@
     <div
       v-if="currentView === 'reorder' && selectedOrder"
       class="reorder-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="确认订单"
       @click.self="currentView = 'history'"
     >
-      <div class="reorder-modal-content">
+      <div class="reorder-modal-content" ref="reorderModalRef" tabindex="-1">
         <div class="modal-header">
           <div class="modal-title"><i class="fas fa-shopping-cart"></i>确认订单</div>
           <button class="btn-close" @click="currentView = 'history'"><i class="fas fa-arrow-left"></i> 返回</button>
@@ -105,34 +115,12 @@
             </div>
           </div>
 
-          <div class="order-info-grid">
-            <div class="info-box">
-              <div class="info-label">美人姓名</div>
-              <div class="info-value">{{ selectedOrder.girl_name || '-' }}</div>
-            </div>
-            <div class="info-box">
-              <div class="info-label">身份</div>
-              <div class="info-value">{{ selectedOrder.identity || '-' }}</div>
-            </div>
-            <div class="info-box">
-              <div class="info-label">套餐名称</div>
-              <div class="info-value">{{ selectedOrder.package_name || '-' }}</div>
-            </div>
-            <div class="info-box">
-              <div class="info-label">订单价格</div>
-              <div class="info-value price">¥{{ selectedOrder.price ?? '-' }}</div>
-            </div>
-          </div>
-
           <div class="info-section">
             <div class="section-title"><i class="fas fa-info-circle"></i> 订单说明</div>
             <div class="section-content">
-              您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{ selectedOrder.price ?? '-' }}。
-              当前好感度：{{ getNestedValue(selectedOrder?.originalData, '心理状态.好感度', '-') }}， 被下单次数：{{
-                getNestedValue(selectedOrder?.originalData, '性经验.下单次数', '-')
-              }}， 怀孕几率：{{
-                formatPregnancyChance(getNestedValue(selectedOrder?.originalData, '性经验.怀孕几率', '-'))
-              }}。 确认后将立即生效，请确保您已了解服务内容。
+              您即将再次下单"{{ selectedOrder.package_name || '-' }}"服务，价格为 ¥{{
+                selectedOrder.price ?? '-'
+              }}。确认后将立即生效，请确保您已了解服务内容。
             </div>
           </div>
 
@@ -257,7 +245,14 @@
     </div>
 
     <!-- 玩法和备注弹窗 -->
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+    <div
+      v-if="showModal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="玩法和备注"
+      @click.self="closeModal"
+    >
       <div class="modal-content">
         <h3>玩法和备注</h3>
         <div v-if="currentOrderFeatures.length > 0" class="modal-tags-section">
@@ -287,33 +282,33 @@
     </div>
 
     <!-- 底部导航 -->
-    <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/home')">
+    <nav class="nav-bar">
+      <button type="button" class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/discover')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/discover')">
         <i class="fas fa-compass"></i>
         <span>发现</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/service')">
-        <i class="fas fa-heart"></i>
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/service')">
+        <i class="fas fa-concierge-bell"></i>
         <span>服务</span>
-      </div>
-      <div class="nav-item active" @click="$router.push('/history')">
+      </button>
+      <button type="button" class="nav-item active" aria-current="page" @click="$router.push('/history')">
         <i class="fas fa-history"></i>
         <span>历史</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/me')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/me')">
         <i class="fas fa-user"></i>
         <span>我的</span>
-      </div>
-    </div>
+      </button>
+    </nav>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { filterCompletedOrders, loadOrdersFromMVU, readCachedOrders } from '../shared/serviceOrders';
 import { getNestedValue } from './utils';
@@ -348,23 +343,53 @@ const currentView = ref('history');
 const showModal = ref(false);
 const orderRemark = ref('');
 const remarkTextarea = ref<HTMLTextAreaElement | null>(null);
+const reorderModalRef = ref<HTMLElement | null>(null);
 const submissionError = ref('');
 let stopMvuUpdate: { stop: () => void } | null = null;
 
-// 状态样式
-function getStatusStyle(status: string) {
-  const styles: Record<string, string> = {
-    已完成:
-      'background-color: rgba(46,204,113,0.2); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-    订单结束:
-      'background-color: rgba(231,76,60,0.2); color: #e74c3c; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-    服务结束:
-      'background-color: rgba(230,126,34,0.2); color: #e67e22; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-    进行中:
-      'background-color: rgba(52,152,219,0.2); color: #3498db; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;',
-  };
-  return styles[status] || styles['进行中'];
+// 状态样式：语义类由 SCSS 令牌渲染，自动适配深浅主题
+function statusClass(status: string) {
+  switch (status) {
+    case '已完成':
+      return 'is-completed';
+    case '订单结束':
+      return 'is-order-ended';
+    case '服务结束':
+      return 'is-service-ended';
+    default:
+      return 'is-active';
+  }
 }
+
+// 弹窗打开时按 Escape 关闭（两个弹窗共用）
+function onModalKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return;
+  if (showModal.value) {
+    closeModal();
+  } else if (currentView.value === 'reorder') {
+    currentView.value = 'history';
+  }
+}
+
+watch([showModal, currentView], ([modalOpen, view]) => {
+  const anyModalOpen = modalOpen || view === 'reorder';
+  if (anyModalOpen) {
+    window.addEventListener('keydown', onModalKeydown);
+    nextTick(() => {
+      if (modalOpen) {
+        remarkTextarea.value?.focus();
+      } else {
+        reorderModalRef.value?.focus();
+      }
+    });
+  } else {
+    window.removeEventListener('keydown', onModalKeydown);
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onModalKeydown);
+});
 
 // 提取订单特色功能
 function extractOrderFeatures(order: any): string[] {
@@ -522,6 +547,13 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: ease) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -606,12 +638,17 @@ onBeforeUnmount(() => {
   margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   cursor: pointer;
-  transition: all 0.4s;
+  @include transition-props(0.4s);
   border: 1px solid var(--border-accent);
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255, 195, 0, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--accent-primary) 70%, transparent);
+    outline-offset: 2px;
   }
 
   .history-header {
@@ -697,6 +734,27 @@ onBeforeUnmount(() => {
         font-size: 12px;
         font-weight: 600;
         white-space: nowrap;
+
+        /* 与文本主色混色，保证浅色主题下文字对比度 ≥4.5:1、深色主题自动提亮 */
+        &.is-completed {
+          background: color-mix(in srgb, var(--status-success) 16%, transparent);
+          color: color-mix(in srgb, var(--status-success) 40%, var(--text-primary));
+        }
+
+        &.is-order-ended {
+          background: color-mix(in srgb, var(--status-danger) 16%, transparent);
+          color: color-mix(in srgb, var(--status-danger) 40%, var(--text-primary));
+        }
+
+        &.is-service-ended {
+          background: color-mix(in srgb, var(--status-warning) 18%, transparent);
+          color: color-mix(in srgb, var(--status-warning) 38%, var(--text-primary));
+        }
+
+        &.is-active {
+          background: color-mix(in srgb, var(--status-info) 16%, transparent);
+          color: color-mix(in srgb, var(--status-info) 40%, var(--text-primary));
+        }
       }
     }
 
@@ -711,7 +769,7 @@ onBeforeUnmount(() => {
       font-size: 12px;
       font-weight: 600;
       color: var(--accent-dark);
-      transition: all 0.25s;
+      @include transition-props(0.25s);
 
       &:hover {
         background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
@@ -729,8 +787,6 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   z-index: 2000;
   display: flex;
   justify-content: center;
@@ -790,7 +846,7 @@ onBeforeUnmount(() => {
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.25s;
+      @include transition-props(0.25s);
       color: var(--text-secondary);
 
       &:hover {
@@ -973,8 +1029,7 @@ onBeforeUnmount(() => {
         grid-column: 1 / -1;
       }
 
-      /* 左侧：基础信息、订单说明、心理状态 */
-      .order-info-grid,
+      /* 左侧：订单说明、心理状态 */
       .info-section:nth-of-type(1),
       .info-section:nth-of-type(2) {
         grid-column: 1 / 2;
@@ -999,7 +1054,7 @@ onBeforeUnmount(() => {
       border: none;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.25s;
+      @include transition-props(0.25s);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1023,59 +1078,6 @@ onBeforeUnmount(() => {
         &:hover {
           background: var(--bg-badge);
         }
-      }
-    }
-  }
-}
-
-.order-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-
-  /* 大屏端：4列 */
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(4, 1fr);
-    grid-column: 1 / -1 !important; /* 跨越两栏 */
-  }
-
-  .info-box {
-    background: var(--bg-card-light);
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      border-color: var(--accent-primary);
-    }
-
-    .info-label {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-
-    .info-value {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text-primary);
-      line-height: 1.2;
-      word-break: break-word;
-
-      &.price {
-        font-size: 28px;
-        background: var(--badge-danger-gradient);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
       }
     }
   }
@@ -1130,7 +1132,7 @@ onBeforeUnmount(() => {
     background: rgba(255, 255, 255, 0.5);
     padding: 16px;
     border-radius: 12px;
-    transition: all 0.3s ease;
+    @include transition-props(0.3s);
 
     &:hover {
       background: rgba(255, 255, 255, 0.8);
@@ -1219,7 +1221,7 @@ onBeforeUnmount(() => {
     border-radius: 50px;
     border: 1.5px solid var(--border-color);
     cursor: pointer;
-    transition: all 0.3s;
+    @include transition-props(0.3s);
 
     &:hover {
       background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
@@ -1237,7 +1239,7 @@ onBeforeUnmount(() => {
     margin-bottom: 20px;
     font-size: 14px;
     resize: none;
-    transition: all 0.3s;
+    @include transition-props(0.3s);
     font-family: inherit;
     background: var(--bg-card);
     color: var(--text-primary);
@@ -1260,7 +1262,7 @@ onBeforeUnmount(() => {
       border: none;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
+      @include transition-props(0.3s);
     }
 
     .modal-btn-confirm {
@@ -1300,7 +1302,7 @@ onBeforeUnmount(() => {
     font-size: 0.8rem;
     padding: 4px 0;
     cursor: pointer;
-    transition: all 0.25s;
+    @include transition-props(0.25s);
     border-radius: 8px;
     margin: 0 4px;
 
@@ -1321,16 +1323,12 @@ onBeforeUnmount(() => {
     i {
       font-size: 1.25rem;
       margin-bottom: 4px;
-      transition: all 0.25s;
+      @include transition-props(0.25s);
     }
   }
 }
 
 @media (max-width: 480px) {
-  .order-info-grid {
-    grid-template-columns: 1fr;
-  }
-
   .info-section {
     .section-grid {
       grid-template-columns: 1fr;

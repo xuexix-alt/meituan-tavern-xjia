@@ -69,16 +69,16 @@
       </div>
     </div>
 
-    <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/home')">
+    <nav class="nav-bar">
+      <button type="button" class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/discover')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/discover')">
         <i class="fas fa-compass"></i>
         <span>发现</span>
-      </div>
-    </div>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -150,6 +150,13 @@ function goItemDetail(pkg: any) {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: cubic-bezier(0.25, 0.46, 0.45, 0.94)) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -171,8 +178,6 @@ function goItemDetail(pkg: any) {
   gap: 12px;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
 
   .title {
     font-size: 1.15rem;
@@ -500,12 +505,10 @@ function goItemDetail(pkg: any) {
 .nav-bar {
   display: flex;
   border-top: 1px solid var(--border-color);
-  background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
+  background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
   padding: 8px 12px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   position: relative;
 
   &::before {
@@ -527,7 +530,7 @@ function goItemDetail(pkg: any) {
     font-size: 0.8rem;
     padding: 4px 0;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
     position: relative;
     border-radius: 8px;
     margin: 0 4px;
@@ -549,7 +552,7 @@ function goItemDetail(pkg: any) {
     i {
       font-size: 1.4rem;
       margin-bottom: 2px;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
     }
   }
 }

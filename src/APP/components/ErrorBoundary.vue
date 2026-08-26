@@ -72,13 +72,15 @@ const retry = () => {
 
     .retry-btn {
       background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
-      color: white;
+      color: var(--on-accent);
       border: none;
       padding: 12px 32px;
       border-radius: 25px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s;
+      transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
       display: inline-flex;
       align-items: center;
       gap: 8px;

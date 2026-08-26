@@ -13,7 +13,7 @@
       <div class="user-profile-card">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <img v-if="userAvatar" :src="userAvatar" alt="avatar" />
+            <img v-if="userAvatar" :src="userAvatar" :alt="`${username}的头像`" />
             <i v-else class="fas fa-user"></i>
           </div>
           <div class="avatar-badge">
@@ -44,19 +44,34 @@
       <div class="card">
         <div class="card-title"><i class="fas fa-cog"></i>设置</div>
         <div class="settings-list">
-          <div class="settings-item" @click="toggleTheme">
+          <div
+            class="settings-item"
+            role="switch"
+            :aria-checked="isDarkMode"
+            tabindex="0"
+            @click="toggleTheme"
+            @keydown.enter.prevent="toggleTheme"
+            @keydown.space.prevent="toggleTheme"
+          >
             <div class="settings-icon">
               <i :class="['fas', isDarkMode ? 'fa-sun' : 'fa-moon']"></i>
             </div>
             <div class="settings-info">
-              <div class="settings-title">{{ isDarkMode ? '浅色模式' : '深色模式' }}</div>
+              <div class="settings-title">{{ isDarkMode ? '切换到浅色模式' : '切换到深色模式' }}</div>
               <div class="settings-desc">切换深色/浅色主题</div>
             </div>
-            <div class="settings-toggle">
+            <div class="settings-toggle" aria-hidden="true">
               <i :class="['fas', isDarkMode ? 'fa-toggle-on' : 'fa-toggle-off']"></i>
             </div>
           </div>
-          <div class="settings-item" @click="refreshData">
+          <div
+            class="settings-item"
+            role="button"
+            tabindex="0"
+            @click="refreshData"
+            @keydown.enter.prevent="refreshData"
+            @keydown.space.prevent="refreshData"
+          >
             <div class="settings-icon">
               <i class="fas fa-sync-alt"></i>
             </div>
@@ -64,23 +79,37 @@
               <div class="settings-title">刷新数据</div>
               <div class="settings-desc">从酒馆重新获取最新数据</div>
             </div>
-            <div class="settings-arrow">
+            <div class="settings-arrow" aria-hidden="true">
               <i class="fas fa-chevron-right"></i>
             </div>
           </div>
-          <div class="settings-item" @click="regenerateShops">
+          <div
+            class="settings-item"
+            role="button"
+            tabindex="0"
+            @click="regenerateShops"
+            @keydown.enter.prevent="regenerateShops"
+            @keydown.space.prevent="regenerateShops"
+          >
             <div class="settings-icon">
-              <i class="fas fa-sync-alt"></i>
+              <i class="fas fa-store"></i>
             </div>
             <div class="settings-info">
               <div class="settings-title">重新生成首页店铺</div>
-              <div class="settings-desc">重新生成首页店铺</div>
+              <div class="settings-desc">让AI重新生成一批首页店铺</div>
             </div>
-            <div class="settings-arrow">
-              <i class="fas fa-sync-alt"></i>
+            <div class="settings-arrow" aria-hidden="true">
+              <i class="fas fa-chevron-right"></i>
             </div>
           </div>
-          <div class="settings-item" @click="$router.push('/lab')">
+          <div
+            class="settings-item"
+            role="button"
+            tabindex="0"
+            @click="$router.push('/lab')"
+            @keydown.enter.prevent="$router.push('/lab')"
+            @keydown.space.prevent="$router.push('/lab')"
+          >
             <div class="settings-icon">
               <i class="fas fa-terminal"></i>
             </div>
@@ -88,7 +117,7 @@
               <div class="settings-title">提示词调试台</div>
               <div class="settings-desc">调试提示词与接口请求</div>
             </div>
-            <div class="settings-arrow">
+            <div class="settings-arrow" aria-hidden="true">
               <i class="fas fa-chevron-right"></i>
             </div>
           </div>
@@ -97,28 +126,28 @@
     </div>
 
     <!-- 底部导航 -->
-    <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/home')">
+    <nav class="nav-bar">
+      <button type="button" class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/discover')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/discover')">
         <i class="fas fa-compass"></i>
         <span>发现</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/service')">
-        <i class="fas fa-heart"></i>
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/service')">
+        <i class="fas fa-concierge-bell"></i>
         <span>服务</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/history')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/history')">
         <i class="fas fa-history"></i>
         <span>历史</span>
-      </div>
-      <div class="nav-item active" @click="$router.push('/me')">
+      </button>
+      <button type="button" class="nav-item active" aria-current="page" @click="$router.push('/me')">
         <i class="fas fa-user"></i>
         <span>我的</span>
-      </div>
-    </div>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -199,9 +228,12 @@ function toggleTheme() {
   localStorage.setItem('app-theme', isDarkMode.value ? 'dark' : 'light');
 }
 
-// 刷新数据
-function refreshData() {
-  window.location.reload();
+// 刷新数据：重新读取变量并更新界面，避免整页 reload 打断当前状态
+async function refreshData() {
+  await initDisplay();
+  if (typeof toastr !== 'undefined') {
+    toastr.success('数据已刷新');
+  }
 }
 
 // 重新生成首页店铺
@@ -371,6 +403,13 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: ease) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -391,7 +430,7 @@ onBeforeUnmount(() => {
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  @include transition-props(0.3s);
 
   .title {
     font-size: 1.3rem;
@@ -428,7 +467,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: all 0.3s ease;
+  @include transition-props(0.3s);
 
   &:hover {
     box-shadow: var(--shadow-md);
@@ -506,7 +545,7 @@ onBeforeUnmount(() => {
       font-weight: 600;
       color: var(--accent-dark);
       margin-bottom: 12px;
-      transition: all 0.3s ease;
+      @include transition-props(0.3s);
 
       i {
         color: var(--accent-primary);
@@ -550,7 +589,7 @@ onBeforeUnmount(() => {
   margin-bottom: 16px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-accent);
-  transition: all 0.3s ease;
+  @include transition-props(0.3s);
 
   &:hover {
     box-shadow: var(--shadow-md);
@@ -606,11 +645,16 @@ onBeforeUnmount(() => {
   background: var(--bg-item);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  @include transition-props(0.25s);
 
   &:hover {
     background: var(--bg-item-hover);
     transform: translateX(4px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--accent-primary) 70%, transparent);
+    outline-offset: 2px;
   }
 
   .settings-icon {
@@ -646,7 +690,7 @@ onBeforeUnmount(() => {
   .settings-arrow {
     font-size: 18px;
     color: var(--text-secondary);
-    transition: all 0.25s ease;
+    @include transition-props(0.25s);
 
     &:hover {
       color: var(--accent-primary);
@@ -670,7 +714,7 @@ onBeforeUnmount(() => {
     font-size: 0.8rem;
     padding: 4px 0;
     cursor: pointer;
-    transition: all 0.25s;
+    @include transition-props(0.25s);
     border-radius: 8px;
     margin: 0 4px;
 
@@ -691,7 +735,7 @@ onBeforeUnmount(() => {
     i {
       font-size: 1.25rem;
       margin-bottom: 4px;
-      transition: all 0.25s;
+      @include transition-props(0.25s);
     }
   }
 }

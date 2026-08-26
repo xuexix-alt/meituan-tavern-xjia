@@ -14,7 +14,8 @@ test('套餐详情滚动区和 tab 控件声明移动端纵向触摸策略', () 
 });
 
 test('套餐详情仍保留三个 tab 及现有切换目标', () => {
-  assert.equal((source.match(/<button class="tab-link"/g) ?? []).length, 3);
+  // 按钮标记允许携带 type/role/aria 等属性，断言意图是恰好三个 tab 按钮
+  assert.equal((source.match(/<button[^>]*class="tab-link"/g) ?? []).length, 3);
   assert.match(source, /@click="activeTab = 'content'"/);
   assert.match(source, /@click="activeTab = 'reviews'"/);
   assert.match(source, /@click="activeTab = 'images'"/);

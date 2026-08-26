@@ -70,28 +70,28 @@
       </div>
     </div>
 
-    <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/home')">
+    <nav class="nav-bar">
+      <button type="button" class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
-      </div>
-      <div class="nav-item active" @click="$router.push('/discover')">
+      </button>
+      <button type="button" class="nav-item active" aria-current="page" @click="$router.push('/discover')">
         <i class="fas fa-compass"></i>
         <span>发现</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/service')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/service')">
         <i class="fas fa-concierge-bell"></i>
         <span>服务</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/history')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/history')">
         <i class="fas fa-history"></i>
         <span>历史</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/me')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/me')">
         <i class="fas fa-user"></i>
         <span>我的</span>
-      </div>
-    </div>
+      </button>
+    </nav>
   </div>
   <input ref="fileInput" class="hidden-input" type="file" accept=".json,application/json" @change="handleFileChange" />
 </template>
@@ -251,6 +251,13 @@ function checksumPayload(str: string) {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: ease) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -272,8 +279,6 @@ function checksumPayload(str: string) {
   gap: 12px;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
 
   .title {
     display: flex;
@@ -608,12 +613,10 @@ function checksumPayload(str: string) {
 .nav-bar {
   display: flex;
   border-top: 1px solid var(--border-accent);
-  background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
+  background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
   padding: 8px 12px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
   position: relative;
 
   &::before {
@@ -635,7 +638,7 @@ function checksumPayload(str: string) {
     font-size: 0.8rem;
     padding: 6px 4px;
     cursor: pointer;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    @include transition-props(0.35s, cubic-bezier(0.34, 1.56, 0.64, 1));
     position: relative;
     border-radius: 12px;
     margin: 0 2px;
@@ -650,7 +653,7 @@ function checksumPayload(str: string) {
       height: 100%;
       background: linear-gradient(135deg, rgba(255, 195, 0, 0.15), rgba(255, 215, 64, 0.1));
       border-radius: 12px;
-      transition: all 0.3s ease;
+      @include transition-props(0.3s);
       z-index: 0;
     }
 
@@ -686,7 +689,7 @@ function checksumPayload(str: string) {
     i {
       font-size: 1.4rem;
       margin-bottom: 2px;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      @include transition-props(0.35s, cubic-bezier(0.34, 1.56, 0.64, 1));
       position: relative;
       z-index: 1;
     }
@@ -694,7 +697,7 @@ function checksumPayload(str: string) {
     span {
       font-size: 0.7rem;
       font-weight: 600;
-      transition: all 0.3s ease;
+      @include transition-props(0.3s);
       position: relative;
       z-index: 1;
       letter-spacing: 0.5px;

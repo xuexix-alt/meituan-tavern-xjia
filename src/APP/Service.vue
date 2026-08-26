@@ -34,11 +34,13 @@
       </div>
 
       <!-- 标签页（仅多订单时显示） -->
-      <div v-if="girlsData.length > 1" class="tabs-container">
+      <div v-if="girlsData.length > 1" class="tabs-container" role="tablist" aria-label="服务对象">
         <button
           v-for="(girl, index) in girlsData"
           :key="girl.id"
           type="button"
+          role="tab"
+          :aria-selected="currentGirlIndex === index"
           :class="['tab-item', { active: currentGirlIndex === index }]"
           @click="currentGirlIndex = index"
         >
@@ -47,7 +49,7 @@
       </div>
 
       <!-- 当前女孩的核心状态卡片 -->
-      <div v-if="currentGirl" class="status-card">
+      <div v-if="currentGirl" class="status-card" role="tabpanel">
         <!-- 基本信息和状态 -->
         <div class="status-header">
           <div class="basic-info">
@@ -340,28 +342,28 @@
     </div>
 
     <!-- 底部导航 -->
-    <div class="nav-bar">
-      <div class="nav-item" @click="$router.push('/home')">
+    <nav class="nav-bar">
+      <button type="button" class="nav-item" @click="$router.push('/home')">
         <i class="fas fa-home"></i>
         <span>首页</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/discover')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/discover')">
         <i class="fas fa-compass"></i>
         <span>发现</span>
-      </div>
-      <div class="nav-item active" @click="$router.push('/service')">
+      </button>
+      <button type="button" class="nav-item active" aria-current="page" @click="$router.push('/service')">
         <i class="fas fa-concierge-bell"></i>
         <span>服务</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/history')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/history')">
         <i class="fas fa-history"></i>
         <span>历史</span>
-      </div>
-      <div class="nav-item" @click="$router.push('/me')">
+      </button>
+      <button type="button" class="nav-item" @click="$router.push('/me')">
         <i class="fas fa-user"></i>
         <span>我的</span>
-      </div>
-    </div>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -498,13 +500,14 @@ const heartbeatStatusClass = computed(() => {
   return 'status-normal';
 });
 const heartbeatColor = computed(() => {
+  // 使用主题令牌，深色模式下自动调整为更适合的颜色
   switch (heartbeatStatusClass.value) {
     case 'status-warning':
-      return '#FFA726';
+      return 'var(--status-warning)';
     case 'status-danger':
-      return '#EF5350';
+      return 'var(--status-danger)';
     default:
-      return '#66BB6A';
+      return 'var(--status-success)';
   }
 });
 
@@ -537,11 +540,12 @@ const serviceProgressBarWidth = computed(() => {
 });
 
 const progressColor = computed(() => {
+  // 使用主题令牌，深色模式下自动调整
   const value = serviceProgress.value;
-  if (value === '-') return '#E0E0E0';
-  if (value < 30) return '#FFA726';
-  if (value > 80) return '#66BB6A';
-  return '#FFD54F';
+  if (value === '-') return 'var(--border-color)';
+  if (value < 30) return 'var(--status-warning)';
+  if (value > 80) return 'var(--status-success)';
+  return 'var(--accent-light)';
 });
 
 // 服务次数（使用服务统计中的本次服务性交次数）
@@ -602,6 +606,13 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
+@mixin transition-props($duration: 0.25s, $easing: ease) {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: $duration;
+  transition-timing-function: $easing;
+}
+
 .app-view {
   width: 100%;
   height: 100%;
@@ -621,8 +632,6 @@ onBeforeUnmount(() => {
   align-items: center;
   border-bottom: 1px solid var(--border-accent);
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
   position: relative;
 
   &::after {
@@ -648,7 +657,7 @@ onBeforeUnmount(() => {
       color: var(--accent-primary);
       padding: 8px;
       border-radius: 10px;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      @include transition-props(0.35s, cubic-bezier(0.34, 1.56, 0.64, 1));
 
       &:hover {
         background: linear-gradient(135deg, rgba(255, 195, 0, 0.15), rgba(255, 215, 64, 0.1));
@@ -669,7 +678,7 @@ onBeforeUnmount(() => {
     cursor: pointer;
     padding: 8px;
     border-radius: 8px;
-    transition: all 0.3s;
+    @include transition-props(0.3s);
 
     &:hover {
       background: rgba(255, 195, 0, 0.1);
@@ -734,7 +743,7 @@ onBeforeUnmount(() => {
     border-radius: 25px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s;
+    @include transition-props(0.3s);
 
     &:hover {
       transform: translateY(-2px);
@@ -790,7 +799,7 @@ onBeforeUnmount(() => {
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s;
+    @include transition-props(0.3s);
     color: var(--text-secondary);
     text-align: center;
 
@@ -1024,7 +1033,7 @@ onBeforeUnmount(() => {
       padding: 10px;
       background: var(--bg-card);
       border-radius: 12px;
-      transition: all 0.3s;
+      @include transition-props(0.3s);
 
       &:hover {
         transform: translateY(-4px);
@@ -1086,7 +1095,7 @@ onBeforeUnmount(() => {
       border: 0;
       cursor: pointer;
       background: var(--bg-card);
-      transition: all 0.3s;
+      @include transition-props(0.3s);
       font-weight: 700;
       color: var(--text-primary);
 
@@ -1180,7 +1189,7 @@ onBeforeUnmount(() => {
         border: 0;
         cursor: pointer;
         background: var(--bg-card);
-        transition: all 0.3s;
+        @include transition-props(0.3s);
 
         &:hover {
           background: var(--bg-badge);
@@ -1214,7 +1223,7 @@ onBeforeUnmount(() => {
 
       .collapsible-content {
         padding: 0 20px 16px 20px;
-        transition: all 0.3s ease;
+        @include transition-props(0.3s);
       }
 
       // 紧凑信息网格样式
@@ -1332,7 +1341,7 @@ onBeforeUnmount(() => {
             background: var(--bg-card);
             border-radius: 12px;
             border: 1px solid rgba(255, 195, 0, 0.15);
-            transition: all 0.3s ease;
+            @include transition-props(0.3s);
 
             &:hover {
               transform: translateY(-2px);
@@ -1463,7 +1472,7 @@ onBeforeUnmount(() => {
               background: var(--bg-card);
               border-radius: 10px;
               border: 1px solid rgba(255, 195, 0, 0.12);
-              transition: all 0.3s ease;
+              @include transition-props(0.3s);
 
               &:hover {
                 transform: translateY(-1px);
@@ -1638,8 +1647,6 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, var(--bg-header) 0%, var(--bg-header-light) 100%);
   padding: 8px 0;
   flex-shrink: 0;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   position: relative;
 
   &::before {
@@ -1661,7 +1668,7 @@ onBeforeUnmount(() => {
     font-size: 0.8rem;
     padding: 4px 0;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    @include transition-props(0.25s);
     position: relative;
     border-radius: 8px;
     margin: 0 4px;
@@ -1683,7 +1690,7 @@ onBeforeUnmount(() => {
     i {
       font-size: 1.25rem;
       margin-bottom: 4px;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
     }
   }
 }

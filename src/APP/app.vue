@@ -118,6 +118,12 @@ onErrorCaptured((err: Error) => {
   /* 渐变 */
   --badge-danger-gradient: linear-gradient(135deg, #ff4a4a 0%, #ff6b6b 100%);
   --badge-info-gradient: linear-gradient(135deg, #42a5f5 0%, #478ed1 100%);
+  /* 品牌渐变文字：浅色主题下用深金保证对比度（大字号 ≥3:1，小字号 ≥4.5:1） */
+  --brand-text-gradient: linear-gradient(135deg, #8f6b00 0%, #6e5300 100%);
+  /* 金色背景上的前景文字色（对比度 ≈9:1） */
+  --on-accent: #2c2500;
+  /* 可读金色文字：浅色背景上使用深金（≈5:1），深色主题覆盖为亮金 */
+  --accent-text: #7a6000;
 }
 
 [data-theme='dark'] {
@@ -156,6 +162,10 @@ onErrorCaptured((err: Error) => {
   /* 渐变 - 深色模式下调整 */
   --badge-danger-gradient: linear-gradient(135deg, #ff5252 0%, #ff8a80 100%);
   --badge-info-gradient: linear-gradient(135deg, #29b6f6 0%, #4fc3f7 100%);
+  /* 深色主题下品牌渐变文字用亮金（深底对比度 ≈10:1） */
+  --brand-text-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-light) 100%);
+  /* 深色主题下可读金色文字用亮金 */
+  --accent-text: var(--accent-light);
 }
 
 /* 全局字体优化 */
@@ -207,10 +217,11 @@ body,
   max-width: 100%;
 }
 
-#app button,
-#app input,
-#app textarea,
-#app select {
+/* 低特异性重置：允许 scoped 样式正常覆盖字体等属性（原先 #app 前缀的 ID 特异性会压过所有按钮/输入框的字号字重设置） */
+button,
+input,
+textarea,
+select {
   font: inherit;
   min-width: 0;
   max-width: 100%;
@@ -281,11 +292,11 @@ body,
     padding: 12px 0;
   }
 
-  /* 输入框增加触控区域 */
-  body input,
-  body select,
-  body textarea {
-    font-size: 16px; /* 防止iOS自动缩放 */
+  /* 输入框增加触控区域（保持高特异性，确保覆盖 scoped 字号，防止 iOS 聚焦缩放） */
+  #app input,
+  #app select,
+  #app textarea {
+    font-size: 16px;
     min-height: 44px;
   }
 
@@ -320,7 +331,10 @@ body,
     0 10px 24px rgba(0, 0, 0, 0.08),
     0 0 0 1px rgba(255, 255, 255, 0.15) inset,
     0 10px 20px rgba(255, 195, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition:
+    background-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   @media (max-width: 768px) {
     width: 100%;
@@ -417,6 +431,10 @@ body,
 }
 
 .phone-frame :deep(.nav-item) {
+  /* nav-item 为 button 元素时的默认样式重置 */
+  background: transparent;
+  border: none;
+  padding: 4px 0;
   min-width: 0;
   min-width: var(--touch-target);
   min-height: var(--touch-target);

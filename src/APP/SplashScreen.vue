@@ -37,10 +37,10 @@
         <div class="version-info">
           <span>v4.0.0</span>
         </div>
-        <div class="skip-button" :class="{ 'fade-out': isFading }" @click="skipSplash">
+        <button type="button" class="skip-button" :class="{ 'fade-out': isFading }" @click="skipSplash">
           <span>跳过</span>
           <i class="fas fa-chevron-right"></i>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { navigateToDefaultPage } from './utils';
 
@@ -62,11 +62,18 @@ import { navigateToDefaultPage } from './utils';
 const slogan = ref('为您送上一切心动的美人');
 const isFading = ref(false);
 const router = useRouter();
+let autoSkipTimer: number | null = null;
 
 // 跳过启动画面
 async function skipSplash() {
+  // 防止点击跳过后定时器再次触发
+  if (isFading.value) return;
+  isFading.value = true;
+  if (autoSkipTimer !== null) {
+    window.clearTimeout(autoSkipTimer);
+    autoSkipTimer = null;
+  }
   try {
-    isFading.value = true;
     // 调用智能导航函数决定目标页面
     const targetPath = await navigateToDefaultPage();
     console.log(`[智能导航] 启动画面跳过，跳转到: ${targetPath}`);
@@ -85,9 +92,17 @@ async function skipSplash() {
 
 onMounted(async () => {
   // 启动画面已显示，3秒后自动跳过
-  setTimeout(() => {
+  autoSkipTimer = window.setTimeout(() => {
+    autoSkipTimer = null;
     skipSplash();
   }, 3000); // 3秒后自动跳过
+});
+
+onBeforeUnmount(() => {
+  if (autoSkipTimer !== null) {
+    window.clearTimeout(autoSkipTimer);
+    autoSkipTimer = null;
+  }
 });
 </script>
 
@@ -258,19 +273,22 @@ onMounted(async () => {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
       font-size: 0.9rem;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition:
+        background-color 0.3s ease,
+        transform 0.3s ease,
+        opacity 0.3s ease;
       padding: 8px 12px;
+      border: none;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      -webkit-backdrop-filter: blur(10px);
-      backdrop-filter: blur(10px);
+      /* 深色半透明底代替玻璃拟态，白字对比更稳且免去 backdrop-filter 开销 */
+      background: rgba(0, 0, 0, 0.2);
 
       &:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.3);
         transform: translateX(4px);
       }
 
