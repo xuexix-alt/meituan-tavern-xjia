@@ -51,7 +51,8 @@ export function useDebugLab() {
   const recordedRunId = ref(0);
 
   // 发送方式：tavern = 酒馆生成（generateRaw）；direct = 直连 API（代理逻辑搬进浏览器）
-  const sendMode = ref<SendMode>(workspace.value.sendMode === 'tavern' ? 'tavern' : 'direct');
+  // 默认酒馆生成，仅显式存有 direct 时才使用直连
+  const sendMode = ref<SendMode>(workspace.value.sendMode === 'direct' ? 'direct' : 'tavern');
   const tavernAvailable = ref(false);
   const tavernError = ref('');
   let tavernRunId: string | null = null;

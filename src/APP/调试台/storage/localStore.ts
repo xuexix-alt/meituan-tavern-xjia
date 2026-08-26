@@ -5,6 +5,8 @@ import { createDefaultPlaygroundConfig } from '../domain/playgroundConfig';
 
 export const STORAGE_KEY = 'deepseek-prompt-lab.workspace.v1';
 export const HISTORY_LIMIT = 30;
+// 一次性迁移标记：旧版本默认发送方式为直连（direct），现改为酒馆生成（tavern）
+const SEND_MODE_MIGRATION_KEY = 'deepseek-prompt-lab.sendModeDefault.v1';
 
 export type SendMode = 'tavern' | 'direct';
 
@@ -110,7 +112,7 @@ const workspaceSchema = z.object({
   macroName: z.string().optional().default(DEFAULT_MACRO_NAME),
   appendReply: z.boolean().optional().default(false),
   macroInput: z.string().optional().default(''),
-  sendMode: z.enum(['tavern', 'direct']).optional().default('direct'),
+  sendMode: z.enum(['tavern', 'direct']).optional().default('tavern'),
 });
 
 const secretFieldNames = new Set(['authorization', 'apikey', 'api_key', 'x-provider-api-key']);
@@ -130,18 +132,32 @@ export function createDefaultWorkspace(): WorkspaceState {
     macroName: defaults.macroName,
     appendReply: defaults.appendReply,
     macroInput: '',
-    sendMode: 'direct',
+    // 默认走酒馆自带的生成通道，无需手动配置接口地址与密钥
+    sendMode: 'tavern',
   };
 }
 
 export function loadWorkspace(storage: Storage = localStorage): WorkspaceState {
   const stored = storage.getItem(STORAGE_KEY);
-  if (!stored) return createDefaultWorkspace();
+  if (!stored) {
+    // 全新工作区直接采用新默认（酒馆生成），同时标记迁移已完成，
+    // 避免用户此后手动选择的直连模式在下次加载时被误迁移。
+    storage.setItem(SEND_MODE_MIGRATION_KEY, '1');
+    return createDefaultWorkspace();
+  }
 
   try {
     const parsed = workspaceSchema.safeParse(JSON.parse(stored));
     if (!parsed.success) return createDefaultWorkspace();
     const normalized = normalizeWorkspace(parsed.data);
+
+    // 一次性迁移：旧版本把直连（direct）作为默认值持久化，这里把首次加载到的
+    // direct 视为旧默认并切回酒馆生成；此后用户手动切回直连的选择会被保留。
+    if (!storage.getItem(SEND_MODE_MIGRATION_KEY)) {
+      if (normalized.sendMode === 'direct') normalized.sendMode = 'tavern';
+      storage.setItem(SEND_MODE_MIGRATION_KEY, '1');
+    }
+
     if (!isLegacyBlankDraft(normalized.draft)) return normalized;
 
     const defaults = createDefaultWorkspace();
@@ -227,7 +243,8 @@ function normalizeWorkspace(state: WorkspaceState): WorkspaceState {
     macroName: state.macroName,
     appendReply: state.appendReply,
     macroInput: state.macroInput ?? '',
-    sendMode: state.sendMode === 'tavern' ? 'tavern' : 'direct',
+    // 非法值回落到酒馆生成（新默认）
+    sendMode: state.sendMode === 'direct' ? 'direct' : 'tavern',
   };
 }
 
