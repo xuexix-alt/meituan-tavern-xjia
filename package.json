@@ -23,7 +23,7 @@
     "@types/toastr": "^2.1.44",
     "@types/webpack": "^5.28.5",
     "@typescript-eslint/parser": "^8.70.0",
-    "autoprefixer": "^10.5.5",
+    "autoprefixer": "^10.6.0",
     "chokidar": "^4.0.3",
     "css-loader": "^7.1.5",
     "eslint": "^10.10.0",
@@ -52,7 +52,7 @@
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
     "remark-loader": "^6.0.0",
-    "sass": "^1.104.0",
+    "sass": "^1.104.1",
     "sass-loader": "^17.0.1",
     "socket.io": "^4.8.3",
     "style-loader": "^4.0.0",
@@ -92,7 +92,7 @@
     "jqueryui": "^1.11.1",
     "klona": "^2.0.6",
     "lodash": "^4.18.1",
-    "markdown-it": "^14.3.1",
+    "markdown-it": "^14.3.2",
     "pako": "^2.2.0",
     "pinia": "^3.0.4",
     "pixi.js": "^8.20.1",
@@ -103,8 +103,8 @@
     "vue-final-modal": "^4.5.5",
     "vue-router": "^4.6.4",
     "vue3-pixi": "1.0.0-beta.3",
-    "yaml": "^2.9.0",
-    "zod": "^4.6.1"
+    "yaml": "^2.9.1",
+    "zod": "^4.6.4"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
