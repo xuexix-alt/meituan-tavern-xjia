@@ -10,7 +10,7 @@
           <span class="title-sub">{{ shops.length > 0 ? `${shops.length} 个店铺` : '暂无店铺' }}</span>
         </div>
       </div>
-      <button class="import-btn" type="button" @click="triggerImport">
+      <button class="import-btn" type="button" aria-label="导入 JSON" title="导入 JSON" @click="triggerImport">
         <i class="fas fa-file-import"></i>
         <span>导入 JSON</span>
       </button>
@@ -46,13 +46,11 @@
               <i v-else class="fas fa-store"></i>
             </div>
             <div class="info">
-              <div class="name-row">
-                <div class="name">{{ shop.name }}</div>
-                <span v-if="shop.packages && shop.packages.length > 0" class="package-count">
-                  <i class="fas fa-layer-group"></i>
-                  {{ shop.packages.length }} 个套餐
-                </span>
-              </div>
+              <div class="name" :title="shop.name">{{ shop.name }}</div>
+              <span v-if="shop.packages && shop.packages.length > 0" class="package-count">
+                <i class="fas fa-layer-group"></i>
+                {{ shop.packages.length }} 个套餐
+              </span>
               <div class="desc">
                 <span class="slogan-text">{{ shop.slogan || '暂无简介' }}</span>
               </div>
@@ -530,26 +528,23 @@ function checksumPayload(str: string) {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
     padding-right: 30px;
-  }
-
-  .name-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
   }
 
   .name {
     font-weight: 700;
     color: var(--text-primary);
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 1rem;
     line-height: 1.35;
-    flex: 1;
     min-width: 0;
   }
 
@@ -559,7 +554,7 @@ function checksumPayload(str: string) {
     gap: 4px;
     padding: 2px 8px;
     background: rgba(255, 195, 0, 0.14);
-    color: var(--accent-dark);
+    color: var(--accent-text);
     border-radius: 999px;
     font-size: 0.7rem;
     font-weight: 600;
@@ -572,6 +567,7 @@ function checksumPayload(str: string) {
   }
 
   .desc {
+    width: 100%;
     font-size: 0.8rem;
     color: var(--text-secondary);
     display: flex;

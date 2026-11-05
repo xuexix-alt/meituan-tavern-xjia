@@ -5,11 +5,9 @@ import test from 'node:test';
 const appSource = fs.readFileSync(new URL('../app.vue', import.meta.url), 'utf8');
 const readerSource = fs.readFileSync(new URL('./StoryReader.vue', import.meta.url), 'utf8');
 
-test('移动端正文外壳为阅读区保留更高的纵向空间', () => {
-  assert.match(
-    appSource,
-    /\.phone-frame\.is-story-reader\s*\{[\s\S]*?min-height:\s*min\(980px,\s*calc\(100vw\s*\*\s*1\.85\)\)/,
-  );
+test('正文与其他页面共用宿主可视高度，不用额外最小高度挤出操作区', () => {
+  assert.match(appSource, /height:\s*var\(--app-height,\s*auto\)/);
+  assert.doesNotMatch(appSource, /min-height:\s*min\(980px/);
 });
 
 test('正文页在底部输入区提供独立的首页快捷按钮', () => {

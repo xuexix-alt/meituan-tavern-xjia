@@ -1,220 +1,193 @@
 <template>
   <div class="app-view active">
-    <!-- 首页内容 -->
     <div class="app-header">
-      <div class="title">
-        <i class="fas fa-home"></i>
-        <span>首页</span>
-      </div>
+      <div class="title"><i class="fas fa-home" aria-hidden="true"></i><span>首页</span></div>
     </div>
-
-    <div class="app-content">
-      <!-- Slogan区域 - 移至顶部 -->
-      <div class="slogan-section">
-        <div class="slogan-card">
-          <div class="slogan-bg-decoration">
-            <div class="decoration-circle circle-1"></div>
-            <div class="decoration-circle circle-2"></div>
-            <div class="decoration-circle circle-3"></div>
-          </div>
-          <div class="slogan-content-wrapper">
-            <div class="slogan-content">
-              <h2 class="slogan-title">
-                <span class="title-line">
-                  <span class="text-gradient">随心所欲</span>
-                </span>
-                <span class="title-line">
-                  <span class="text-gradient">跨越时空</span>
-                </span>
-              </h2>
-              <p class="slogan-subtitle">
-                <span class="subtitle-text">为您送上一切心动的美人</span>
-              </p>
-
-              <div class="slogan-footer">
-                <div class="slogan-signature">
-                  <div class="signature-text">
-                    <i class="fas fa-heart"></i>
-                    <span>美人团外卖</span>
-                    <i class="fas fa-heart"></i>
-                  </div>
-                </div>
-                <div class="version-info">v4.0.0</div>
-              </div>
-            </div>
-
-            <!-- 新增公告栏和玩法说明 -->
-            <div class="announcement-panel">
-              <div class="panel-header">
-                <i class="fas fa-bullhorn"></i>
-                <span>最新公告</span>
-              </div>
-              <div class="panel-content">
-                <div class="notice-item">
-                  <span class="notice-tag">活动</span>
-                  <span class="notice-text">新增“国企往事”DLC，挂载世界书后点击即可</span>
-                </div>
-                <div class="notice-item">
-                  <span class="notice-tag">更新</span>
-                  <span class="notice-text">现在店铺脚本有快捷按钮导出JSON，欢迎分享到发布贴中供大家品尝 </span>
-                </div>
-                <div class="notice-item">
-                  <span class="notice-tag">更新</span>
-                  <span class="notice-text">当前推荐非json格式的APP生成方式，深度为0，顺序-1，根据预设情况调整</span>
-                </div>
-                <div class="notice-item">
-                  <span class="notice-tag">更新</span>
-                  <span class="notice-text">截断问题多出自预设和正则，我也没有更好的办法，不行你就还我的预设</span>
-                </div>
-                <div class="notice-item">
-                  <span class="notice-tag">更新</span>
-                  <span class="notice-text"
-                    >经常被截断推荐默认的非js生成模式，破限不完全的预设搜不出明星，只能搜出高仿货🤣</span
-                  >
-                </div>
-              </div>
-              <div class="panel-header mt-3">
-                <i class="fas fa-gamepad"></i>
-                <span>玩法说明</span>
-              </div>
-              <div class="panel-content">
-                <p class="instruction-text">
-                  1. 女孩你不想玩了最好向AI下指令‘结束服务’<br />
-                  2. 搜某种类别时最好加上“X店铺每个x套餐”<br />
-                  3. 正确更新APP的方式是关掉酒馆清空浏览器缓存<br />
-                  4. 世界书有二选一模式，如果常截断可以试试不同框架
-                </p>
-              </div>
-            </div>
-          </div>
+    <div class="app-content home-content">
+      <section class="brand-banner" aria-label="美人团外卖">
+        <div>
+          <p class="brand-label">美人团外卖 <span>v4.0.0</span></p>
+          <h2>随心所欲 · 跨越时空</h2>
+          <p class="brand-subtitle">为您送上一切心动的美人</p>
         </div>
-      </div>
-
-      <!-- 分类网格 -->
-      <div class="category-grid" :class="{ 'is-generating': isGenerating }" :aria-busy="isGenerating">
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
-          @keydown.enter.prevent="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
-          @keydown.space.prevent="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
-          <span>路人</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
-          @keydown.enter.prevent="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
-          @keydown.space.prevent="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-mask"></i></div>
-          <span>偶遇</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
-          @keydown.enter.prevent="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
-          @keydown.space.prevent="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-video"></i></div>
-          <span>AV</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
-          @keydown.enter.prevent="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
-          @keydown.space.prevent="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
-          <span>街拍</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
-          @keydown.enter.prevent="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
-          @keydown.space.prevent="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
-          <span>熟人</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
-          @keydown.enter.prevent="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
-          @keydown.space.prevent="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-heart-broken"></i></div>
-          <span>乱伦</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
-          @keydown.enter.prevent="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
-          @keydown.space.prevent="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-briefcase"></i></div>
-          <span>职场</span>
-        </div>
-        <div
-          class="category-item"
-          role="button"
-          tabindex="0"
-          @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
-          @keydown.enter.prevent="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
-          @keydown.space.prevent="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
-        >
-          <div class="icon-wrapper"><i class="fas fa-users"></i></div>
-          <span>友妻</span>
-        </div>
-      </div>
-
-      <!-- 搜索栏 -->
-      <div class="search-bar-container">
-        <i class="fas fa-search"></i>
-        <input v-model="searchKeyword" placeholder="要养成告诉AI“结束XX订单”的好习惯" @keyup.enter="doSearch" />
-        <button
-          class="search-btn"
-          :class="{ 'is-stopping': isGenerating }"
-          @click="isGenerating ? cancelGeneration() : doSearch()"
-        >
-          {{ isGenerating ? '停止' : '搜索' }}
-        </button>
-      </div>
-
-      <!-- 特色玩法 -->
-      <div class="list-section">
-        <div class="section-header">
-          <h3>特色玩法</h3>
-        </div>
-        <div class="feature-button-grid">
-          <!-- DLC按钮 -->
-          <div class="feature-button-item">
-            <button class="dlc-button" title="DLC需先挂载世界书" :disabled="isGenerating" @click="generateDLCContent">
-              <div class="dlc-icon">
-                <i class="fas fa-history"></i>
-              </div>
-              <span class="dlc-text">DLC:1995国企往事</span>
-              <div class="dlc-badge">NEW</div>
+        <i class="fas fa-heart banner-icon" aria-hidden="true"></i>
+      </section>
+      <div class="home-layout">
+        <section class="home-main" aria-label="探索与搜索">
+          <!-- 搜索栏 -->
+          <div class="search-bar-container" role="search" aria-label="搜索店铺">
+            <i class="fas fa-search"></i>
+            <input
+              v-model="searchKeyword"
+              aria-label="搜索店铺或主题"
+              placeholder="搜索店铺、主题或想遇见的人…"
+              @keyup.enter="doSearch"
+            />
+            <button
+              class="search-btn"
+              :class="{ 'is-stopping': isGenerating }"
+              @click="isGenerating ? cancelGeneration() : doSearch()"
+            >
+              {{ isGenerating ? '停止' : '搜索' }}
             </button>
           </div>
-        </div>
+
+          <!-- 分类网格 -->
+          <div class="category-grid" :class="{ 'is-generating': isGenerating }" :aria-busy="isGenerating">
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
+              @keydown.enter.prevent="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
+              @keydown.space.prevent="search('各类路人商品-2个店铺每个含3个套餐', '路人')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-street-view"></i></div>
+              <span>路人</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
+              @keydown.enter.prevent="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
+              @keydown.space.prevent="search('路人商品-各类场景偶遇的心动女孩主题-2个店铺每个含3个套餐', '偶遇')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-mask"></i></div>
+              <span>偶遇</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
+              @keydown.enter.prevent="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
+              @keydown.space.prevent="search('路人商品-色情片中的AV女优主题-2个店铺每个含3个套餐', 'AV')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-video"></i></div>
+              <span>AV</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
+              @keydown.enter.prevent="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
+              @keydown.space.prevent="search('路人商品-街上遇到的心动美女主题-2个店铺每个含3个套餐', '街拍')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-camera-retro"></i></div>
+              <span>街拍</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
+              @keydown.enter.prevent="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
+              @keydown.space.prevent="search('各类熟人商品-2个店铺每个含3个套餐', '熟人')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
+              <span>熟人</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
+              @keydown.enter.prevent="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
+              @keydown.space.prevent="search('熟人商品-乱伦主题（不得含母子）-2个店铺每个含3个套餐', '乱伦')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-heart-broken"></i></div>
+              <span>乱伦</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
+              @keydown.enter.prevent="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
+              @keydown.space.prevent="search('熟人商品-各类职场主题-2个店铺每个含3个套餐', '职场')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-briefcase"></i></div>
+              <span>职场</span>
+            </div>
+            <div
+              class="category-item"
+              role="button"
+              tabindex="0"
+              @click="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
+              @keydown.enter.prevent="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
+              @keydown.space.prevent="search('熟人商品-各类朋友妻主题-2个店铺每个含3个套餐', '友妻')"
+            >
+              <div class="icon-wrapper"><i class="fas fa-users"></i></div>
+              <span>友妻</span>
+            </div>
+          </div>
+
+          <!-- 特色玩法 -->
+          <div class="list-section">
+            <div class="section-header">
+              <h3>特色玩法</h3>
+            </div>
+            <div class="feature-button-grid">
+              <!-- DLC按钮 -->
+              <div class="feature-button-item">
+                <button
+                  class="dlc-button"
+                  title="DLC需先挂载世界书"
+                  :disabled="isGenerating"
+                  @click="generateDLCContent"
+                >
+                  <div class="dlc-icon">
+                    <i class="fas fa-history"></i>
+                  </div>
+                  <span class="dlc-text">DLC:1995国企往事</span>
+                  <div class="dlc-badge">NEW</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="home-aside" aria-label="公告与帮助">
+          <details class="announcement-panel">
+            <summary>
+              <span class="summary-heading"><i class="fas fa-bullhorn" aria-hidden="true"></i> 最新公告</span>
+              <span class="notice-preview">新增「国企往事」DLC</span>
+              <i class="fas fa-chevron-down disclosure-icon" aria-hidden="true"></i>
+            </summary>
+            <div class="panel-content">
+              <p><span class="notice-tag">活动</span> 新增“国企往事”DLC，挂载世界书后点击即可</p>
+              <p><span class="notice-tag">更新</span> 现在店铺脚本有快捷按钮导出JSON，欢迎分享到发布贴中供大家品尝</p>
+              <p>
+                <span class="notice-tag">更新</span> 当前推荐非json格式的APP生成方式，深度为0，顺序-1，根据预设情况调整
+              </p>
+              <p>
+                <span class="notice-tag">更新</span> 截断问题多出自预设和正则，我也没有更好的办法，不行你就还我的预设
+              </p>
+              <p>
+                <span class="notice-tag">更新</span>
+                经常被截断推荐默认的非js生成模式，破限不完全的预设搜不出明星，只能搜出高仿货🤣
+              </p>
+            </div>
+          </details>
+          <details class="help-panel">
+            <summary>
+              <span class="summary-heading"><i class="fas fa-circle-question" aria-hidden="true"></i> 玩法与帮助</span>
+              <span class="notice-preview">搜索、结束服务与更新说明</span>
+              <i class="fas fa-chevron-down disclosure-icon" aria-hidden="true"></i>
+            </summary>
+            <div class="panel-content">
+              <ol>
+                <li>女孩你不想玩了最好向AI下指令“结束服务”。</li>
+                <li>搜某种类别时最好加上“X店铺每个x套餐”。</li>
+                <li>正确更新APP的方式是关掉酒馆清空浏览器缓存。</li>
+                <li>世界书有二选一模式，如果常截断可以试试不同框架。</li>
+              </ol>
+            </div>
+          </details>
+        </aside>
       </div>
     </div>
-
     <!-- 底部导航 -->
     <nav class="nav-bar">
       <button type="button" class="nav-item active" aria-current="page" @click="$router.push('/home')">
@@ -273,905 +246,330 @@ function generateDLCContent() {
 </script>
 
 <style lang="scss" scoped>
-// 过渡属性白名单：避免 transition: all 匹配所有属性带来的性能开销
-@mixin transition-props($duration: 0.25s, $easing: cubic-bezier(0.25, 0.46, 0.45, 0.94)) {
-  transition-property: transform, box-shadow, background-color, border-color, color, opacity, filter;
-  transition-duration: $duration;
-  transition-timing-function: $easing;
-}
-
-.app-view {
-  width: 100%;
-  height: 100%;
+.app-header,
+.title {
   display: flex;
-  flex-direction: column;
-  background-color: var(--bg-primary);
-  position: absolute;
-  top: 0;
-  left: 0;
-  @include transition-props(0.25s);
+  align-items: center;
 }
-
 .app-header {
-  background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
-  padding: 35px 16px 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-  }
-
-  .title {
-    font-size: 1.3rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-primary);
-    @include transition-props(0.25s);
-
-    i {
-      color: var(--accent-primary);
-      cursor: pointer;
-      @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
-      padding: 4px;
-      border-radius: 6px;
-
-      &:hover {
-        background-color: rgba(255, 195, 0, 0.2);
-        transform: scale(1.1) rotate(-5deg);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-    }
-  }
+  border-bottom: 1px solid var(--border-color);
 }
-
-.app-content {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 16px;
-  -ms-overflow-style: none;
-  scroll-behavior: smooth;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+.title {
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
 }
-
-.category-grid {
+.title i {
   display: grid;
-  /* 列数由 app.vue 的容器查询规则统一控制（.phone-frame :deep(.category-grid)） */
-  gap: 16px;
-  margin-bottom: 16px;
+  place-items: center;
+  color: var(--accent-text);
 }
-
-.category-grid.is-generating .category-item {
-  pointer-events: none;
-  opacity: 0.55;
+.home-content {
+  scrollbar-gutter: stable;
 }
-
-.category-item {
-  text-align: center;
-  cursor: pointer;
-  color: var(--text-primary);
-  font-size: 0.85rem;
+.brand-banner {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  @include transition-props(0.25s);
-  position: relative;
-
-  &:focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--accent-primary) 70%, transparent);
-    outline-offset: 3px;
-    border-radius: 12px;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 80px;
-    height: 80px;
-    margin-left: -40px;
-    background: radial-gradient(circle, rgba(255, 195, 0, 0.3), transparent);
-    border-radius: 50%;
-    transform: scale(0);
-    opacity: 0;
-    z-index: -1;
-  }
-
-  &:active::before {
-    animation: ripple 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  .icon-wrapper {
-    width: 55px;
-    height: 55px;
-    background: var(--bg-badge);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 12px;
-    font-size: 1.5rem;
-    color: var(--accent-primary);
-    box-shadow: var(--shadow-sm);
-    @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
-    position: relative;
-    overflow: hidden;
-    border: 2px solid transparent;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-      transform: translateX(-100%);
-      transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    &:hover::before {
-      transform: translateX(100%);
-    }
-  }
-
-  &:hover .icon-wrapper {
-    transform: scale(1.1) rotate(8deg);
-    box-shadow: var(--shadow-md);
-    background: linear-gradient(135deg, var(--accent-primary) 0, var(--accent-dark) 100%);
-    color: #ffffff;
-    border-color: var(--border-accent);
-  }
-
-  &:active .icon-wrapper {
-    transform: scale(0.95) rotate(3deg);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-card);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent-primary) 15%, var(--bg-item)), var(--bg-item));
+  h2 {
+    margin: 4px 0;
+    color: var(--accent-text);
+    font-size: clamp(20px, 3.6cqw, 30px);
+    font-weight: 750;
+    line-height: 1.35;
   }
 }
-
+.brand-label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.brand-label span {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 400;
+}
+.brand-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.banner-icon {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+  font-size: 32px;
+}
+.home-layout,
+.home-main,
+.home-aside {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  align-content: start;
+}
 .search-bar-container {
   display: flex;
   align-items: center;
-  background: var(--bg-card);
-  border-radius: 50px;
-  padding: 4px 8px 4px 16px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-accent);
-  @include transition-props(0.25s);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 6px 8px 6px 14px;
+  min-height: 56px;
+  background: var(--bg-item);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
   &:focus-within {
-    box-shadow:
-      0 10px 15px rgba(0, 0, 0, 0.1),
-      0 0 0 3px var(--border-accent);
-    border-color: var(--accent-primary);
-    transform: translateY(-1px);
-
-    &::before {
-      transform: translateX(100%);
-    }
-
-    i {
-      color: var(--accent-primary);
-    }
+    border-color: var(--accent-dark);
+    box-shadow: 0 0 0 3px var(--border-accent);
   }
-
-  i {
-    color: var(--text-secondary);
-    transition: color 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  > i {
+    color: var(--accent-text);
   }
-
   input {
-    flex-grow: 1;
-    border: none;
-    outline: 0;
+    flex: 1;
+    min-width: 0;
+    width: 0;
+    min-height: 44px;
+    padding: 8px 0;
+    border: 0;
     background: transparent;
-    padding: 8px 12px;
-    font-size: 0.9rem;
     color: var(--text-primary);
-    @include transition-props(0.25s);
-
-    &::placeholder {
-      color: var(--text-secondary);
-      transition: color 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    &:focus::placeholder {
-      color: var(--text-placeholder);
-    }
+    font-size: 16px;
   }
-
-  .search-btn {
-    background: linear-gradient(135deg, var(--accent-primary) 0, var(--accent-dark) 100%);
-    color: var(--on-accent);
-    border: none;
-    border-radius: 50px;
-    padding: 9px 16px;
-    font-weight: 600;
-    cursor: pointer;
-    @include transition-props(0.25s);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100px;
-      height: 100px;
-      margin: -50px 0 0 -50px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: scale(0);
-      opacity: 0;
-    }
-
-    &:hover {
-      background: linear-gradient(135deg, var(--accent-dark) 0, #cc9900 100%);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
-    }
-
-    &:active::before {
-      animation: ripple 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    &:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
+  input::placeholder {
+    color: var(--text-secondary);
   }
 }
-
-// Slogan区域样式
-.slogan-section {
-  margin-bottom: 16px;
-  animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.slogan-card {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 195, 0, 0.15) 0%,
-    rgba(255, 215, 64, 0.1) 50%,
-    rgba(255, 195, 0, 0.05) 100%
-  );
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow:
-    0 8px 32px rgba(255, 195, 0, 0.2),
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 195, 0, 0.3);
-  overflow: hidden;
-  @include transition-props(0.25s);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 16px 48px rgba(255, 195, 0, 0.25),
-      0 8px 24px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  }
-
-  .slogan-bg-decoration {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-
-    .decoration-circle {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 195, 0, 0.1) 0%, transparent 70%);
-      /* 装饰动画仅播放一次，避免移动端持续占用合成资源 */
-      animation: float 6s ease-in-out;
-
-      &.circle-1 {
-        width: 120px;
-        height: 120px;
-        top: -30px;
-        right: -30px;
-        animation-delay: 0s;
-      }
-
-      &.circle-2 {
-        width: 80px;
-        height: 80px;
-        bottom: -20px;
-        left: -20px;
-        animation-delay: 2s;
-      }
-
-      &.circle-3 {
-        width: 60px;
-        height: 60px;
-        top: 50%;
-        right: 20%;
-        animation-delay: 4s;
-      }
-    }
-  }
-
-  .slogan-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    position: relative;
-    z-index: 1;
-
-    /* 平板端：左右布局 */
-    @media (min-width: 600px) {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      text-align: left;
-    }
-  }
-
-  .slogan-content {
-    flex: 1;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* 默认居中 */
-    justify-content: center;
-
-    /* 平板端：左侧居中 */
-    @media (min-width: 600px) {
-      text-align: center; /* 文本居中 */
-      align-items: center; /* 元素居中 */
-      padding-right: 20px;
-      border-right: 1px solid rgba(255, 195, 0, 0.2);
-    }
-
-    .slogan-title {
-      margin: 0 0 16px 0;
-      line-height: 1.2;
-
-      .title-line {
-        display: block;
-        font-size: 1.8rem;
-        font-weight: 900;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-        position: relative;
-        animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        .text-gradient {
-          /* 品牌渐变文字令牌：浅色主题深金 / 深色主题亮金，保证对比度 */
-          background: var(--brand-text-gradient);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          position: relative;
-
-          &::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-            animation: shimmer 2s ease-in-out;
-          }
-        }
-      }
-    }
-
-    .slogan-subtitle {
-      margin: 0 0 20px 0;
-      font-size: 1.05rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      animation: fadeIn 1s ease-out 0.5s both;
-      letter-spacing: 0.3px;
-      font-style: italic;
-      text-shadow: 0 1px 2px rgba(255, 195, 0, 0.1);
-
-      /* 平板端：左对齐 */
-      @media (min-width: 600px) {
-        justify-content: flex-start;
-      }
-
-      .subtitle-text {
-        opacity: 0.95;
-        /* 渐变终点用可读金色令牌，避免浅色模式下金色尾段对比度不足 */
-        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-text) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-    }
-
-    .slogan-signature {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      animation: fadeInUp 1s ease-out 0.8s both;
-
-      /* 平板端：左对齐 */
-      @media (min-width: 600px) {
-        justify-content: flex-start;
-      }
-
-      .signature-line {
-        width: 40px;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-      }
-
-      .signature-text {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--accent-text);
-        background: rgba(255, 195, 0, 0.1);
-        padding: 8px 16px;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 195, 0, 0.2);
-
-        i {
-          color: var(--accent-primary);
-          animation: heartbeat 2s ease-in-out;
-
-          &:last-child {
-            animation-delay: 1s;
-          }
-        }
-      }
-    }
-  }
-
-  .announcement-panel {
-    flex: 1;
-    /* 主题感知的面板底色，修复深色模式下的白色残留 */
-    background: color-mix(in srgb, var(--bg-card-light) 88%, transparent);
-    border-radius: 16px;
-    padding: 16px;
-    border: 1px solid var(--border-accent);
-    animation: fadeIn 1s ease-out 0.3s both;
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--accent-text);
-      margin-bottom: 10px;
-
-      &.mt-3 {
-        margin-top: 12px;
-      }
-
-      i {
-        color: var(--accent-primary);
-      }
-    }
-
-    .panel-content {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-
-      .notice-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        font-size: 0.85rem;
-
-        .notice-tag {
-          background: var(--accent-primary);
-          color: var(--on-accent);
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          flex-shrink: 0;
-          margin-top: 2px; /* 微调对齐 */
-        }
-
-        .notice-text {
-          color: var(--text-primary);
-          line-height: 1.4;
-        }
-      }
-
-      .instruction-text {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        line-height: 1.5;
-        margin: 0;
-      }
-    }
+.search-btn {
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  font-weight: 700;
+  cursor: pointer;
+  &.is-stopping {
+    background: var(--status-danger);
+    color: var(--bg-item);
   }
 }
-
-// 动画定义
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.category-grid {
+  display: grid;
 }
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(5deg);
-  }
-}
-
-@keyframes shimmer {
-  0%,
-  100% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  50% {
-    opacity: 1;
-    transform: translateX(100%);
-  }
-}
-
-@keyframes heartbeat {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  14% {
-    transform: scale(1.2);
-  }
-  28% {
-    transform: scale(1);
-  }
-  42% {
-    transform: scale(1.2);
-  }
-  70% {
-    transform: scale(1);
-  }
-}
-
-/* 涟漪只用 transform/opacity，避免触发布局 */
-@keyframes ripple {
-  from {
-    transform: scale(0);
-    opacity: 1;
-  }
-  to {
-    transform: scale(3);
-    opacity: 0;
-  }
-}
-
-.list-section {
-  background: var(--bg-card);
-  padding: 16px;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-accent);
-  position: relative;
-  overflow: hidden;
-  @include transition-props(0.25s);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 195, 0, 0.03), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  &:hover::before {
-    transform: translateX(100%);
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    h3 {
-      margin: 0;
-      font-size: 1.15rem;
-      color: var(--text-primary);
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      @include transition-props(0.25s);
-
-      &::before {
-        content: '';
-        display: block;
-        width: 4px;
-        height: 18px;
-        background: linear-gradient(135deg, var(--accent-primary) 0, #ff6b35 100%);
-        border-radius: 6px;
-        @include transition-props(0.25s);
-      }
-    }
-  }
-
-  &:hover .section-header h3::before {
-    width: 6px;
-    height: 20px;
-    box-shadow: 0 0 8px rgba(255, 195, 0, 0.4);
-  }
-}
-
-.feature-button-grid {
+.category-item {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 0;
-}
-
-.feature-button-item {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-.dlc-button {
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  padding: 16px 20px;
-  width: 100%; /* 宽度撑满 */
-  text-align: left;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 72px;
+  padding: 5px 0;
+  color: var(--text-primary);
+  font-size: 13px;
   cursor: pointer;
-  @include transition-props(0.25s);
-  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
-  position: relative;
-  overflow: hidden;
+  border-radius: var(--radius-control);
+  touch-action: manipulation;
+  &:focus-visible {
+    outline: 3px solid var(--accent-dark);
+    outline-offset: 2px;
+  }
+  &:active {
+    background: var(--bg-item-hover);
+  }
+}
+.icon-wrapper {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--bg-item);
+  border: 1px solid var(--border-accent);
+  color: var(--accent-text);
+  font-size: 21px;
+}
+.section-header h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+.feature-button-grid {
+  display: grid;
+  gap: 12px;
+}
+.dlc-button {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  &:hover {
-    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(30, 60, 114, 0.4);
-    border-color: rgba(255, 255, 255, 0.2);
-
-    &::before {
-      transform: translateX(100%);
-    }
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(30, 60, 114, 0.3);
-  }
-
-  .dlc-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    @include transition-props(0.25s);
-    flex-shrink: 0;
-
-    i {
-      color: #ffd700;
-      font-size: 1.1rem;
-    }
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: scale(1.05);
-    }
-  }
-
-  .dlc-text {
-    flex-grow: 1;
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .dlc-badge {
-    /* 加深底色保证白字 ≥4.5:1 */
-    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-    color: #ffffff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 8px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(169, 50, 38, 0.3);
-    animation: pulse 2s ease-in-out;
-    flex-shrink: 0;
+  width: 100%;
+  min-height: 68px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
   }
 }
-
+.dlc-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  height: 40px;
+  background: var(--bg-item-hover);
+  color: var(--accent-text);
+  border-radius: 12px;
+}
+.dlc-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  font-weight: 700;
+}
+.dlc-badge {
+  padding: 2px 6px;
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.home-aside details {
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  background: var(--bg-item);
+}
+summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  gap: 4px 12px;
+  align-items: center;
+  min-height: 72px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  &::-webkit-details-marker {
+    display: none;
+  }
+  &:focus-visible {
+    outline: 3px solid var(--accent-dark);
+    outline-offset: 2px;
+    border-radius: var(--radius-card);
+  }
+}
+.summary-heading {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.summary-heading i {
+  margin-right: 4px;
+  color: var(--accent-text);
+}
+.notice-preview {
+  grid-column: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.disclosure-icon {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+details[open] .disclosure-icon {
+  transform: rotate(180deg);
+}
+.panel-content {
+  padding: 0 14px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  p {
+    margin: 0 0 10px;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
+  ol {
+    margin: 0;
+    padding-left: 20px;
+  }
+  li + li {
+    margin-top: 8px;
+  }
+}
+.notice-tag {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  font-size: 11px;
+}
 .nav-bar {
   display: flex;
-  border-top: 1px solid var(--border-color);
-  background: linear-gradient(135deg, var(--bg-header) 0, var(--bg-header-light) 100%);
-  padding: 8px 0;
   flex-shrink: 0;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-  }
-
-  .nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    padding: 4px 0;
-    cursor: pointer;
-    @include transition-props(0.25s);
-    position: relative;
-    border-radius: 8px;
-    margin: 0 4px;
-
-    &.active {
-      color: var(--text-primary);
-
-      i {
-        color: var(--accent-primary);
-        transform: scale(1.15) translateY(-2px);
-      }
-    }
-
-    &:hover:not(.active) {
-      color: var(--text-primary);
-      transform: translateY(-1px);
-    }
-
-    i {
-      font-size: 1.25rem;
-      margin-bottom: 4px;
-      @include transition-props(0.25s, cubic-bezier(0.34, 1.56, 0.64, 1));
-    }
-  }
 }
-
-.empty-state {
-  text-align: center;
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   color: var(--text-secondary);
-  padding: 40px 20px;
-  line-height: 1.6;
+  font-size: 12px;
+  cursor: pointer;
 }
-
-// 动画（pulse 供 DLC 徽章使用；其余重复/未使用的 keyframes 已清理）
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.9;
+.nav-item i {
+  font-size: 20px;
+}
+@container (min-width: 600px) {
+  .home-aside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .slogan-section,
-  .title-line,
-  .slogan-subtitle,
-  .slogan-signature,
-  .announcement-panel,
-  .decoration-circle,
-  .text-gradient::after,
-  .signature-text i,
-  .dlc-badge {
-    animation: none;
+@container (min-width: 900px) {
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 24px;
+  }
+  .home-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@container (max-width: 359px) {
+  .brand-banner {
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .banner-icon {
+    display: none;
+  }
+  .home-layout,
+  .home-main,
+  .home-aside {
+    gap: 12px;
+  }
+  .search-btn {
+    padding-inline: 12px;
   }
 }
 </style>

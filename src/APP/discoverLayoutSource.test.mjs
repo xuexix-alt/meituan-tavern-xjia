@@ -8,7 +8,7 @@ const discoverSource = fs.readFileSync(new URL('./Discover.vue', import.meta.url
 test('发现页窄屏店铺卡片保留可读宽度并允许副标题收缩', () => {
   assert.match(
     appSource,
-    /\.phone-frame :deep\(\.shop-list-items\)\s*\{\s*grid-template-columns: repeat\(auto-fit, minmax\(min\(200px, 100%\), 1fr\)\)/s,
+    /\.phone-frame :deep\(\.shop-list-items\)\s*\{\s*grid-template-columns: repeat\(auto-fill, minmax\(min\(300px, 100%\), 1fr\)\)/s,
   );
   assert.match(discoverSource, /\.slogan-text[\s\S]*?min-width: 0;/);
 });

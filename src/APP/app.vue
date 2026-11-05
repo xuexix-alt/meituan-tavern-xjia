@@ -1,11 +1,17 @@
 <template>
   <div
     class="phone-frame"
-    :class="{ 'has-generation-status': hasGenerationStatus, 'is-story-reader': isStoryRoute }"
+    :class="{
+      'has-generation-status': hasGenerationStatus,
+      'has-story-entry': hasStoryEntry,
+      'is-story-reader': isStoryRoute,
+      'is-compact': hostHeight !== null && hostHeight < 440,
+    }"
     :data-theme="currentTheme"
+    :style="hostHeight === null ? undefined : { '--app-height': `${hostHeight}px` }"
   >
     <GenerationStatus />
-    <StoryEntry />
+    <StoryEntry v-if="hasStoryEntry" />
     <!-- 错误边界组件 -->
     <ErrorBoundary>
       <RouterView />
@@ -23,12 +29,18 @@ import { generationTask } from './services/generationTaskSingleton';
 import { provideStorySession } from './story/storyContext';
 import { createDefaultStorySession } from './story/storyTavern';
 import { applyReaderTypography, loadReaderTypography } from './story/readerTypography';
+import { observeHostPanelHeight } from './hostViewport';
 
 // 当前主题
 const currentTheme = ref<'light' | 'dark'>('light');
 const hasGenerationStatus = computed(() => generationTask.state.value.status !== 'idle');
 const route = useRoute();
 const isStoryRoute = computed(() => route.path === '/story');
+const hasStoryEntry = computed(() =>
+  ['/home', '/discover', '/service', '/history', '/me', '/lab'].includes(route.path),
+);
+const hostHeight = ref<number | null>(null);
+let stopHostViewport = () => {};
 const storySession = createDefaultStorySession();
 provideStorySession(storySession);
 
@@ -49,6 +61,9 @@ function initTheme() {
 
 // 在组件挂载时初始化主题
 onMounted(() => {
+  stopHostViewport = observeHostPanelHeight(height => {
+    hostHeight.value = height;
+  });
   initTheme();
   applyReaderTypography(loadReaderTypography(localStorage));
   storySession.bind();
@@ -61,6 +76,7 @@ onBeforeUnmount(() => {
 });
 
 function disposeAppSessions() {
+  stopHostViewport();
   generationTask.dispose();
   storySession.dispose();
 }
@@ -312,12 +328,12 @@ select {
 
 <style lang="scss" scoped>
 .phone-frame {
-  width: min(100%, 640px);
+  width: 100%;
   max-width: 100%;
-  min-height: min(720px, calc(100vw * 1.7));
-  height: auto;
-  max-height: 1024px;
-  aspect-ratio: 10 / 16;
+  min-height: 0;
+  height: var(--app-height, auto);
+  max-height: var(--app-height, 900px);
+  aspect-ratio: 4 / 3;
   background: var(--bg-primary);
   border: 1px solid var(--border-accent);
   border-radius: 16px;
@@ -337,29 +353,11 @@ select {
     box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   @media (max-width: 768px) {
-    width: 100%;
-    min-height: min(680px, calc(100vw * 1.85));
+    aspect-ratio: 3 / 5;
     border-radius: 12px;
   }
 
   @media (max-width: 420px) {
-    min-height: min(640px, calc(100vw * 1.95));
-    border-radius: 10px;
-  }
-}
-
-.phone-frame.is-story-reader {
-  width: min(100%, 820px);
-  max-width: 820px;
-  min-height: min(1094px, calc(100vw * 1.3333));
-  max-height: 1094px;
-  aspect-ratio: 3 / 4;
-}
-
-@media (max-width: 768px) {
-  .phone-frame.is-story-reader {
-    width: 100%;
-    min-height: min(980px, calc(100vw * 1.85));
     border-radius: 10px;
   }
 }
@@ -391,10 +389,20 @@ select {
   box-shadow: 0 1px 0 color-mix(in srgb, var(--border-color) 75%, transparent);
 }
 
+// 正文入口占用顶栏的预留位置，不覆盖公告、列表或其他顶栏操作。
+.phone-frame.has-story-entry :deep(.app-header),
+.phone-frame.has-story-entry :deep(.lab-back-row) {
+  padding-right: calc(var(--space-page) + 108px);
+}
+
 .phone-frame :deep(.app-header .title) {
   min-width: 0;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+.phone-frame :deep(.app-header .title > i) {
+  flex-shrink: 0;
 }
 
 .phone-frame :deep(.app-header .title > span) {
@@ -468,11 +476,8 @@ select {
   box-shadow: var(--shadow-card);
 }
 
-.phone-frame :deep(.story-entry) {
-  bottom: max(72px, calc(68px + env(safe-area-inset-bottom)));
-  box-shadow:
-    var(--shadow-floating),
-    0 0 0 3px color-mix(in srgb, var(--bg-primary) 86%, transparent);
+.phone-frame.has-generation-status :deep(.story-entry) {
+  top: 58px;
 }
 
 .phone-frame :deep(.modal-content),
@@ -518,7 +523,7 @@ select {
 
 // 店铺卡片包含图标、文字和删除按钮，窄屏下至少保留可读宽度，避免三列挤压内容。
 .phone-frame :deep(.shop-list-items) {
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
 }
 
 .phone-frame :deep(.settings-list) {
@@ -532,33 +537,13 @@ select {
 }
 
 .phone-frame :deep(.category-grid) {
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-  gap: clamp(10px, 3%, 16px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.phone-frame :deep(.slogan-content-wrapper) {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.phone-frame :deep(.slogan-content) {
-  padding-right: 0;
-  border-right: 0;
-}
-
-.phone-frame :deep(.slogan-title .title-line) {
-  font-size: clamp(1.45rem, 8cqw, 1.8rem);
-}
-
-@container (min-width: 600px) {
-  .phone-frame :deep(.slogan-content-wrapper) {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .phone-frame :deep(.slogan-content) {
-    padding-right: 20px;
-    border-right: 1px solid rgba(255, 195, 0, 0.2);
+@container (min-width: 620px) {
+  .phone-frame :deep(.category-grid) {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
 
@@ -572,7 +557,7 @@ select {
 }
 
 .phone-frame :deep(.search-bar-container input) {
-  min-width: 120px;
+  min-width: 0;
 }
 
 .phone-frame :deep(.search-btn) {
@@ -662,5 +647,73 @@ select {
     padding: 6px 8px 6px 14px;
     border-radius: var(--radius-panel);
   }
+}
+
+@container (max-width: 399px) {
+  .phone-frame :deep(.import-btn span) {
+    display: none;
+  }
+}
+
+// 短屏保留搜索和正文操作空间，触控目标仍至少为 44px。
+.phone-frame.is-compact :deep(.app-header) {
+  min-height: 52px;
+  padding-block: 4px;
+}
+
+.phone-frame.is-compact :deep(.app-header .title) {
+  font-size: 1rem;
+}
+
+.phone-frame.is-compact :deep(.story-entry) {
+  top: 5px;
+}
+
+.phone-frame.is-compact.has-generation-status :deep(.story-entry) {
+  top: 53px;
+}
+
+.phone-frame.is-compact :deep(.nav-bar) {
+  min-height: 52px;
+  padding-block: 4px max(4px, env(safe-area-inset-bottom));
+}
+
+.phone-frame.is-compact :deep(.nav-item) {
+  gap: 2px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.phone-frame.is-compact :deep(.nav-item i) {
+  margin-bottom: 0;
+  font-size: 17px;
+}
+
+.phone-frame.is-compact :deep(.brand-banner) {
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.phone-frame.is-compact :deep(.brand-banner h2) {
+  font-size: 18px;
+}
+
+.phone-frame.is-compact :deep(.brand-subtitle) {
+  display: none;
+}
+
+.phone-frame.is-compact :deep(.reader-header) {
+  min-height: 52px;
+  padding-block: 4px;
+}
+
+.phone-frame.is-compact :deep(.reader-composer) {
+  padding-block: 6px max(6px, env(safe-area-inset-bottom));
+}
+
+.phone-frame.is-compact :deep(.reader-composer textarea) {
+  height: 48px;
+  min-height: 44px;
+  padding-block: 8px;
 }
 </style>
